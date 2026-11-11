@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>航旅状态机卡片 · AI 推理二级页</title>
+<style>
+  :root{
+    --ink:#0d1220;
+    --ink-2:#3d465c;
+    --ink-3:#7b849c;
+    --line:rgba(16,24,44,.08);
+    --paper:#ffffff;
+    --bg:#eef1f7;
+    --blue:#2f5bff;
+    --violet:#7a5cff;
+    --cyan:#25c8d8;
+    --radius:26px;
+    --font:-apple-system,BlinkMacSystemFont,"HarmonyOS Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:var(--font);color:var(--ink);
+    background:
+      radial-gradient(900px 600px at 12% -10%, #dfe7ff 0%, rgba(223,231,255,0) 62%),
+      radial-gradient(700px 520px at 100% 8%, #f3e6ff 0%, rgba(243,230,255,0) 58%),
+      radial-gradient(800px 700px at 50% 120%, #e4f6f8 0%, rgba(228,246,248,0) 60%),
+      var(--bg);
+    display:flex;flex-direction:column;align-items:center;
+    padding:40px 20px 56px;
+    min-height:100%;
+  }
+  .stage-title{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#93a0bd;font-weight:700;margin-bottom:22px}
+  .phone{
+    position:relative;width:392px;height:826px;border-radius:46px;
+    background:#0b1020;padding:11px;
+    box-shadow:
+      0 2px 0 rgba(255,255,255,.5) inset,
+      0 40px 80px -30px rgba(24,38,80,.45),
+      0 10px 30px -12px rgba(24,38,80,.28);
+  }
+  .phone::after{
+    content:"";position:absolute;inset:0;border-radius:46px;pointer-events:none;
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.16) inset;
+  }
+  .viewport{position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:#f6f7fb;isolation:isolate}
+  .statusbar{
+    position:absolute;top:0;left:0;right:0;height:46px;z-index:30;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 26px 0;font-size:12.5px;font-weight:700;letter-spacing:.02em;
+    color:#0d1220;pointer-events:none;transition:color .3s ease;
+  }
+  .statusbar.on-dark{color:#fff}
+  .statusbar .right{display:flex;align-items:center;gap:5px}
+  .sb-batt{width:22px;height:11px;border-radius:3px;border:1.4px solid currentColor;position:relative;opacity:.9}
+  .sb-batt::before{content:"";position:absolute;inset:1.6px;width:12px;border-radius:1px;background:currentColor}
+  .sb-batt::after{content:"";position:absolute;right:-3.4px;top:3px;width:2px;height:5px;border-radius:0 1px 1px 0;background:currentColor;opacity:.55}
+
+  /* ============ 页面容器 ============ */
+  .page{position:absolute;inset:0;overflow:hidden}
+  .page--home{background:#f6f7fb}
+  .page--ai{
+    background:#fbfcff;
+    transform:translateX(100%);
+    transition:transform .46s cubic-bezier(.32,.72,0,1);
+    z-index:20;
+    display:flex;flex-direction:column;
+  }
+  .page--ai.open{transform:translateX(0)}
+  .page--home.pushed{transform:translateX(-16%) scale(.97);transition:transform .46s cubic-bezier(.32,.72,0,1)}
+
+  /* ============ 首页 ============ */
+  .home-scroll{position:absolute;inset:0;overflow-y:auto;padding:56px 18px 30px;scrollbar-width:none}
+  .home-scroll::-webkit-scrollbar{display:none}
+  .home-head{display:flex;align-items:flex-end;justify-content:space-between;padding:0 6px 16px}
+  .greet{font-size:11.5px;font-weight:700;letter-spacing:.16em;color:#98a2bb;text-transform:uppercase}
+  .greet-sub{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:5px}
+  .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(140deg,#c9d6ff,#e8d6ff);border:1px solid rgba(255,255,255,.9);box-shadow:0 4px 12px rgba(70,90,150,.16)}
+
+  /* 卡片 */
+  .tcard{
+    position:relative;border-radius:var(--radius);overflow:hidden;color:#fff;
+    background:linear-gradient(148deg,#101a3c 0%,#1d2a63 38%,#2b2f7a 68%,#402c78 100%);
+    box-shadow:0 26px 48px -22px rgba(23,34,80,.62),0 2px 0 rgba(255,255,255,.08) inset;
+    padding:18px 18px 15px;
+  }
+  .tcard::before{
+    content:"";position:absolute;width:300px;height:300px;right:-110px;top:-150px;border-radius:50%;
+    background:radial-gradient(circle,rgba(112,196,255,.42),rgba(112,196,255,0) 66%);
+  }
+  .tcard::after{
+    content:"";position:absolute;width:260px;height:260px;left:-120px;bottom:-170px;border-radius:50%;
+    background:radial-gradient(circle,rgba(180,120,255,.36),rgba(180,120,255,0) 66%);
+  }
+  .tcard > *{position:relative;z-index:2}
+
+  .tc-top{display:flex;align-items:center;gap:8px}
+  .state-badge{
+    display:inline-flex;align-items:center;gap:6px;height:25px;padding:0 10px 0 8px;border-radius:999px;
+    background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.18);
+    font-size:11.5px;font-weight:700;letter-spacing:.02em;backdrop-filter:blur(8px);
+    transition:background .3s ease;
+  }
+  .live-dot{width:6px;height:6px;border-radius:50%;background:#43e6a8;box-shadow:0 0 0 0 rgba(67,230,168,.7);animation:pulse 1.9s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(67,230,168,.55)}70%{box-shadow:0 0 0 7px rgba(67,230,168,0)}100%{box-shadow:0 0 0 0 rgba(67,230,168,0)}}
+  .state-hint{margin-left:auto;font-size:11px;font-weight:600;color:rgba(255,255,255,.66);letter-spacing:.01em}
+
+  .ai-btn{
+    flex:0 0 auto;position:relative;height:30px;padding:0 11px 0 8px;border:0;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;border-radius:999px;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);
+    color:#fff;font-family:var(--font);font-size:11.5px;font-weight:800;letter-spacing:.06em;
+    backdrop-filter:blur(10px);
+    transition:transform .2s ease,background .2s ease;
+  }
+  .ai-btn:active{transform:scale(.93);background:rgba(255,255,255,.26)}
+  .ai-btn .spark{
+    font-size:12px;line-height:1;
+    background:linear-gradient(120deg,#8ef0ff,#c3a4ff 60%,#ffd6a5);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:spin 6s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ai-btn .ring{
+    position:absolute;inset:-2px;border-radius:999px;pointer-events:none;
+    background:conic-gradient(from 0deg,rgba(142,240,255,.85),rgba(195,164,255,.75),rgba(255,214,165,.7),rgba(142,240,255,.85));
+    filter:blur(5px);opacity:.38;z-index:-1;animation:spin 5s linear infinite;
+  }
+
+  .route{display:flex;align-items:flex-start;gap:10px;margin-top:20px}
+  .port{flex:0 0 auto;min-width:82px}
+  .port-code{font-size:31px;font-weight:800;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+  .port-time{font-size:19px;font-weight:700;margin-top:9px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .port-name{font-size:10.5px;color:rgba(255,255,255,.58);margin-top:4px;letter-spacing:.01em;white-space:nowrap}
+  .port.right{text-align:right;margin-left:auto}
+  .mid{flex:1;padding-top:6px;min-width:0}
+  .mid-line{position:relative;height:1px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.36) 0 4px,transparent 4px 8px);margin:0 6px}
+  .mid-plane{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);backdrop-filter:blur(6px);
+  }
+  .mid-plane svg{width:12px;height:12px;transform:rotate(90deg)}
+  .mid-dur{text-align:center;font-size:10px;color:rgba(255,255,255,.6);margin-top:9px;letter-spacing:.04em}
+  .mid-date{text-align:center;font-size:10px;color:rgba(255,255,255,.42);margin-top:3px}
+
+  .tear{position:relative;height:1px;margin:17px -18px 0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 5px,transparent 5px 11px)}
+  .tear::before,.tear::after{content:"";position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:#f6f7fb;transform:translateY(-50%)}
+  .tear::before{left:-8px}
+  .tear::after{right:-8px}
+
+  .meta{display:flex;align-items:center;justify-content:space-between;padding-top:13px}
+  .meta-item{display:flex;flex-direction:column;gap:3px}
+  .meta-k{font-size:9.5px;letter-spacing:.1em;color:rgba(255,255,255,.45);text-transform:uppercase;font-weight:700}
+  .meta-v{font-size:13px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  .meta-sep{width:1px;height:22px;background:rgba(255,255,255,.13)}
+
+  /* 状态机步进 */
+  .stepper{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}
+  .track{position:relative;height:14px;margin:0 8px}
+  .track-base{position:absolute;left:0;right:0;top:6px;height:2px;border-radius:2px;background:rgba(255,255,255,.16)}
+  .track-fill{position:absolute;left:0;top:6px;height:2px;border-radius:2px;background:linear-gradient(90deg,#63d6ff,#9d8bff);transition:width .55s cubic-bezier(.4,0,.2,1);box-shadow:0 0 10px rgba(120,180,255,.6)}
+  .nodes{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:flex-start}
+  .node{position:relative;width:14px;height:14px;display:grid;place-items:center}
+  .node i{
+    width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.26);
+    box-shadow:0 0 0 2.5px rgba(16,26,60,1);
+    transition:all .4s ease;
+  }
+  .node.done i{background:#63d6ff}
+  .node.now i{width:11px;height:11px;background:#fff;box-shadow:0 0 0 2.5px rgba(16,26,60,1),0 0 14px 2px rgba(140,190,255,.95)}
+  .node.now::after{
+    content:"";position:absolute;width:11px;height:11px;border-radius:50%;
+    border:1.5px solid rgba(160,205,255,.85);animation:halo 1.8s ease-out infinite;
+  }
+  @keyframes halo{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+  .labels{display:flex;justify-content:space-between;margin:7px 8px 0}
+  .labels span{font-size:9px;font-weight:600;color:rgba(255,255,255,.34);letter-spacing:.01em;transition:color .35s ease}
+  .labels span.on{color:#fff;font-weight:800}
+  .labels span.past{color:rgba(255,255,255,.6)}
+
+  /* 首页其余内容 */
+  .section-title{display:flex;align-items:center;justify-content:space-between;padding:26px 6px 12px}
+  .section-title h2{font-size:14px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .section-title span{font-size:11px;color:#98a2bb;font-weight:600}
+  .mini-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mini{
+    background:var(--paper);border-radius:18px;padding:13px 14px;border:1px solid var(--line);
+    box-shadow:0 8px 20px -16px rgba(20,32,70,.4);
+  }
+  .mini .k{font-size:10px;color:#98a2bb;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .mini .v{font-size:15px;font-weight:800;margin-top:7px;letter-spacing:-.01em}
+  .mini .s{font-size:10.5px;color:#8b95ad;margin-top:4px}
+  .hint-bar{
+    margin-top:20px;display:flex;align-items:center;gap:10px;
+    background:linear-gradient(100deg,#eef2ff,#f7f0ff);
+    border:1px solid rgba(122,92,255,.14);border-radius:18px;padding:13px 14px;
+  }
+  .hint-bar .ico{width:26px;height:26px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(140deg,#5b7cff,#a06bff);color:#fff;font-size:13px;flex:0 0 auto}
+  .hint-bar p{margin:0;font-size:11.5px;line-height:1.5;color:#4a5470;font-weight:600}
+  .hint-bar p b{color:#2f3f8f}
+
+  /* 落地之后 · 时间线 */
+  .tl{background:var(--paper);border-radius:20px;border:1px solid var(--line);padding:6px 15px;box-shadow:0 10px 24px -22px rgba(20,32,70,.5)}
+  .tl-row{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid rgba(16,24,44,.055)}
+  .tl-row:first-child{border-top:0}
+  .tl-t{font-size:11px;font-weight:800;color:#8b95ad;font-variant-numeric:tabular-nums;width:38px;flex:0 0 auto;padding-top:1px;letter-spacing:.01em}
+  .tl-dot{width:6px;height:6px;border-radius:50%;background:#cfd8ea;margin-top:6px;flex:0 0 auto}
+  .tl-row.hot .tl-dot{background:#2f5bff;box-shadow:0 0 0 3px rgba(47,91,255,.14)}
+  .tl-row.hot .tl-t{color:#2f5bff}
+  .tl-n{font-size:12px;font-weight:800;color:#0d1220;letter-spacing:-.005em}
+  .tl-s{font-size:10.5px;color:#98a2bb;font-weight:600;margin-top:2px}
+
+  /* ============ AI 二级页 ============ */
+  .ai-nav{
+    flex:0 0 auto;height:98px;padding:56px 16px 0;display:flex;align-items:center;gap:10px;
+    background:rgba(251,252,255,.95);backdrop-filter:blur(22px) saturate(1.1);
+    border-bottom:1px solid rgba(16,24,44,.06);position:relative;z-index:5;
+  }
+  .back{width:34px;height:34px;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;cursor:pointer;flex:0 0 auto;transition:transform .18s ease}
+  .back:active{transform:scale(.9)}
+  .back svg{width:15px;height:15px}
+  .ai-nav .t{font-size:14.5px;font-weight:800;letter-spacing:-.01em}
+  .ai-nav .t em{font-style:normal;font-size:10px;font-weight:700;color:#8b95ad;display:block;margin-top:2px;letter-spacing:.06em}
+  .dest-chip{
+    margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:27px;padding:0 11px;border-radius:999px;
+    background:linear-gradient(120deg,#eef2ff,#f9eaff);border:1px solid rgba(122,92,255,.16);
+    font-size:11.5px;font-weight:800;color:#4b3fa8;
+  }
+  .dest-chip .d{width:5px;height:5px;border-radius:50%;background:#7a5cff}
+
+  .ai-scroll{flex:1;overflow-y:auto;padding:16px 16px 130px;scrollbar-width:none}
+  .ai-scroll::-webkit-scrollbar{display:none}
+
+  .read-banner{
+    display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:15px;
+    background:linear-gradient(100deg,rgba(47,91,255,.07),rgba(122,92,255,.07));
+    border:1px solid rgba(47,91,255,.12);margin-bottom:16px;
+  }
+  .read-banner .w{font-size:11px;font-weight:700;color:#3c4a7a;line-height:1.5}
+  .read-banner .w b{color:#2f5bff}
+  .read-banner .pill{
+    margin-left:auto;flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.06em;
+    padding:3px 7px;border-radius:6px;background:rgba(47,91,255,.1);color:#2f5bff;
+  }
+
+  /* 推理日志 */
+  .think{
+    border-radius:18px;border:1px solid rgba(16,24,44,.07);background:#fff;padding:14px 14px 12px;
+    box-shadow:0 10px 24px -20px rgba(20,32,70,.5);
+  }
+  .think-head{display:flex;align-items:center;gap:7px;margin-bottom:11px}
+  .think-head .lb{font-size:10px;font-weight:800;letter-spacing:.12em;color:#98a2bb;text-transform:uppercase}
+  .think-head .st{margin-left:auto;font-size:10px;font-weight:800;color:#2f5bff;display:flex;align-items:center;gap:5px}
+  .think-head .st .spin{width:9px;height:9px;border-radius:50%;border:1.6px solid rgba(47,91,255,.25);border-top-color:#2f5bff;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .think.done .think-head .st{color:#0f9f6e}
+  .think.done .think-head .st .spin{display:none}
+  .step{display:flex;gap:9px;padding:5px 0;opacity:0;transform:translateY(4px);transition:opacity .35s ease,transform .35s ease}
+  .step.in{opacity:1;transform:none}
+  .step .tick{
+    flex:0 0 auto;width:14px;height:14px;border-radius:50%;margin-top:1.5px;
+    display:grid;place-items:center;background:rgba(47,91,255,.1);color:#2f5bff;font-size:8px;font-weight:900;
+  }
+  .step.active .tick{background:transparent;border:1.6px solid rgba(47,91,255,.28);border-top-color:#2f5bff;animation:sp .7s linear infinite}
+  .step .txt{font-size:11.5px;line-height:1.55;color:#4a5470;font-weight:600;letter-spacing:.005em}
+  .step .txt b{color:#141c33;font-weight:800}
+  .step .txt i{font-style:normal;color:#8b95ad;font-size:10.5px}
+
+  .bar{height:2px;border-radius:2px;background:rgba(47,91,255,.1);margin-top:10px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#2f5bff,#7a5cff);transition:width .5s cubic-bezier(.4,0,.2,1)}
+
+  /* 结果卡片 */
+  .results{margin-top:6px}
+  .rcard{
+    background:#fff;border-radius:20px;border:1px solid rgba(16,24,44,.07);padding:15px 15px 14px;
+    margin-bottom:11px;box-shadow:0 14px 30px -26px rgba(20,32,70,.7);
+    opacity:0;transform:translateY(14px) scale(.985);
+    transition:opacity .5s cubic-bezier(.2,.7,.2,1),transform .5s cubic-bezier(.2,.7,.2,1);
+  }
+  .rcard.in{opacity:1;transform:none}
+  .rc-head{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .rc-ico{width:29px;height:29px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;font-size:14px}
+  .rc-ico.weather{background:linear-gradient(140deg,#e6f1ff,#dff5ff);color:#2b7fd4}
+  .rc-ico.spot{background:linear-gradient(140deg,#e8fbef,#e2f6e8);color:#1c9b5c}
+  .rc-ico.book{background:linear-gradient(140deg,#fff1e6,#ffe9f0);color:#d4692b}
+  .rc-ico.food{background:linear-gradient(140deg,#ffeaef,#fbe8ff);color:#cf3f6a}
+  .rc-title{font-size:12.5px;font-weight:800;letter-spacing:-.005em}
+  .rc-sub{font-size:9.5px;color:#98a2bb;font-weight:700;letter-spacing:.05em;margin-top:2px;text-transform:uppercase}
+  .rc-badge{margin-left:auto;font-size:9.5px;font-weight:800;padding:3px 7px;border-radius:6px;background:#f2f4fa;color:#7b849c;letter-spacing:.03em}
+  .rc-badge.warn{background:#fff4e8;color:#c9721f}
+  .rc-body{font-size:12px;line-height:1.62;color:#3d465c}
+  .rc-body strong{color:#0d1220;font-weight:800}
+
+  /* 天气块 */
+  .wx{display:flex;align-items:center;gap:14px}
+  .wx-temp{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+  .wx-temp small{font-size:13px;font-weight:700;color:#8b95ad;letter-spacing:0}
+  .wx-meta{display:flex;flex-direction:column;gap:4px}
+  .wx-cond{font-size:12.5px;font-weight:800;color:#0d1220}
+  .wx-note{font-size:10.5px;color:#8b95ad;font-weight:600}
+  .wx-strip{display:flex;gap:6px;margin-top:12px}
+  .wx-h{flex:1;text-align:center;background:#f6f8fc;border-radius:10px;padding:7px 0}
+  .wx-h .h{font-size:9px;color:#98a2bb;font-weight:800;letter-spacing:.04em}
+  .wx-h .t{font-size:11.5px;font-weight:800;margin-top:3px;color:#2b3450}
+  .wx-h.now{background:linear-gradient(140deg,#eef3ff,#e9f6ff);box-shadow:0 0 0 1px rgba(47,91,255,.12) inset}
+
+  /* 景点 */
+  .spot-main{display:flex;gap:11px}
+  .spot-thumb{
+    width:52px;height:52px;border-radius:13px;flex:0 0 auto;position:relative;overflow:hidden;
+    background:linear-gradient(150deg,#b9e6c9,#7fc79b 55%,#4a9c74);
+  }
+  .spot-thumb::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.7),transparent 55%)}
+  .spot-thumb span{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;z-index:2}
+  .spot-name{font-size:13.5px;font-weight:800;letter-spacing:-.01em}
+  .spot-desc{font-size:11px;line-height:1.55;color:#5c6580;margin-top:4px;font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .tag{font-size:9.5px;font-weight:700;padding:3.5px 8px;border-radius:7px;background:#f3f6fb;color:#5a6480;letter-spacing:.02em}
+
+  /* 预约 */
+  .bk{display:flex;gap:9px;padding:8px 0;border-top:1px dashed rgba(16,24,44,.08)}
+  .bk:first-of-type{border-top:0;padding-top:2px}
+  .bk .dot{width:5px;height:5px;border-radius:50%;background:#f0a45c;margin-top:7px;flex:0 0 auto}
+  .bk .n{font-size:12px;font-weight:800;color:#0d1220}
+  .bk .r{font-size:10.5px;color:#7b849c;font-weight:600;margin-top:2px;line-height:1.5}
+  .bk .r em{font-style:normal;color:#c9721f;font-weight:800}
+
+  /* 美食 */
+  .food-list{display:flex;flex-direction:column;gap:8px}
+  .food{display:flex;align-items:center;gap:10px}
+  .food .em{width:26px;height:26px;border-radius:9px;background:#fff3f5;display:grid;place-items:center;font-size:13px;flex:0 0 auto}
+  .food .fn{font-size:12px;font-weight:800}
+  .food .fd{font-size:10.5px;color:#8b95ad;font-weight:600;margin-top:1px}
+
+  /* 底部结论 */
+  .conclusion{
+    margin-top:2px;border-radius:18px;padding:14px 15px;color:#fff;
+    background:linear-gradient(135deg,#20264f,#33306e 55%,#4a2f78);
+    box-shadow:0 18px 34px -24px rgba(30,36,80,.9);
+    opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease;
+  }
+  .conclusion.in{opacity:1;transform:none}
+  .conclusion .lb{font-size:9.5px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.5);text-transform:uppercase}
+  .conclusion p{margin:8px 0 0;font-size:12px;line-height:1.65;font-weight:600;color:rgba(255,255,255,.92)}
+  .conclusion p b{color:#9fe4ff;font-weight:800}
+  .src{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .src span{font-size:9px;font-weight:700;color:rgba(255,255,255,.6);background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:3px 6px}
+
+  /* 输入条 */
+  .ask{
+    position:absolute;left:0;right:0;bottom:0;padding:10px 16px 22px;
+    background:linear-gradient(to top,#fbfcff 55%,rgba(251,252,255,0));
+    z-index:6;
+  }
+  .ask-inner{
+    display:flex;align-items:center;gap:9px;height:44px;padding:0 8px 0 14px;border-radius:16px;
+    background:#fff;border:1px solid rgba(16,24,44,.09);box-shadow:0 12px 26px -18px rgba(20,32,70,.7);
+  }
+  .ask-inner .ph{font-size:11.5px;color:#a3adc2;font-weight:600}
+  .ask-send{margin-left:auto;width:30px;height:30px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(140deg,#2f5bff,#7a5cff);color:#fff}
+  .ask-send svg{width:13px;height:13px}
+
+  /* ============ 演示控制条 ============ */
+  .controls{margin-top:26px;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .ctl-label{font-size:10px;font-weight:800;letter-spacing:.18em;color:#9aa5bf;text-transform:uppercase}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:520px}
+  .chip{
+    border:1px solid rgba(16,24,44,.1);background:rgba(255,255,255,.8);color:#5a6480;
+    font-family:var(--font);font-size:11.5px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;
+    transition:all .2s ease;backdrop-filter:blur(6px);
+  }
+  .chip:hover{background:#fff;color:#2f3f8f;border-color:rgba(47,91,255,.28)}
+  .chip.on{background:linear-gradient(120deg,#2f5bff,#7a5cff);color:#fff;border-color:transparent;box-shadow:0 8px 18px -10px rgba(47,91,255,.9)}
+  .note{font-size:11px;color:#98a2bb;font-weight:600;text-align:center;max-width:460px;line-height:1.6}
+</style>
+</head>
+<body>
+  <div class="stage-title">Travel Status Card · AI Reasoning</div>
+
+  <div class="phone">
+    <div class="viewport">
+      <div class="statusbar" id="statusbar">
+        <span>12:14</span>
+        <span class="right">
+          <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><rect x="0" y="7" width="2.6" height="4" rx=".8"/><rect x="4" y="5" width="2.6" height="6" rx=".8"/><rect x="8" y="2.6" width="2.6" height="8.4" rx=".8"/><rect x="12" y="0" width="2.6" height="11" rx=".8"/></svg>
+          <svg width="14" height="11" viewBox="0 0 14 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 4.1a8.6 8.6 0 0 1 12 0"/><path d="M3.4 6.6a5.3 5.3 0 0 1 7.2 0"/><circle cx="7" cy="9.3" r=".9" fill="currentColor" stroke="none"/></svg>
+          <span class="sb-batt"></span>
+        </span>
+      </div>
+
+      <!-- ================= 首页 ================= -->
+      <div class="page page--home" id="home">
+        <div class="home-scroll">
+          <div class="home-head">
+            <div>
+              <div class="greet">Thursday · 11 / 05</div>
+              <div class="greet-sub">今天飞成都</div>
+            </div>
+            <div class="avatar"></div>
+          </div>
+
+          <!-- 航旅状态机卡片 -->
+          <div class="tcard">
+            <div class="tc-top">
+              <div class="state-badge"><span class="live-dot"></span><span id="badgeText">登机中</span></div>
+              <div class="state-hint" id="stateHint">15 分钟后起飞</div>
+              <button class="ai-btn" id="aiBtn" aria-label="用 AI 看这趟行程">
+                <span class="ring"></span>
+                <span class="spark">✦</span>AI
+              </button>
+            </div>
+
+            <div class="route">
+              <div class="port">
+                <div class="port-code">SHA</div>
+                <div class="port-time">09:35</div>
+                <div class="port-name">上海虹桥 T2</div>
+              </div>
+              <div class="mid">
+                <div class="mid-line">
+                  <div class="mid-plane">
+                    <svg viewBox="0 0 24 24" fill="#fff"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1L15 22v-1.5L13 19v-5.5z"/></svg>
+                  </div>
+                </div>
+                <div class="mid-dur">3h 15m · 直飞</div>
+                <div class="mid-date">MU5401 · 空客 A321</div>
+              </div>
+              <div class="port right">
+                <div class="port-code">TFU</div>
+                <div class="port-time">12:50</div>
+                <div class="port-name">成都天府 T2</div>
+              </div>
+            </div>
+
+            <div class="tear"></div>
+
+            <div class="meta">
+              <div class="meta-item"><span class="meta-k">登机口</span><span class="meta-v" id="metaGate">C12</span></div>
+              <div class="meta-sep"></div>
+              <div class="meta-item"><span class="meta-k">座位</span><span class="meta-v">32A</span></div>
+              <div class="meta-sep"></div>
+              <div class="meta-item"><span class="meta-k">行李转盘</span><span class="meta-v" id="metaBelt">—</span></div>
+            </div>
+
+            <div class="stepper">
+              <div class="track">
+                <div class="track-base"></div>
+                <div class="track-fill" id="trackFill" style="width:60%"></div>
+                <div class="nodes" id="nodes"></div>
+              </div>
+              <div class="labels" id="labels"></div>
+            </div>
+          </div>
+
+          <div class="section-title"><h2>行前提醒</h2><span>共 2 条</span></div>
+          <div class="mini-row">
+            <div class="mini">
+              <div class="k">成都 · 今日</div>
+              <div class="v">14° / 20°</div>
+              <div class="s">多云转小雨</div>
+            </div>
+            <div class="mini">
+              <div class="k">落地后</div>
+              <div class="v">58 km</div>
+              <div class="s">天府机场 → 市区</div>
+            </div>
+          </div>
+
+          <div class="hint-bar">
+            <div class="ico">✦</div>
+            <p>这张卡片右上角的 <b>AI</b> 会自己读完行程，把目的地该知道的四件事摆出来 —— 不用你问。</p>
+          </div>
+
+          <div class="section-title"><h2>落地之后</h2><span>成都 · 11/05</span></div>
+          <div class="tl">
+            <div class="tl-row"><span class="tl-t">13:40</span><span class="tl-dot"></span><div><div class="tl-n">酒店入住</div><div class="tl-s">春熙路 · 天府机场出发 58 km</div></div></div>
+            <div class="tl-row hot"><span class="tl-t">16:00</span><span class="tl-dot"></span><div><div class="tl-n">宽窄巷子</div><div class="tl-s">小雨，建议带伞 · 步行 20 分钟可逛完</div></div></div>
+            <div class="tl-row"><span class="tl-t">19:00</span><span class="tl-dot"></span><div><div class="tl-n">火锅 · 蜀大侠</div><div class="tl-s">需提前取号，晚市 18:30 开始排队</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= AI 二级页 ================= -->
+      <div class="page page--ai" id="aiPage">
+        <div class="ai-nav">
+          <div class="back" id="backBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0d1220" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="t">AI 行程助手<em>READ FROM CARD</em></div>
+          <div class="dest-chip"><span class="d"></span>成都 CTU</div>
+        </div>
+
+        <div class="ai-scroll" id="aiScroll">
+          <div class="read-banner">
+            <div class="w">已读取这张卡片：<b>MU5401</b> 上海虹桥 → 成都天府，11-05 12:50 落地</div>
+            <div class="pill">AUTO</div>
+          </div>
+
+          <div class="think" id="think">
+            <div class="think-head">
+              <span class="lb">Reasoning</span>
+              <span class="st" id="thinkState"><span class="spin"></span>推理中</span>
+            </div>
+            <div id="steps"></div>
+            <div class="bar"><i id="thinkBar"></i></div>
+          </div>
+
+          <div class="results" id="results">
+
+            <!-- 1 天气 -->
+            <div class="rcard" data-i="0">
+              <div class="rc-head">
+                <div class="rc-ico weather">☁</div>
+                <div>
+                  <div class="rc-title">落地时天气</div>
+                  <div class="rc-sub">Weather · 12:50 CST</div>
+                </div>
+                <div class="rc-badge">实时</div>
+              </div>
+              <div class="wx">
+                <div class="wx-temp">17<small>°C</small></div>
+                <div class="wx-meta">
+                  <div class="wx-cond">多云转小雨</div>
+                  <div class="wx-note">14° ~ 20° · 湿度 68% · 东南风 2 级</div>
+                </div>
+              </div>
+              <div class="wx-strip">
+                <div class="wx-h now"><div class="h">12:50</div><div class="t">17°</div></div>
+                <div class="wx-h"><div class="h">15:00</div><div class="t">19°</div></div>
+                <div class="wx-h"><div class="h">18:00</div><div class="t">16°</div></div>
+                <div class="wx-h"><div class="h">21:00</div><div class="t">15°</div></div>
+              </div>
+              <div class="rc-body" style="margin-top:11px">傍晚有零星小雨，<strong>带一件薄外套 + 折叠伞</strong>；天府机场到市区 58 km，落地后先别急着脱外套。</div>
+            </div>
+
+            <!-- 2 景点 -->
+            <div class="rcard" data-i="1">
+              <div class="rc-head">
+                <div class="rc-ico spot">◈</div>
+                <div>
+                  <div class="rc-title">最出名的景点</div>
+                  <div class="rc-sub">Top Attraction</div>
+                </div>
+                <div class="rc-badge">必去</div>
+              </div>
+              <div class="spot-main">
+                <div class="spot-thumb"><span>🐼</span></div>
+                <div>
+                  <div class="spot-name">成都大熊猫繁育研究基地</div>
+                  <div class="spot-desc">来成都的第一顺位。上午 9 点前是熊猫最活跃的时段，从市区打车约 30 分钟。</div>
+                </div>
+              </div>
+              <div class="tags">
+                <span class="tag">距你 58 km</span>
+                <span class="tag">建议 3 小时</span>
+                <span class="tag">07:30 开园</span>
+                <span class="tag">门票 55 元</span>
+              </div>
+            </div>
+
+            <!-- 3 预约 -->
+            <div class="rcard" data-i="2">
+              <div class="rc-head">
+                <div class="rc-ico book">◷</div>
+                <div>
+                  <div class="rc-title">需要预约的地方</div>
+                  <div class="rc-sub">Reservation Required</div>
+                </div>
+                <div class="rc-badge warn">3 处</div>
+              </div>
+              <div class="bk">
+                <div class="dot"></div>
+                <div>
+                  <div class="n">大熊猫繁育研究基地</div>
+                  <div class="r">需<em>提前 1 天</em>在官方小程序实名分时段预约 · 上午场最抢手</div>
+                </div>
+              </div>
+              <div class="bk">
+                <div class="dot"></div>
+                <div>
+                  <div class="n">成都博物馆</div>
+                  <div class="r">免费但<em>必须实名预约</em>，提前 1–7 天放号 · 周一闭馆</div>
+                </div>
+              </div>
+              <div class="bk">
+                <div class="dot"></div>
+                <div>
+                  <div class="n">三星堆博物馆（广汉）</div>
+                  <div class="r">需<em>提前 3 天</em>预约，新馆单独购票 72 元 · 距成都 40 km</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4 美食 -->
+            <div class="rcard" data-i="3">
+              <div class="rc-head">
+                <div class="rc-ico food">◍</div>
+                <div>
+                  <div class="rc-title">一定要吃的美食</div>
+                  <div class="rc-sub">Must Eat</div>
+                </div>
+                <div class="rc-badge">4 样</div>
+              </div>
+              <div class="food-list">
+                <div class="food"><div class="em">🌶</div><div><div class="fn">成都火锅</div><div class="fd">蜀大侠 / 大龙燚 · 微辣也要提前说「微微辣」</div></div></div>
+                <div class="food"><div class="em">🥟</div><div><div class="fn">钟水饺 + 甜水面</div><div class="fd">红油带甜，老字号「钟水饺」总店</div></div></div>
+                <div class="food"><div class="em">🍢</div><div><div class="fn">钵钵鸡</div><div class="fd">冷吃串串，叶婆婆 / 马路边边</div></div></div>
+                <div class="food"><div class="em">🥞</div><div><div class="fn">蛋烘糕</div><div class="fd">贺记蛋烘糕 · 奶油肉松双拼是本地吃法</div></div></div>
+              </div>
+            </div>
+
+            <!-- 结论 -->
+            <div class="conclusion" id="conclusion">
+              <div class="lb">Conclusion</div>
+              <p>12:50 落地、小雨、市区 58 km —— <b>建议先回酒店放行李，傍晚再去宽窄巷子</b>；熊猫基地必须现在约明天的上午场，晚了只剩下午场。</p>
+              <div class="src">
+                <span>行程卡片</span><span>航班动态</span><span>天气 API</span><span>预约政策库</span><span>本地榜单</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ask">
+          <div class="ask-inner">
+            <span class="ph">继续问这趟行程…</span>
+            <div class="ask-send">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-label">状态机演示</div>
+    <div class="chips" id="chips"></div>
+    <div class="note">点卡片右上角的 <b>AI</b> 进入二级页 · 二级页是 AI 自己推理出来的，没有输入任何问题</div>
+  </div>
+
+<script>
+(function(){
+  /* ---------- 状态机 ---------- */
+  var STATES = [
+    { name:'计划中',  badge:'计划中',   hint:'距起飞 3h20m', gate:'C12', belt:'—', note:'值机 06:35 开放' },
+    { name:'值机',    badge:'值机开放', hint:'柜台 K01–K12', gate:'C12', belt:'—', note:'建议 2 小时内完成' },
+    { name:'安检',    badge:'安检中',   hint:'B 区 · 约 8 分钟', gate:'C12', belt:'—', note:'登机口 C12' },
+    { name:'登机',    badge:'登机中',   hint:'15 分钟后起飞', gate:'C12', belt:'—', note:'已开始登机' },
+    { name:'起飞',    badge:'飞行中',   hint:'巡航 10,600 m', gate:'C12', belt:'—', note:'预计 12:50 落地' },
+    { name:'到达',    badge:'已到达',   hint:'行李转盘 7', gate:'—', belt:'7', note:'12:47 落地 · 提前 3 分钟' }
+  ];
+  var cur = 3;
+
+  var nodesEl = document.getElementById('nodes');
+  var labelsEl = document.getElementById('labels');
+  var chipsEl = document.getElementById('chips');
+
+  STATES.forEach(function(s, i){
+    var n = document.createElement('div');
+    n.className = 'node';
+    n.innerHTML = '<i></i>';
+    nodesEl.appendChild(n);
+
+    var l = document.createElement('span');
+    l.textContent = s.name;
+    labelsEl.appendChild(l);
+
+    var c = document.createElement('button');
+    c.className = 'chip';
+    c.textContent = s.badge;
+    c.addEventListener('click', function(){ setState(i); });
+    chipsEl.appendChild(c);
+  });
+
+  function setState(i){
+    cur = i;
+    var nodeEls = nodesEl.children;
+    var labEls = labelsEl.children;
+    for (var k = 0; k < STATES.length; k++){
+      nodeEls[k].className = 'node' + (k < i ? ' done' : '') + (k === i ? ' now' : '');
+      labEls[k].className = k === i ? 'on' : (k < i ? 'past' : '');
+      chipsEl.children[k].className = 'chip' + (k === i ? ' on' : '');
+    }
+    document.getElementById('trackFill').style.width = (i / (STATES.length - 1) * 100) + '%';
+    document.getElementById('badgeText').textContent = STATES[i].badge;
+    document.getElementById('stateHint').textContent = STATES[i].hint;
+    document.getElementById('metaGate').textContent = STATES[i].gate;
+    document.getElementById('metaBelt').textContent = STATES[i].belt;
+  }
+  setState(3);
+
+  /* ---------- 页面切换 ---------- */
+  var home = document.getElementById('home');
+  var aiPage = document.getElementById('aiPage');
+  var statusbar = document.getElementById('statusbar');
+  var played = false;
+  var timers = [];
+
+  function openAI(){
+    aiPage.classList.add('open');
+    home.classList.add('pushed');
+    if (!played){ played = true; playReasoning(); }
+    else { revealAll(); }
+  }
+  function closeAI(){
+    aiPage.classList.remove('open');
+    home.classList.remove('pushed');
+  }
+  document.getElementById('aiBtn').addEventListener('click', openAI);
+  document.getElementById('backBtn').addEventListener('click', closeAI);
+
+  /* ---------- AI 推理动画 ---------- */
+  var STEPS = [
+    { t:'读取卡片上下文 · <b>MU5401</b> 上海虹桥 → 成都天府 <i>· 12:50 落地</i>' },
+    { t:'定位目的地 <b>成都</b> <i>· 天府新区，距市区 58 km</i>' },
+    { t:'查询落地时段天气 <i>· 17°C 多云转小雨</i>' },
+    { t:'检索目的地高热度景点 <i>· 命中 4 处，取第一顺位</i>' },
+    { t:'核对预约政策 <i>· 熊猫基地 / 成都博物馆 / 三星堆 需预约</i>' },
+    { t:'汇总本地必吃 <i>· 命中 4 项</i>' }
+  ];
+  var stepsEl = document.getElementById('steps');
+  var barEl = document.getElementById('thinkBar');
+  var thinkEl = document.getElementById('think');
+  var thinkState = document.getElementById('thinkState');
+  var cards = [].slice.call(document.querySelectorAll('.rcard'));
+  var conclusion = document.getElementById('conclusion');
+
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+
+  function playReasoning(){
+    clearTimers();
+    stepsEl.innerHTML = '';
+    barEl.style.width = '0%';
+    thinkEl.classList.remove('done');
+    thinkState.innerHTML = '<span class="spin"></span>推理中';
+    cards.forEach(function(c){ c.classList.remove('in'); });
+    conclusion.classList.remove('in');
+
+    STEPS.forEach(function(s, i){
+      var d = document.createElement('div');
+      d.className = 'step active';
+      d.innerHTML = '<div class="tick">✓</div><div class="txt">' + s.t + '</div>';
+      stepsEl.appendChild(d);
+
+      timers.push(setTimeout(function(){
+        d.classList.add('in');
+        timers.push(setTimeout(function(){
+          d.classList.remove('active');
+          d.querySelector('.tick').textContent = '✓';
+        }, 320));
+        barEl.style.width = ((i + 1) / STEPS.length * 100) + '%';
+      }, 260 + i * 430));
+    });
+
+    var end = 260 + STEPS.length * 430;
+    timers.push(setTimeout(function(){
+      thinkEl.classList.add('done');
+      thinkState.innerHTML = '推理完成 · 6 步';
+      cards.forEach(function(c, i){
+        timers.push(setTimeout(function(){ c.classList.add('in'); }, i * 190));
+      });
+      timers.push(setTimeout(function(){ conclusion.classList.add('in'); }, cards.length * 190 + 180));
+    }, end));
+  }
+
+  function revealAll(){
+    clearTimers();
+    stepsEl.innerHTML = '';
+    STEPS.forEach(function(s){
+      var d = document.createElement('div');
+      d.className = 'step in';
+      d.innerHTML = '<div class="tick">✓</div><div class="txt">' + s.t + '</div>';
+      stepsEl.appendChild(d);
+    });
+    barEl.style.width = '100%';
+    thinkEl.classList.add('done');
+    thinkState.innerHTML = '推理完成 · 6 步';
+    cards.forEach(function(c){ c.classList.add('in'); });
+    conclusion.classList.add('in');
+  }
+
+  /* 支持 #ai 直接进入二级页（便于截图与分享） */
+  if (location.hash === '#ai'){ setTimeout(openAI, 60); }
+
+  /* 键盘快捷键：A 开关二级页 */
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'a' || e.key === 'A'){ aiPage.classList.contains('open') ? closeAI() : openAI(); }
+  });
+})();
+</script>
+</body>
+</html>
