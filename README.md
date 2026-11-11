@@ -1,292 +1,125 @@
-<div align="center">
+# Harmony Harness Game
 
-# TA Harness
+**dsh 鸿蒙外壳上的游戏应用。** 三国人生模拟：你扮演刘备，从 161 年涿县出生，
+走完他生命里的十二个岔路口。你可以照史载走，也可以随时离开它。
 
-**在鸿蒙设备上本地运行 DeepSeek Harness 的原生外壳**
-**A native shell for running DeepSeek Harness locally on HarmonyOS devices.**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Release](https://img.shields.io/badge/Release-v1.0.0-brightgreen)](https://github.com/QtePP/deepseek-harness-harmony/releases)
-[![Platform](https://img.shields.io/badge/Platform-HarmonyOS%20%7C%20API%2026-blue)](https://developer.huawei.com/consumer/cn/)
-[![Language](https://img.shields.io/badge/Language-ArkTS-3178C6)](https://developer.huawei.com/consumer/cn/arkts/)
-[![Runtime](https://img.shields.io/badge/Node-v24.2.0-339933)](https://nodejs.org/)
-
-不套壳浏览器、不投屏、不连电脑 —— AI 能力全部运行在手机/平板/2in1 的同一应用进程内。
-
-*No WebView, no screen mirroring, no tethering to a computer — the whole runtime lives inside the app process.*
-
-</div>
+这个仓是从 [deepseek-harness-harmony](https://github.com/QtePP/deepseek-harness-harmony)
+（外壳本体）分出来的**垂域仓**：外壳只提供会话、文件、审批、设置；游戏归这里。
 
 ---
 
-## 这是什么
+## 为什么单独一个仓
 
-本仓库是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）的**鸿蒙外壳**：
+外壳的产品身份是「一个能跑 dsh 的通用会话界面」。垂域内容（游戏、旅行、饮食）如果长在外壳里，
+外壳就会认识"航班""抽卡""卡路里"这些概念，然后每个垂域都要在外壳里加一套状态模型和渲染。
 
-- **原生 ArkUI 界面**，不是 WebView 包壳
-- **同进程内嵌 Node v24.2.0**（NAPI `dlopen libnode.so`），不是子进程或远程调用
-- **数据全部留在本机**，会话日志、工作区文件都在应用沙箱内
-- **三形态自适应**：手机 / 平板 / 2in1（840vp 断点切换单双栏）
+判据：**这块 UI 能不能被另一个垂域复用？** 不能，就该在垂域仓。
 
-`dsh` 是这个仓库唯一的大脑 —— 会话、工具调用、插件、模型适配、持久化全部来自 npm 包 `@deepseek-ai/dsh`。本仓库不含任何 AI 能力，只有**宿主适配层 + 原生界面**。
+所以这里带着外壳的完整历史（`git clone` 自外壳），加上游戏专属的三层：
 
-> 类比：VS Code 与其进程内扩展引擎；或 Electron 之于 Chromium + Node。
+| 层 | 位置 | 是什么 |
+|---|---|---|
+| **裁判引擎** | `host/profile-ohos/.../@ohos/dsh-sanguo/` | 随载荷分发的 dsh 插件：掷骰、判成败、算数值、推演势力、记人物记忆 |
+| **原生前端** | `entry/.../model/SanguoBoard.ets`、`entry/.../view/SanguoBoardView.ets` | 读 `.sanguo/life.json` 投影的棋盘；手机顶部切换器、平板 340vp 右栏 |
+| **Agent pack** | `agents/sanguo-life/` 等五个 | `AGENTS.md` + `.dsh/skills/` + `cards/`，整包拷进 workspace 即生效 |
 
-<details>
-<summary>English</summary>
+---
 
-This repository is the **HarmonyOS shell** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`):
+## 为什么引擎必须是插件
 
-- **Native ArkUI interface** — not a WebView wrapper
-- **Node v24.2.0 embedded in the same app process** (NAPI `dlopen libnode.so`) — not a subprocess, not a remote call
-- **All data stays on the device** — session logs and workspace files live in the app sandbox
-- **Three form factors** — phone / tablet / 2in1, switching between single and dual column at the 840vp breakpoint
+本 profile 跑 `tools.mode: native`，`run_code` **不在**模型工具表里
+（`dsh-tools` 只在非 native 模式注入），`bash` 又被 patch 移除（鸿蒙禁 fork/exec）。
+所以工作区里放一个 `.js` 引擎 = 一个没有任何东西能执行的文件。
 
-`dsh` is the only brain here: sessions, tool calls, plugins, model adapters and persistence all come from the npm package `@deepseek-ai/dsh`. This repository contains no AI capability of its own — only the **host adaptation layer + native UI**.
-
-> Analogy: VS Code and its in-process extension engine; or Electron for Chromium + Node.
-
-</details>
-
-## 截图
-
-<p align="center">
-  <img src="docs/images/home.png" alt="首页" width="280">
-</p>
-
-<table>
-<tr>
-<td width="33%">
-
-**多模态：看图、算营养、落盘**
-
-<img src="store-assets/screenshots/01-chat.png" alt="多模态对话" width="100%">
-
-</td>
-<td width="33%">
-
-**工具轨迹：每一步都摊开**
-
-<img src="store-assets/screenshots/02-trace.png" alt="工具轨迹" width="100%">
-
-</td>
-<td width="33%">
-
-**产物就在你自己的目录里**
-
-<img src="store-assets/screenshots/03-files.png" alt="项目文件" width="100%">
-
-</td>
-</tr>
-<tr>
-<td width="33%">
-
-**按项目分开的会话**
-
-<img src="store-assets/screenshots/04-sessions.png" alt="会话与项目" width="100%">
-
-</td>
-<td width="33%">
-
-**密钥、模型、权限都归你管**
-
-<img src="store-assets/screenshots/05-settings.png" alt="设置" width="100%">
-
-</td>
-<td width="33%">
-
-*截图由 [scripts/make-store-shots.py](scripts/make-store-shots.py) 从真机截图合成*
-
-</td>
-</tr>
-</table>
-
-## 功能
-
-| 能力 | 说明 |
-|---|---|
-| **本地运行时** | Node v24.2.0 内嵌在应用进程，无外部依赖 |
-| **流式对话** | 思考过程、工具调用、回答实时呈现 |
-| **工具轨迹** | 每个工具调用按功能分类（读取/写入/查找/联网/执行），失败节点高亮 |
-| **产物面板** | 对话中生成的文件自动归档，支持内嵌预览与全屏查看 |
-| **回合回撤** | 长按消息可回撤到该轮之前，**并还原该轮写入的文件** |
-| **会话分支** | 从任意消息 fork 出新会话，原会话完整保留 |
-| **项目隔离** | 每个项目独立工作区，可绑定外部目录 |
-| **图片输入** | 支持相册选择与系统分享 |
-| **密钥热更新** | 设置页保存 API Key 后约 2 秒生效，无需重启 |
-| **权限三档** | 只读 / 平衡 / 宽松，沙箱与审批捆绑 |
-| **Agent pack** | 可整包投放的角色设定（`agents/`），含对局教练、开放世界向导、剧情向导、三国等 |
-| **原生棋盘视图** | 三国人生模拟带专属 ArkTS 棋盘，选项在点击前就显示代价 |
-
-### 能真的玩的那种 Agent
-
-`agents/sanguo-life` 不只是提示词，它带一个**裁判引擎**（`@ohos/dsh-sanguo`）：
-掷骰、判成败、算数值、推演势力、记人物记忆，五个工具 `sanguo_new / status / choose / act / advance`。
-
-为什么要做成插件而不是工作区脚本——因为 `native` 模式下 `run_code` 不在工具表、
-`bash` 被平台补丁移除，工作区里放的 `.js` **没有任何东西能执行**。
-这是平台约束直接塑造了设计。
-
-## 架构
+引擎只能随载荷分发成插件，模型通过五个工具调用它：
 
 ```
-┌──────────────────────────────────────────┐
-│  鸿蒙应用进程                             │
-│                                           │
-│  ┌────────────┐    TCP 127.0.0.1:4517    │
-│  │  ArkUI UI  │◄──── JSON-RPC 2.0 ────┐  │
-│  └────────────┘     (newline-delimited)│  │
-│                                        │  │
-│  ┌─────────────────────────────────┐   │  │
-│  │  Node v24.2.0 (libnode.so)      │   │  │
-│  │  ├─ bootstrap.cjs  桥接 stdio    │───┘  │
-│  │  ├─ fetch-shim.cjs 纯 JS fetch   │      │
-│  │  └─ dsh (npm)      唯一大脑      │      │
-│  └─────────────────────────────────┘      │
-└──────────────────────────────────────────┘
+sanguo_new      开一局（只在玩家明确要求时用，会覆盖存档）
+sanguo_status   看处境，不改状态
+sanguo_choose   在抉择节点选一个已声明选项（要 option id，不是序号）
+sanguo_act      选项之外的事，走能力判定
+sanguo_advance  让世界自己走一季
 ```
 
-**为什么是回环 TCP 而不是 stdio？** 鸿蒙禁止 `fork`/`exec`，无法 spawn 子进程。桥把 socket 伪装成 `dsh` 的 stdio，让官方运行时以为自己在跟终端对话。
+---
 
-详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
+## 两种判定，两种人生
 
-## 快速开始
+引擎里有两套完全不同的机制，对应刘备一生里两种完全不同的时刻：
 
-### 环境要求
+| | 能力判定 | 仁义抉择 |
+|---|---|---|
+| 什么时候 | "我能不能做到" | "我愿意付什么代价" |
+| 掷骰 | **掷**（1d100 + 属性 + 修正） | **不掷** |
+| 谁决定 | 骰子 | 玩家 |
 
-- DevEco Studio（含 SDK API 26 / HarmonyOS 7.0.0）
-- 鸿蒙设备：**API 26+**（装不上 HarmonyOS 6.x）
-- Node 22+（仅本地装配载荷用）
+**为什么分开**：如果把"携民渡江"也做成掷骰，这个游戏讲的就是运气，不是人。
+历史上它没有失败——它让他失去了一切物质，却在十年后买回了荆州和益州。
 
-### 构建
+模型可以**建议**用哪个属性、难度多少，但两者都会被夹到合法区间（10–95）再掷，
+所以建议能影响一次判定，不能让成功变成必然、也不能让失败变成注定。
+
+## 「势」：偏离史载的代价，不是禁令
+
+```
+偏离一次史载  → 势 +10
+实力不足硬来  → 势 +（缺口 × 0.5）
+一季无所作为  → 势 −2
+```
+
+`势` 转成判定惩罚（上限 −30）并改变天下对你的评语（天下未觉 → 举世皆敌）。
+**它永远不否决你。** 一个把势拉满的玩家面对的是一个处处与他为敌的世界，但世界仍然可以玩。
+这是模拟和轨道的区别。
+
+## 世界不等你
+
+每季（一回合 = 一季）独立推演：强弱悬殊（2.4 倍）且**接壤**的势力会取地、各势力本州
+（`home`）防御更高、按史实年份出场与退场（孙权 200 年才登场，董卓 192 年后失地）。
+在新野坐等五年，曹操照样统一河北、刘表照样病死、刘琮照样投降。
+
+---
+
+## 怎么跑
+
+和外壳完全一样的构建链：
 
 ```bash
-git clone https://github.com/QtePP/deepseek-harness-harmony.git
-cd deepseek-harness-harmony
-
-# 1. 装配载荷（把 dsh 及依赖打包进 HAP，约 225MB，首次较慢）
-node scripts/assemble-payload.mjs
-
-# 2. 部署到真机（自动处理签名）
-bash scripts/deploy.sh
+node scripts/assemble-payload.mjs    # 把插件打进载荷，约 30 s
+bash scripts/deploy.sh               # 签名 + 构建 + 装机
+bash scripts/test.sh                 # 全部检查：单测 / ArkTS / LocalUnit / 设备
 ```
 
-`deploy.sh` 会依次：检查设备 → 登录华为账号 → 生成签名（缺失时）→ 构建 → 安装启动，并在结束时**自动还原无签名的仓库状态**。
+开局：应用里新建项目「汉末人生」→ 把 `agents/sanguo-life/BOOTSTRAP.md` 里
+`---` 之间的那段粘进第一个对话 → 模型落盘并直接开始第一幕。
 
-> **签名说明**：仓库内 `build-profile.json5` 的 `signingConfigs` 为空（密钥不入库）。
-> 真实签名在本地 `build-profile.signing.json5`（已 gitignore）。
+棋盘入口：项目 workspace 里出现 `.sanguo/` 后，手机顶部会出现「对局 / 这一局」切换器，
+平板则是聊天右侧的 340vp 棋盘栏。
 
-详细步骤与排障见 [docs/BUILD.md](docs/BUILD.md)。
+---
 
-### 首次启动
+## 内容边界（诚实清单）
 
-解包载荷约 60–90 秒 → 启动内嵌 Node → 连接本地桥 → 进入聊天界面。之后冷启约 3 秒。
+- **前七幕已写**：涿郡（0–23）→ 安喜（23–29）→ 平原（30–32）→ 徐州（33–35）→
+  许都（36–40）→ 新野（41–46）→ 长坂（47）。23 个场景。
+- **第八至十二幕未写**（赤壁、益州、汉中、荆州、白帝）。引擎支持，`data/acts.json` 是空的；
+  走到长坂末尾会停在"这一段落已尽"。
+- **没有 NPC 对话工具**。人物有态度和记忆，但对话由模型基于 digest 讲，不落状态。
+- **没有存档管理 UI**。存档在 `.sanguo/save.json`，可手改、可拷走，但应用里没有读档入口。
 
-**首次使用有两步必做设置：**
+## 目录
 
-1. **填入 DeepSeek API Key**（设置页，保存后约 2 秒生效，无需重启）
-2. **切换对话协议到 ACP**（设置 → 对话协议 → ACP → 保存 → **彻底退出并重开应用**）
-
-第 2 步容易漏。默认走 `sdk` profile，此时**纯 JS 搜索、密钥热更新、时间上下文都不会挂载**——
-表现为「搜索不好用」或「改了 key 不生效」。切到 ACP 后 profile 落到 `ohos`，这些插件才到位。
-协议在启动期读取，`node::Start` 每进程一次，所以**必须重启应用**才生效。
-
-> **只装一个**：桥固定占用 `127.0.0.1:4517`，且为单客户端。如果设备上还留着旧包名
-> （如 `com.example.dshharmony`）并正在运行，新包会因 `EADDRINUSE` 启动失败并报
-> `initialize: Invalid params [stage=exited]`。先 `hdc uninstall <旧包名>` 或 force-stop 旧应用。
-
-## 技术要点
-
-平台约束决定了实现方式，这里记录几条关键取舍：
-
-| 约束 | 对策 |
+| 路径 | 作用 |
 |---|---|
-| 禁 `fork`/`exec` | 同进程 Node，桥接回环 TCP 伪装 stdio |
-| `node::Start` 每进程一次 | 崩溃即终态，UI 明示需重启应用 |
-| 无 JIT ⇒ 无 WebAssembly | 纯 JS `fetch` 垫片 + undici 别名替换 |
-| 原生 `.node` 模块不可用 | 装配时 `--ignore-scripts`，排除 koffi 等 |
-| 文件系统禁 hardlink | `copyFile(COPYFILE_EXCL)` 降级 |
-| 零受限 ACL 安装 | 默认 `--jitless` |
+| `host/profile-ohos/.../@ohos/dsh-sanguo/` | 裁判引擎（`engine/` 六个纯 JS 模块 + `data/acts.json` + 97 个单测） |
+| `entry/src/main/ets/model/SanguoBoard.ets` | 投影解析（把 `.sanguo/life.json` 读成棋盘状态） |
+| `entry/src/main/ets/model/SanguoRun.ets` | 从 `save.json` + `history.jsonl` 算走势（「势」的柱状轨迹） |
+| `entry/src/main/ets/view/SanguoBoardView.ets` | 棋盘本体 |
+| `agents/sanguo-life/` | 能真的玩的 pack（引擎驱动） |
+| `agents/sanguo-guide/` | 带自有设定集的三国向导（四源标注） |
+| `agents/match-coach/`、`openworld-guide/`、`story-guide/` | 三种不同输出契约的陪玩 pack |
+| `examples/counter-example-travel-card/` | **反例**：垂域状态卡片，保留作"我们不做这个"的证据 |
 
-### 关于运行 Python / Java
+## 许可
 
-**当前不支持**，这是平台限制而非实现缺失：
-
-- 设备上不存在 `python3` / `java` 解释器
-- 鸿蒙只能创建 **ArkTS 子进程**，无法 `exec` 任意二进制
-- `run_code` 工具仅执行 **JavaScript**（`node:vm` 沙箱，无 `require`/`process`）
-
-唯一可行路径是把 CPython 交叉编译成 arm64-v8a 的 `.so` 打进 HAP（类比本项目内嵌 Node 的做法），工作量大且生态受限。
-
-## 项目结构
-
-```
-entry/src/main/ets/
-├── host/          # Node 宿主适配层（NodeHost / Payload / DirGrant）
-├── model/         # 协议与数据模型（Protocol / DshClient / AcpClient / ChatModel）
-├── view/          # 界面组件（ChatView / SessionRail / Markdown / FileViewer）
-├── common/        # 配置与展示文案
-└── pages/         # 页面入口
-
-host/
-├── bootstrap.cjs      # 桥接 stdio ↔ socket
-├── fetch-shim.cjs     # jitless 环境的纯 JS fetch
-├── sharp-stub.cjs     # 图片直通（设备无 sharp 原生模块）
-├── patches/           # 平台补丁（禁用调用即失败的工具）
-└── profile-ohos/      # 自定义 dsh profile（纯 JS 搜索、PTC 运行时等）
-
-docs/                  # 架构、构建、协议、差距分析
-scripts/               # 载荷装配、一键部署
-```
-
-## 文档
-
-| 文档 | 内容 |
-|---|---|
-| [CHANGELOG.md](CHANGELOG.md) | 版本变更记录 |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 架构图、协议面、事件渲染表 |
-| [BUILD.md](docs/BUILD.md) | 构建、签名、装机、排障 |
-| [GAP-ANALYSIS.md](docs/GAP-ANALYSIS.md) | 与桌面版的能力差距及根因 |
-| [SPIKE-ACP.md](docs/SPIKE-ACP.md) | ACP 协议实测记录 |
-| [PERSONAL-AGENT.md](docs/PERSONAL-AGENT.md) | 个人 Agent 与功能卡片演进方案 |
-| [NEEDS-ANALYSIS.md](docs/NEEDS-ANALYSIS.md) | 手机形态能力清单与需求评分 |
-| [ROADMAP.md](docs/ROADMAP.md) | 路线图 |
-
-## 已知边界
-
-诚实清单：
-
-- **无 token 级流式** —— 按块而非按 token 渲染
-- **无二进制工具面** —— 没有 `git` / `rg` / `bash`
-- **设备端不做图片降采样** —— 原尺寸上传，由服务端投影到视觉网格
-- **`run_code` 仅支持 JavaScript**，且当前默认未启用
-- **外部目录授权重启后需重新绑定**
-- **发布证书签名的 HAP 不能 `hdc` 直装** —— 平台限制（`not trusted app source`），
-  发布包只能经 AGC 分发；真机装机走调试签名（`scripts/deploy.sh`）
-- **同一设备只能跑一个实例** —— 桥固定 4517 端口且单客户端，新旧包名不能共存
-- **`DeepSeek-V4.1-Flash` 的模型目录被本地覆盖** —— 上游该模型带
-  `toolUpdate: addition-only`，会把全部工具标成延迟加载而被 API 拒绝
-  （`at least one tool must have defer_loading=false`）。见 `docs/BUILD.md`
-
-## 贡献
-
-欢迎 Issue 与 PR。提交前请确保：
-
-```bash
-devecocli check arkts <改动的 .ets 文件>   # ArkTS 静态检查，0 error
-devecocli build                            # 构建通过
-```
-
-**安全红线**：API Key、签名材料、设备序列号一律不入库。
-
-## 致谢
-
-- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) —— 本项目的全部智能
-- `@fellow99/node-bridge` —— 进程内嵌 Node 的桥接层
-- 所有在鸿蒙上跑通 dsh 的先行者
-
-## 许可证
-
-[MIT](LICENSE) © 2026 QtePP
-
-`dsh` 本体遵循其自身的开源许可，本项目仅提供宿主适配与界面层。
+MIT，与外壳一致。游戏内容（三国史实与演义）属公有领域；`agents/*/data/world/` 下的
+用户设定集不入库。

@@ -5,16 +5,6 @@ import { ShareInbox } from '../model/ShareInbox';
 
 const DOMAIN = 0x0000;
 
-/**
- * Which page the shell opens on.
- *
- * `pages/TravelDemo` is the standalone travel-card demo (card → AI page), kept
- * so the demo can be looked at on a device without the chat shell in the way.
- * Set this back to `pages/Index` to restore the normal entry — nothing else in
- * the app depends on this constant.
- */
-const ENTRY_PAGE = 'pages/TravelDemo';
-
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     try {
@@ -40,7 +30,7 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
-    windowStage.loadContent(ENTRY_PAGE, (err) => {
+    windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;
