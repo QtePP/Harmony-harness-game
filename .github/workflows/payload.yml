@@ -1,0 +1,87 @@
+name: payload
+
+# What this pipeline is for
+# -------------------------
+# The AI capability lives in the payload (`host/` sources + the pinned dsh
+# tree), and the four plugins we wrote plus the Sanguo engine are the only part
+# of it that is ours. This workflow proves they still pass against the pinned
+# dsh, on every change to `host/` or `scripts/`.
+#
+# What it deliberately does NOT do:
+#   · build or sign a HAP — that needs DevEco Studio's SDK (hvigor, hdc,
+#     hap-sign-tool) and a Huawei account, neither of which exists on a runner;
+#   · pack the 225 MB zip — `--skip-pack` stages the tree and stops;
+#   · touch secrets — there are none in this repository by design.
+
+on:
+  push:
+    paths:
+      - 'host/**'
+      - 'scripts/**'
+      - '.github/workflows/payload.yml'
+  pull_request:
+    paths:
+      - 'host/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-suites:
+    name: payload plugin suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 is the documented local toolchain (AGENTS.md §6). The device
+      # runs 24.2.0, so the plugin suites are written to be version-agnostic;
+      # `node --test` under 22 is the conservative choice for CI.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Stage = npm install the pinned dsh + copy host/*.cjs + install the
+      # ohos profile template + apply the flock patch. No zip.
+      - name: Stage the payload tree
+        run: node scripts/assemble-payload.mjs --skip-pack
+
+      # Every plugin suite runs under `node --test`; the ptc and Sanguo suites
+      # also run under --jitless, the only execution mode the phone has.
+      - name: Run the plugin suites
+        run: bash scripts/test.sh unit
+
+      # `--profile ohos` reads `$DSH_HOME/profiles/ohos` and does not install
+      # it, so the home has to be seeded from the staged template first.
+      - name: Seed the profile home
+        run: |
+          mkdir -p .build/ci-home/profiles
+          cp -R .build/payload/profile-ohos/profiles/ohos .build/ci-home/profiles/ohos
+
+      # Cheap guard against the class of bug that stops a boot: a patch row
+      # whose id no longer exists, or an inserted row that silently did not
+      # compose. `--dump-config` fails loudly on the former, these greps on
+      # the latter. The `skill-office` stderr line is expected: that row only
+      # exists in the sdk tree, and the platform patch is shared by both.
+      - name: Compose the ohos profile
+        run: |
+          set -euo pipefail
+          DSH_HOME=.build/ci-home node .build/payload/node_modules/@deepseek-ai/dsh/lib/bin.js \
+            --profile ohos --patch .build/payload/patches/ohos.patch.yml --dump-config > /tmp/dump.txt
+          for row in tool-fs-search-ohos ptc-runtime-vm credentials-live-ohos time-context boot-report-ohos sanguo-ohos; do
+            grep -q "id: $row" /tmp/dump.txt || { echo "row missing: $row"; exit 1; }
+          done
+          # These stock rows must stay disabled: the device has no fork/exec,
+          # no pwsh, and the pure-JS search plugin replaces the native one.
+          for row in tool-bash tool-pwsh tool-jobs tool-fs-search ptc-runtime; do
+            awk -v id="^- id: $row\$" '
+              $0 ~ id { inside = 1; next }
+              inside && /^- id: / { exit }
+              inside { print }
+            ' /tmp/dump.txt | grep -q 'disabled: true' \
+              || { echo "row not disabled: $row"; exit 1; }
+          done
+          echo "profile composed"

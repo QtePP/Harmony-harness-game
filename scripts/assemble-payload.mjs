@@ -20,6 +20,7 @@
  * Usage:
  *   node scripts/assemble-payload.mjs                # install + pack
  *   node scripts/assemble-payload.mjs --skip-install  # repack existing staging
+ *   node scripts/assemble-payload.mjs --skip-pack     # stage only, no 225MB zip
  *   node scripts/assemble-payload.mjs --dsh-version 0.2.1-rc.4
  */
 
@@ -38,6 +39,7 @@ const OUT = join(ROOT, 'entry', 'src', 'main', 'resources', 'rawfile', 'dsh-payl
 const HOST_DIR = join(ROOT, 'host')
 
 const skipInstall = args.includes('--skip-install')
+const skipPack = args.includes('--skip-pack')
 const versionIndex = args.indexOf('--dsh-version')
 // Pinned, not `latest`: this branch is the standalone game build, and the
 // engine/bridge contract below was verified against 0.2.1-rc.4. Resolving
@@ -154,6 +156,10 @@ stageHost()
 stageProfileTemplate()
 patchNodeModules()
 const version = verify()
-pack()
-process.stdout.write(`\ndone — dsh ${version} packaged for HarmonyOS\n`)
+if (skipPack) {
+  process.stdout.write(`\ndone — dsh ${version} staged (pack skipped)\n`)
+} else {
+  pack()
+  process.stdout.write(`\ndone — dsh ${version} packaged for HarmonyOS\n`)
+}
 process.stdout.write('next: hvigorw assembleHap (or Build > Build Hap(s) in DevEco Studio)\n')

@@ -1,5 +1,7 @@
 # Harmony Harness Game
 
+[![payload](https://github.com/QtePP/Harmony-harness-game/actions/workflows/payload.yml/badge.svg)](https://github.com/QtePP/Harmony-harness-game/actions/workflows/payload.yml)
+
 **dsh 鸿蒙外壳上的游戏应用。** 三国人生模拟：你扮演刘备，从 161 年涿县出生，
 走完他生命里的十二个岔路口。你可以照史载走，也可以随时离开它。
 
