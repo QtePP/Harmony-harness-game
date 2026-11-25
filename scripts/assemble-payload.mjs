@@ -39,7 +39,10 @@ const HOST_DIR = join(ROOT, 'host')
 
 const skipInstall = args.includes('--skip-install')
 const versionIndex = args.indexOf('--dsh-version')
-const dshVersion = versionIndex >= 0 ? args[versionIndex + 1] : 'latest'
+// Pinned, not `latest`: this branch is the standalone game build, and the
+// engine/bridge contract below was verified against 0.2.1-rc.4. Resolving
+// `latest` here silently moved the runtime under the game on every rebuild.
+const dshVersion = versionIndex >= 0 ? args[versionIndex + 1] : '0.2.1-rc.4'
 
 function run(command, commandArgs, cwd) {
   process.stdout.write(`$ ${command} ${commandArgs.join(' ')}\n`)

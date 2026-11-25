@@ -3,7 +3,7 @@
 > 本文件面向在本仓库工作的所有 AI 代理（deveco code、workbuddy、GitHub Copilot 等）与人类协作者。
 > 它是**统一语言（ubiquitous language）与口径的唯一权威**：与 docs/、历史对话或任何 agent 的
 > 会话记忆冲突时，以本文件与当前代码为准；口径变更必须同一 commit 修订本文件。
-> 最后对齐：2026-10-26。
+> 最后对齐：2026-11-25（独立游戏包 `sanguo-standalone`：包名 `com.qtepp.sanguo`、端口 4518、默认 ACP）。
 
 ## 1. 项目身份（一句话口径）
 
@@ -160,6 +160,7 @@ ACP 实测契约（勿凭直觉改）：
 - **内嵌运行时 Node = v24.2.0**（libnode.so，设备端 `bridge-status.json` 的 `node` 字段）。
 - **本地装配/同构测试 Node = 22.22.2**（macOS 侧，见 `scripts/deploy.sh` 的 PATH）。两个数字并存，不是笔误。
 - dsh 0.2.1-rc.4；载荷 zip ≈225MB；HAP ≈335MB（signed）；桥端口 4517。
+- **独立游戏包（`sanguo-standalone`）**：bundleName **`com.qtepp.sanguo`**、显示名「三国人生」、桥端口 **4518**（HarmonyGo 占 4517；两个应用同时常驻时后启动者才不会 `EADDRINUSE`）、默认 profile **ACP**（`@ohos/dsh-sanguo` 只挂在 ohos profile，SDK 下模型看不到 `sanguo_*`）。这三处只属于本分支的应用身份，不是笔误。
 - `hdc` 不在 PATH：`/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/hdc`。
 - 设备侧文件路径两种视角同目录：hdc shell `/data/app/el2/100/base/<bundle>/haps/entry/files/…`
   ⇄ App 内 `/data/storage/el2/base/haps/entry/files/…`（`context.filesDir`）。

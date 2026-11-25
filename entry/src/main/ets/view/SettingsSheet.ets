@@ -96,7 +96,7 @@ export struct SettingsSheet {
         Column({ space: 6 }) {
           Text('对话协议（实验）').fontSize(12).fontColor($r('app.color.text_secondary'))
           Row({ space: 8 }) {
-            Button('SDK（默认）')
+            Button('SDK（兼容）')
               .layoutWeight(1)
               .fontSize(13)
               .backgroundColor(this.profile === 'sdk' ? $r('app.color.brand') : $r('app.color.surface_muted'))
@@ -105,7 +105,7 @@ export struct SettingsSheet {
                 this.profile = 'sdk'
                 this.onProfileChange(this.profile, this.permissionMode)
               })
-            Button('ACP（流式/审批/取消）')
+            Button('ACP（默认）')
               .layoutWeight(1)
               .fontSize(13)
               .backgroundColor(this.profile === 'acp' ? $r('app.color.brand') : $r('app.color.surface_muted'))
@@ -116,6 +116,10 @@ export struct SettingsSheet {
               })
           }
           .width('100%')
+
+          Text('三国引擎只挂在 ACP（ohos profile）下；本应用默认 ACP。')
+            .fontSize(11)
+            .fontColor($r('app.color.text_tertiary'))
 
           Text('权限模式（参考 dsh 预设）').fontSize(12).fontColor($r('app.color.text_secondary'))
 

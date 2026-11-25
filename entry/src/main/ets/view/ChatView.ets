@@ -2155,17 +2155,17 @@ export struct ChatView {
               // thing a new session shows, so it carries the product identity
               // rather than a generic status dot.
               // Vector mark: transparent, so no rounded plate to clip it to.
-              Image($r('app.media.logo'))
+              Image($r('app.media.seal'))
                 .width(64)
                 .height(64)
                 .objectFit(ImageFit.Contain)
 
-              Text('TA Harness')
+              Text('三国人生')
                 .fontSize(20)
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_primary'))
 
-              Text('随时可以开始')
+              Text('汉末人生，从这一句开始')
                 .fontSize(12)
                 .fontColor($r('app.color.text_tertiary'))
                 .margin({ top: -4 })

@@ -2,15 +2,15 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "module description"
+      "value": "三国人生：汉末人生模拟"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "description"
+      "value": "汉末人生模拟：扮演刘备，走完十二个岔路口"
     },
     {
       "name": "EntryAbility_label",
-      "value": "TA Harness"
+      "value": "三国人生"
     },
     {
       "name": "dir_grant_perm_reason",

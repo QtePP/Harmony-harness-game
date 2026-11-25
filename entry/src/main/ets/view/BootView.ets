@@ -94,13 +94,13 @@ export struct BootView {
 
   build() {
     Column({ space: 16 }) {
-      Image($r('app.media.logo'))
+      Image($r('app.media.seal'))
         .width(96)
         .height(96)
         .scale({ x: this.logoScale, y: this.logoScale })
         .opacity(this.logoOpacity)
 
-      Text('TA Harness')
+      Text('三国人生')
         .fontSize(34)
         .fontWeight(FontWeight.Bold)
         .fontColor($r('app.color.text_primary'))
@@ -129,16 +129,16 @@ export struct BootView {
         Row({ space: 12 }) {
           Button('重试')
             .onClick(() => this.onRetry())
-          Button('诊断信息')
+          Button('设置')
             .backgroundColor($r('app.color.surface_muted'))
             .fontColor($r('app.color.text_primary'))
             .onClick(() => this.onShowDiagnostics())
         }
         .margin({ top: 8 })
       } else {
-        // The brand bolt inside a soft orb, pulsing while the runtime is
-        // reached. A spinner says "wait"; this says "the app is starting", and
-        // it keeps the splash consistent with the in-app thinking indicator.
+        // The seal inside a soft orb, pulsing while the runtime is reached.
+        // A spinner says "wait"; this says "the app is starting", and it keeps
+        // the splash consistent with the in-app thinking indicator.
         Stack() {
           Circle()
             .width(56)
@@ -147,11 +147,10 @@ export struct BootView {
             .opacity(this.orbPhase === 0 ? 1 : 0.55)
             .animation({ duration: 620, curve: Curve.EaseInOut })
 
-          Image($r('app.media.bolt'))
-            .width(24)
-            .height(24)
+          Image($r('app.media.seal'))
+            .width(26)
+            .height(26)
             .objectFit(ImageFit.Contain)
-            .fillColor($r('app.color.brand'))
             .opacity(this.orbPhase === 0 ? 1 : 0.7)
             .scale({
               x: this.orbPhase === 0 ? 1 : 0.92,

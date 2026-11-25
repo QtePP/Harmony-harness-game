@@ -84,12 +84,27 @@ sanguo_advance  让世界自己走一季
 和外壳完全一样的构建链：
 
 ```bash
-node scripts/assemble-payload.mjs    # 把插件打进载荷，约 30 s
+node scripts/assemble-payload.mjs    # 把插件打进载荷（默认钉 dsh 0.2.1-rc.4）
 bash scripts/deploy.sh               # 签名 + 构建 + 装机
 bash scripts/test.sh                 # 全部检查：单测 / ArkTS / LocalUnit / 设备
 ```
 
-开局：应用里新建项目「汉末人生」→ 把 `agents/sanguo-life/BOOTSTRAP.md` 里
+### 独立安装包（与 HarmonyGo 并存）
+
+`main` 上的游戏曾经和外壳同包名，装机就会顶掉外壳。本分支（`sanguo-standalone`）
+把它做成一个**能并排安装的独立应用**：
+
+| 项 | 值 | 为什么 |
+|---|---|---|
+| bundleName | `com.qtepp.sanguo` | 和 `com.qtepp.harmonygo` 不同，互不覆盖 |
+| 显示名 / 图标 | 三国人生 / 汉印 | 桌面上不会和闪电图标的 HarmonyGo 混淆 |
+| 桥端口 | **4518** | HarmonyGo 占 4517；两个应用可以同时常驻，否则后启动的那个 `EADDRINUSE` |
+| 默认 profile | **ACP** | 只有 ohos profile 挂 `@ohos/dsh-sanguo`；SDK 下模型根本看不到 `sanguo_*` 工具 |
+
+首次启动：启动页提示缺 Key → 点「设置」→ 填 DeepSeek API Key → 保存 → 重试。
+之后新建项目「汉末人生」→ 粘下面的建包指令 → 模型落盘并直接开局。
+
+开局：新建项目「汉末人生」→ 把 `agents/sanguo-life/BOOTSTRAP.md` 里
 `---` 之间的那段粘进第一个对话 → 模型落盘并直接开始第一幕。
 
 棋盘入口：项目 workspace 里出现 `.sanguo/` 后，手机顶部会出现「对局 / 这一局」切换器，
