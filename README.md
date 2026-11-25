@@ -3,8 +3,8 @@
 **dsh 鸿蒙外壳上的游戏应用。** 三国人生模拟：你扮演刘备，从 161 年涿县出生，
 走完他生命里的十二个岔路口。你可以照史载走，也可以随时离开它。
 
-这个仓是从 [deepseek-harness-harmony](https://github.com/QtePP/deepseek-harness-harmony)
-（外壳本体）分出来的**垂域仓**：外壳只提供会话、文件、审批、设置；游戏归这里。
+这个仓是从 [harmony-go](https://github.com/QtePP/harmony-go)（外壳本体，原名
+deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、文件、审批、设置；游戏归这里。
 
 ---
 
@@ -91,8 +91,7 @@ bash scripts/test.sh                 # 全部检查：单测 / ArkTS / LocalUnit
 
 ### 独立安装包（与 HarmonyGo 并存）
 
-`main` 上的游戏曾经和外壳同包名，装机就会顶掉外壳。本分支（`sanguo-standalone`）
-把它做成一个**能并排安装的独立应用**：
+这个游戏最初和外壳同包名，装机就会顶掉外壳。现在它是一个**能并排安装的独立应用**：
 
 | 项 | 值 | 为什么 |
 |---|---|---|
