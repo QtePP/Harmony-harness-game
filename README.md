@@ -5,6 +5,10 @@
 **dsh 鸿蒙外壳上的游戏应用。** 三国人生模拟：你扮演刘备，从 161 年涿县出生，
 走完他生命里的十二个岔路口。你可以照史载走，也可以随时离开它。
 
+<img src="store-assets/screenshots/01-board.png" width="320" alt="三国人生的棋盘">
+
+*这一局：名望、信义、人才，和一次待判定的选择。*
+
 这个仓是从 [harmony-go](https://github.com/QtePP/harmony-go)（外壳本体，原名
 deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、文件、审批、设置；游戏归这里。
 
