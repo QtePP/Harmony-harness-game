@@ -1,24 +1,29 @@
 # 三国人生 · 离线 demo
 
-在线试玩：<https://qtepp.github.io/Harmony-harness-game/>
+在线试玩：
 
-[`sanguo.html`](sanguo.html) 是一个**单文件**的三国人生 demo：双击就能玩，不需要安装 App、
-不需要 API Key、不需要网络、不需要 Node。
+- 长页版：<https://qtepp.github.io/Harmony-harness-game/demo/sanguo.html>
+- 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/card.html>
+
+本地：
 
 ```bash
-open demo/sanguo.html          # macOS
+open demo/sanguo.html          # 长页版
+open demo/card.html            # 4:6 单卡版
 # 或者直接把文件拖进浏览器
 ```
 
-文件约 92 KB。引擎、23 个场景、终章和 8 个结局全部在里面；页面没有任何外部请求。
+两个都是**单文件**：不需要安装 App、不需要 API Key、不需要网络、不需要 Node。
+每个约 100 KB，页面没有任何外部请求。
 
 ## 它是什么
 
 - **引擎是真的**：复用 `host/profile-ohos/.../@ohos/dsh-sanguo/engine/` 的掷骰、判定、
   数值、天下推演；不是为 demo 另写一套。
-- **剧情是真的**：`data/acts.json` 的七幕 23 个场景，从涿郡桑树到长坂坡。
-- **终章是 demo 的**：引擎写到长坂就 `act = "end"` 了。demo 在这里补了一个「终章·白帝」，
-  用最后的选择 + 末局数值收束到 8 个结局。
+- **剧情是真的**：`data/acts.json` 的**十二幕 38 个场景**，从涿郡桑树到白帝托孤。
+  第八至十二幕（赤壁 / 益州 / 汉中 / 荆州 / 白帝）是这次补齐的正式场景，同一套引擎直接吃。
+- **结局是 demo 层**：引擎走到白帝之后 `act = "end"`；demo 读取第十一幕「称帝」、
+  第十二幕「夷陵」「白帝」的关键选择（写进 `state.flags`）与末局数值，收束到 8 个结局。
 - **本机推演**：不调用模型。它把每个选项的 effects 乘上一组透明权重（仁 / 霸 / 稳 / 隐），
   再加一点随机；点「本机推演」就会按这个倾向自动走完一生。
 
@@ -27,46 +32,70 @@ open demo/sanguo.html          # macOS
 > 达到同样的目的：离线、即时、可解释。要真上小型神经网络，得离线训练再把权重嵌进来，
 > 对这个体量的文本不值得。
 
+## 两个版本
+
+| 文件 | 形态 | 说明 |
+|---|---|---|
+| `sanguo.html` | 长页 | 场景、数值、选项纵向排列；适合阅读和手机滚动 |
+| `card.html` | 4:6 单卡 | 4 列 × 6 行的竖版卡；卡内完成选择/判定/继续，卡外只有推演、倾向、图鉴、重开 |
+
+两版共用 `game.js` / `endings.js` / `policy.js`，存档与结局图鉴共用同一组
+`localStorage` key，所以在一个版本里解锁的结局，另一个版本能看到。
+
 ## 改它
 
 | 文件 | 作用 |
 |---|---|
-| `app.js` | 界面与流程（开场 / 场景 / 结算 / 终章 / 结局 / 图鉴） |
-| `endings.js` | 终章五个选择 + 8 个结局 + 判定条件 |
+| `app.js` | 长页版的界面与流程 |
+| `card.js` | 4:6 卡片版的界面与流程 |
+| `endings.js` | 8 个结局文本 + 判定条件（读 `state.flags` + 数值） |
+| `policy.js` | 本机推演的透明权重（仁 / 霸 / 稳 / 隐） |
 | `game.js` | 把纯 JS 引擎包成浏览器可用的控制器；开局状态是 `engine/state.js` 的 `createSave` 副本（浏览器不能 import `node:fs`），引擎改字段时要同步 |
-| `template.html` | 单文件骨架与全部 CSS |
-| `build.mjs` | esbuild 打包 + 把 JS 内联进 HTML |
-| `simulate.mjs` | 无头验收：23 个场景能走到 end，8 个结局全部可达 |
+| `template.html` | 长页版骨架与全部 CSS |
+| `card.template.html` | 卡片版骨架与全部 CSS |
+| `build.mjs` | esbuild 打包两个入口 + 内联 JS |
+| `simulate.mjs` | 无头验收：38 个场景能走到 end，8 个结局全部可达 |
 
 ```bash
 cd demo
 npm install
-npm run build       # 生成 sanguo.html
-npm run simulate    # 160 局自动跑，断言 8 个结局都出现
+npm run build       # 生成 sanguo.html 和 card.html
+npm run simulate    # 8 条固定计划，断言 8 个结局都出现
 ```
 
-`sanguo.html` 是**生成物**，不要直接改；改上面的源文件再 build。
+`sanguo.html` / `card.html` 是**生成物**，不要直接改；改上面的源文件再 build。
 
 ## 8 个结局
 
+关键选择：
+
+- 第十一幕 `emperor`：`crown`（称帝）/ `decline`（不称帝）/ `king`（只称汉中王）
+- 第十二幕 `yiling`：`war`（亲征伐吴）/ `peace`（不出兵）
+- 第十二幕 `baidi`：`trust_zhuge`（托孤诸葛亮）/ `trust_liyan`（托孤李严）/ `retire`（散尽家财回涿郡）
+
 | id | 标题 | 条件 |
 |---|---|---|
-| `zhaolie` | 昭烈 | 称帝，名望 ≥ 70、信义 ≥ 55、势 ≤ 35 |
+| `zhaolie` | 昭烈 | 称帝，名望 ≥ 70、信义 ≥ 55、势 ≤ 35，且未伐吴 |
 | `dufu` | 独夫 | 称帝，但上面任一条不够 |
 | `renzhe` | 仁者 | 不称帝，信义 ≥ 65 |
 | `pianan` | 偏安 | 不称帝，信义 < 65 |
-| `hanzhong` | 汉中王 | 称王，不称帝 |
-| `zhixi` | 织席者 | 归还印绶 |
-| `zaoshi` | 蚤世 | 体力 ≤ 15，或伐吴结算后体力 ≤ 35 |
+| `hanzhong` | 汉中王 | 只称汉中王，不称帝 |
+| `zhixi` | 织席者 | 在 `baidi` 选「散尽家财回涿郡」（`retire`） |
+| `zaoshi` | 蚤世 | 体力 ≤ 15；或伐吴后体力 ≤ 35 |
 | `jiedi` | 举世皆敌 | 伐吴，体力 > 35 |
+
+优先级：体力 ≤ 15 → `zaoshi`；`retire` → `zhixi`；`war` → `zaoshi`/`jiedi`；
+否则按称帝/不称帝/称王分流。所有分支都有落点。
 
 结局图鉴存在浏览器 `localStorage`（`sanguo-demo-endings-v1`）；中途存档用
 `sanguo-demo-run-v1`，刷新后可以从开场页「继续上局」。
 
 ## 边界
 
-- 只覆盖已经写好的七幕（到长坂）。第八至十二幕（赤壁 / 益州 / 汉中 / 荆州 / 白帝）
-  没有写成完整场景；终章是压缩后的收束，不是第八幕。
+- 十二幕（38 个场景）都已写进 `acts.json`；引擎不用改。第八至十二幕的数值尺度按后期
+  （名望/信义可到 100，兵力可到数百）设定，和前期不完全同一把尺子。
+- 结局文本、8 个结局的判定、`flags` 映射都在 demo 层；手机 App 里没有这套结局 UI，
+  引擎只负责算到白帝为止。
 - 没有音频、图片、动画资产；所有观感来自 CSS 与排版。
 - 没有把存档导出成 `.sanguo/save.json` 的入口；demo 的存档只活在 localStorage。
 - 许可与仓库一致：MIT。剧情来自史书与演义，属公有领域。

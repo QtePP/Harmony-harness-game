@@ -19,7 +19,7 @@ import { seedFrom } from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/
 import { formatDate, eraOf } from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-sanguo/engine/clock.js'
 import { describe as describeDrift } from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-sanguo/engine/destiny.js'
 import { playerPower } from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-sanguo/engine/world.js'
-import { applyEpilogue, endingFor } from './endings.js'
+
 
 const BIRTH_ATTRS = { wu: 42, tong: 40, zhi: 48, zheng: 45, mei: 78 }
 const BIRTH_COUNTERS = { fame: 5, trust: 20, talent: 0 }
@@ -147,6 +147,24 @@ export function statsOf(state) {
   }
 }
 
+/** demo 层的关键选择：把 act 11/12 的选择记进 flags，结局层只读 flags。 */
+function storyFlags(state, actId, sceneId, optionId) {
+  const flags = { ...(state.flags ?? {}) }
+  if (actId === 'jingzhou' && sceneId === 'emperor') {
+    if (optionId === 'crown' || optionId === 'decline' || optionId === 'king') {
+      flags.epilogue = optionId
+    }
+  }
+  if (actId === 'baidi' && sceneId === 'yiling') {
+    if (optionId === 'war') flags.war = true
+    if (optionId === 'peace') flags.war = false
+  }
+  if (actId === 'baidi' && sceneId === 'baidi' && optionId === 'retire') {
+    flags.retire = true
+  }
+  return flags
+}
+
 /**
  * 建一个游戏实例。
  * @param {object} document acts.json 的内容
@@ -171,8 +189,9 @@ export function makeGame(document) {
     const skipped = moved.skipped ?? (moved.state.age > beforeAge
       ? { turns: (moved.state.age - beforeAge) * 4, targetAge: moved.state.age }
       : null)
+    const stamped = { ...moved.state, flags: storyFlags(moved.state, act.id, scene.id, optionId) }
     return {
-      state: moved.state,
+      state: stamped,
       skipped,
       result: {
         kind: 'choice',
@@ -186,7 +205,7 @@ export function makeGame(document) {
         departure: resolved.priced?.departure === true,
         drift: resolved.priced?.drift ?? state.drift
       },
-      scene: view(moved.state, acts)
+      scene: view(stamped, acts)
     }
   }
 
@@ -228,18 +247,11 @@ export function makeGame(document) {
     }
   }
 
-  /** 终章：结算选择并返回结局。 */
-  function finish(state, optionId) {
-    const next = applyEpilogue(state, optionId)
-    return { state: next, ending: endingFor(next) }
-  }
-
   return {
     acts,
     newRun,
     choose,
     attempt,
-    finish,
     view: (state) => view(state, acts),
     stats: statsOf
   }

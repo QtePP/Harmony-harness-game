@@ -2,12 +2,13 @@
  * 三国人生 · 离线 demo 的前端。
  *
  * 没有框架、没有网络请求、没有 API Key。引擎是 @ohos/dsh-sanguo 的纯 JS 部分，
- * 剧情是 data/acts.json 的 23 个场景；长坂之后接一个 demo 专属的终章，收束到 8 个结局。
+ * 剧情是 data/acts.json 的 38 个场景（十二幕）；走完白帝之后按末局状态收束到 8 个结局。
  */
 
 import actsDocument from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-sanguo/data/acts.json'
 import { makeGame } from './game.js'
-import { EPILOGUE, ENDINGS, ENDING_BY_ID } from './endings.js'
+import { ENDINGS, ENDING_BY_ID, endingFor } from './endings.js'
+import { PERSONAS, bestOption } from './policy.js'
 
 const game = makeGame(actsDocument)
 const app = document.getElementById('app')
@@ -31,25 +32,6 @@ const OUTCOME_LABEL = {
   partial: '未成',
   failure: '失败',
   critical_failure: '大失败'
-}
-
-const PERSONAS = {
-  ren: {
-    name: '仁',
-    trust: 2.0, fame: 1.0, talent: 1.0, troops: -0.3, gold: 0.1, grain: 0.1, hp: 0.6, historical: 0.4
-  },
-  ba: {
-    name: '霸',
-    trust: -0.6, fame: 1.2, talent: 0.5, troops: 1.0, gold: 0.4, grain: 0.4, hp: 0.2, historical: -0.4
-  },
-  wen: {
-    name: '稳',
-    trust: 0.8, fame: 0.5, talent: 0.5, troops: 0.3, gold: 0.5, grain: 0.5, hp: 1.2, historical: 0.2
-  },
-  yin: {
-    name: '隐',
-    trust: 0.5, fame: -1.0, talent: 0.2, troops: -1.0, gold: 0.5, grain: 0.5, hp: 1.0, historical: -0.3
-  }
 }
 
 let state = null
@@ -207,7 +189,7 @@ function renderStart() {
       <h1>三国人生</h1>
       <p class="tagline">你扮演刘备，从涿县的一棵桑树开始。</p>
       <p class="lede">
-        23 个场景，从五岁指树，到白帝托孤。
+        38 个场景，从五岁指树，到白帝托孤。
         骰子、数值、天下大势都由引擎算；你只做选择。
       </p>
       <div class="hero-actions">
@@ -225,7 +207,7 @@ function renderStart() {
 /* ------------------------------------------------------------------ */
 
 function renderScene() {
-  if (!scene || scene.finished) return renderEpilogue()
+  if (!scene || scene.finished) { finishRun(); return renderEnding() }
   mode = 'play'
   document.body.dataset.phase = 'scene'
   const skip = timeSkipNote(skipped)
@@ -310,37 +292,6 @@ function renderResult() {
         ${statsBar(game.stats(state))}
         <button class="primary wide" data-continue>继续</button>
       </section>
-    </main>`
-  bind()
-  scheduleAuto()
-}
-
-/* ------------------------------------------------------------------ */
-/* 终章                                                                */
-/* ------------------------------------------------------------------ */
-
-function renderEpilogue() {
-  mode = 'play'
-  document.body.dataset.phase = 'epilogue'
-  const stats = game.stats(state)
-  app.innerHTML = `
-    ${topBar()}
-    <main class="stage" aria-live="polite">
-      <div class="meta"><span>${esc(EPILOGUE.when)}</span><span>${state.age}岁</span><span>成都</span></div>
-      <section class="scene epilogue">
-        <p class="act">${esc(EPILOGUE.act)}</p>
-        <h2>${esc(EPILOGUE.title)}</h2>
-        <p class="narration">${esc(EPILOGUE.narration)}</p>
-      </section>
-      ${statsBar(stats)}
-      <div class="choices">
-        ${EPILOGUE.options.map((option) => `
-          <button class="choice" data-epilogue="${esc(option.id)}">
-            <span class="choice-label">${esc(option.label)}</span>
-            <span class="choice-arrow" aria-hidden="true">›</span>
-          </button>`).join('')}
-      </div>
-      <p class="hint">终章是 demo 的收束层；引擎写到这里，七个 act 到长坂为止。</p>
     </main>`
   bind()
   scheduleAuto()
@@ -452,19 +403,15 @@ function continueAfterResult() {
   render()
 }
 
-function chooseEpilogue(id) {
-  stopAuto()
-  const out = game.finish(state, id)
-  state = out.state
-  ending = out.ending
+function finishRun() {
+  if (ending || !state) return
+  ending = endingFor(state)
   newEnding = !unlocked.has(ending.id)
   if (newEnding) {
     unlocked.add(ending.id)
     saveUnlocked()
   }
   clearRun()
-  scrollTop()
-  render()
 }
 
 function restart() {
@@ -481,42 +428,6 @@ function restart() {
 /* ------------------------------------------------------------------ */
 /* 本机推演（pybot 风格：透明权重，不是大模型）                        */
 /* ------------------------------------------------------------------ */
-
-function scoreOption(option, stats, weights) {
-  const effects = option.effects ?? {}
-  let score = 0
-  for (const key of ['trust', 'fame', 'talent', 'troops', 'gold', 'grain', 'hp']) {
-    score += Number(effects[key] ?? 0) * Number(weights[key] ?? 0)
-  }
-  if (option.historical) score += weights.historical
-  // 体力见底时，任何扣血的选项都要被压一压
-  if (stats.hp < 35 && Number(effects.hp ?? 0) < 0) score -= 4
-  // 势太高时，不要再加偏离
-  if (stats.drift > 55 && option.historical === false) score -= 2
-  return score + Math.random() * 0.9
-}
-
-function pickOption() {
-  const weights = PERSONAS[persona]
-  let best = null
-  let bestScore = -Infinity
-  for (const option of scene.options) {
-    const score = scoreOption(option, scene.stats, weights)
-    if (score > bestScore) {
-      bestScore = score
-      best = option
-    }
-  }
-  return best?.id
-}
-
-function pickEpilogue() {
-  const stats = game.stats(state)
-  if (persona === 'ren') return 'decline'
-  if (persona === 'ba') return stats.troops >= 45 ? 'war' : 'crown'
-  if (persona === 'wen') return 'king'
-  return 'retire'
-}
 
 function scheduleAuto() {
   clearAuto()
@@ -552,11 +463,11 @@ function autoStep() {
   }
   if (!scene) return
   if (scene.finished) {
-    chooseEpilogue(pickEpilogue())
+    render()
     return
   }
   if (scene.kind === 'moral') {
-    const id = pickOption()
+    const id = bestOption(scene.options, scene.stats, persona)
     if (id) {
       const previous = scene
       const out = game.choose(state, id)
@@ -669,9 +580,6 @@ function bind() {
   })
   app.querySelectorAll('[data-roll]').forEach((node) => node.addEventListener('click', rollCheck))
   app.querySelectorAll('[data-continue]').forEach((node) => node.addEventListener('click', continueAfterResult))
-  app.querySelectorAll('[data-epilogue]').forEach((node) => {
-    node.addEventListener('click', () => chooseEpilogue(node.dataset.epilogue))
-  })
   app.querySelectorAll('[data-auto]').forEach((node) => node.addEventListener('click', toggleAuto))
   app.querySelectorAll('[data-persona]').forEach((node) => {
     node.addEventListener('change', () => {
@@ -683,11 +591,14 @@ function bind() {
 
 function render() {
   if (mode === 'start') return renderStart()
+  if (!ending && state && state.act === 'end') finishRun()
   if (ending) return renderEnding()
   if (result) return renderResult()
-  if (!scene || scene.finished) return renderEpilogue()
+  if (!scene || scene.finished) {
+    finishRun()
+    return renderEnding()
+  }
   return renderScene()
 }
-
 // 开场
 render()

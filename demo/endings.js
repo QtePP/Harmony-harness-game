@@ -1,58 +1,12 @@
 /**
- * 离线 demo 的终章与结局。
+ * 离线 demo 的结局层。
  *
- * 引擎的七个 act 在长坂之后就把 `act` 置为 `end`——它只写了刘备的前半生。
- * 这里补一个「终章·白帝」：建安二十五年，曹丕受禅，成都群臣劝进。玩家做最后一个
- * 决定，结局由这个决定 + 末局的数值共同决定。
- *
- * 这不是引擎的一部分，是 demo 的叙事收束层；它只读 state，不改引擎的规则。
+ * 引擎现在有十二幕，走到白帝之后 `act = "end"`。demo 不再额外加一个「终章」：
+ * 结局由第十一幕称帝、第十二幕夷陵/白帝的关键选择（game.js 记进 state.flags）
+ * 加上末局数值决定。这不是引擎的一部分；引擎只算数值，不管结局文本。
  */
 
-const clamp = (value, low, high) => Math.min(high, Math.max(low, Number.isFinite(value) ? value : low))
-
-/** 终章的场景与选项。effects 与 acts.json 同形，便于复用同一套加减法。 */
-export const EPILOGUE = {
-  act: '终章',
-  title: '白帝',
-  when: '建安二十五年·成都',
-  narration:
-    '曹操已死，曹丕受禅，汉室的最后一块牌位被从许都挪走。' +
-    '成都群臣三次上表，请你即皇帝位。荆州已失，云长、翼德都不在了。你五十九岁。',
-  options: [
-    {
-      id: 'crown',
-      label: '称帝，续汉',
-      note: '群臣山呼万岁。你接过玉玺，说：汉室没有亡。',
-      effects: { fame: 8, trust: 4, drift: 5, hp: -5 }
-    },
-    {
-      id: 'decline',
-      label: '不称帝，终身汉臣',
-      note: '你把劝进表压在案底，只受汉中王印。',
-      effects: { trust: 12, fame: -6, drift: -5 }
-    },
-    {
-      id: 'king',
-      label: '称汉中王，割据一方',
-      note: '不称尊号，不北伐，守住剑阁以南。',
-      effects: { fame: 3, troops: 10, drift: 8 }
-    },
-    {
-      id: 'war',
-      label: '倾国伐吴，为云长报仇',
-      note: '你点起益州全部兵马，顺江而下。',
-      effects: { troops: 0.5, hp: -25, trust: -8, drift: 20 }
-    },
-    {
-      id: 'retire',
-      label: '归还印绶，回涿郡',
-      note: '你把印绶挂在堂上，带几个老卒回北方。',
-      effects: { troops: 0, fame: -30, trust: -10, drift: -10 }
-    }
-  ]
-}
-
-/** 结局表。顺序也是图鉴的顺序。 */
+/** 8 个结局的文本与图鉴提示。 */
 export const ENDINGS = [
   {
     id: 'zhaolie',
@@ -143,65 +97,29 @@ export const ENDINGS = [
 /** 快捷索引。 */
 export const ENDING_BY_ID = Object.fromEntries(ENDINGS.map((ending) => [ending.id, ending]))
 
-const COUNTERS = ['fame', 'trust', 'talent']
-const RESOURCES = ['gold', 'grain', 'troops', 'hp']
-
-/** 把一个 effects 对象结算到 state 上；troops 支持 0.5 这种比例写法。 */
-export function applyEpilogue(state, optionId) {
-  const option = EPILOGUE.options.find((item) => item.id === optionId)
-  if (option === undefined) return state
-
-  const player = state.player ?? {}
-  const counters = { ...(player.counters ?? {}) }
-  const resources = { ...(player.resources ?? {}) }
-  let drift = Number.isFinite(state.drift) ? state.drift : 0
-
-  for (const [key, raw] of Object.entries(option.effects ?? {})) {
-    const value = Number(raw)
-    if (!Number.isFinite(value)) continue
-    if (key === 'drift') {
-      drift += value
-    } else if (key === 'troops' && value > 0 && value < 1) {
-      resources.troops = Math.floor((resources.troops ?? 0) * value)
-    } else if (COUNTERS.includes(key)) {
-      counters[key] = (counters[key] ?? 0) + value
-    } else if (RESOURCES.includes(key)) {
-      resources[key] = (resources[key] ?? 0) + value
-    }
-  }
-
-  for (const key of COUNTERS) counters[key] = clamp(counters[key], 0, 100)
-  for (const key of RESOURCES) resources[key] = Math.max(0, Math.trunc(resources[key]))
-  resources.hp = clamp(resources.hp, 0, 100)
-  drift = clamp(drift, 0, 100)
-
-  return {
-    ...state,
-    drift,
-    player: { ...player, counters, resources },
-    flags: { ...(state.flags ?? {}), epilogue: optionId },
-    log: [
-      ...(Array.isArray(state.log) ? state.log : []),
-      { kind: 'epilogue', text: option.label }
-    ]
-  }
-}
-
 /**
- * 由终章选择 + 末局数值决定结局。
+ * 由末局状态与关键选择决定结局。
  *
- * 先判「身体先垮」，再按选择分流；称帝/不称帝内部再用名望与信义分高低。
+ * 关键选择在引擎里只是普通 effects；demo 在 game.js 的 choose 里把它们记进
+ * state.flags（emperor / yiling / baidi 三处），这里只读 flags + 数值，不再让
+ * 玩家在结局前额外选一次。
+ *
+ * 优先级：先看身体，再看主动退隐，再看伐吴，最后看称帝/称王。
  * 所有分支都有落点，不存在“没有结局”的状态。
  */
 export function endingFor(state) {
   const hp = Number(state?.player?.resources?.hp ?? 100)
   const fame = Number(state?.player?.counters?.fame ?? 0)
   const trust = Number(state?.player?.counters?.trust ?? 0)
-  const epilogue = state?.flags?.epilogue
+  const flags = state?.flags ?? {}
 
   if (hp <= 15) return ENDING_BY_ID.zaoshi
+  if (flags.retire === true) return ENDING_BY_ID.zhixi
+  if (flags.war === true) {
+    return hp <= 35 ? ENDING_BY_ID.zaoshi : ENDING_BY_ID.jiedi
+  }
 
-  switch (epilogue) {
+  switch (flags.epilogue) {
     case 'crown':
       return fame >= 70 && trust >= 55 && Number(state?.drift ?? 0) <= 35
         ? ENDING_BY_ID.zhaolie
@@ -210,10 +128,6 @@ export function endingFor(state) {
       return trust >= 65 ? ENDING_BY_ID.renzhe : ENDING_BY_ID.pianan
     case 'king':
       return ENDING_BY_ID.hanzhong
-    case 'retire':
-      return ENDING_BY_ID.zhixi
-    case 'war':
-      return hp <= 35 ? ENDING_BY_ID.zaoshi : ENDING_BY_ID.jiedi
     default:
       return trust >= 65 ? ENDING_BY_ID.renzhe : ENDING_BY_ID.pianan
   }
