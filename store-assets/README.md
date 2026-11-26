@@ -4,6 +4,8 @@ Captured 2026-11-25 on a HarmonyOS 7 phone (CMM-AL10, 1320×2848), cropped to
 remove the system status bar. They show the standalone **三国人生** build
 (`com.qtepp.sanguo`), not the HarmonyGo shell.
 
+## Raw captures — `screenshots/`
+
 | File | Screen |
 |---|---|
 | `01-board.png` | 这一局：名望 / 信义 / 人才、兵力钱粮、当前场景与判定 |
@@ -11,6 +13,15 @@ remove the system status bar. They show the standalone **三国人生** build
 | `03-trace.png` | 工具轨迹：`sanguo_new` / `sanguo_status` 调用与思考折叠 |
 | `04-settings.png` | 设置：密钥、模型、ACP、权限三档与能力开关 |
 
-These are raw device captures, not designed store-listing cards. AppGallery
-submissions need their own sizes and safe areas, so regenerate a composed set
-before uploading.
+## Marketing cards — `marketing/`
+
+1080×1920 cards composed from the raw captures: seal + title + headline + a
+phone mockup. Regenerate with:
+
+```bash
+python3 scripts/make-store-cards.py
+```
+
+The script uses macOS system fonts (STHeiti Medium / Songti) and the seal at
+`entry/src/main/resources/base/media/seal.png`. AppGallery submissions still
+need their own safe areas and current size spec — check before uploading.
