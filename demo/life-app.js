@@ -131,7 +131,7 @@ function shell(inner, extra = '') {
     <main class="table">
       <section class="card ${extra}">${inner}</section>
       ${tools()}
-      <p class="note">竖版单卡 · 1985—2026 · 三十种答案 · 离线</p>
+      <p class="note">竖版单卡 · 1985—2026 · 六十种答案 · 离线</p>
     </main>`
 }
 
@@ -228,7 +228,7 @@ function renderStart() {
       <div class="back-seal" aria-hidden="true">生</div>
       <p class="back-kicker">1985 · 广东阳江 · 2026</p>
       <h1 class="back-title">如果</h1>
-      <p class="back-sub">人生之书<br>六次选择 · 三次拷问 · 三十种答案</p>
+      <p class="back-sub">人生之书<br>六次选择 · 三次拷问 · 六十种答案</p>
       <p class="back-memory">台风、录像厅、咸水歌。<br>1997 香港回归，2003 年你十八岁。</p>
       <label class="premise-field">
         <span>如果当年……</span>
@@ -380,7 +380,7 @@ function renderEnding() {
   app.innerHTML = shell(`
     <div class="card-grid">
       <header class="card-head">
-        <p class="act">结局 · ${esc(themeLabel(ending.theme))} × ${esc(costLabel(ending.cost))}</p>
+        <p class="act">${ending.kind === 'special' ? '结局 · 另一种答案' : `结局 · ${esc(themeLabel(ending.theme))} × ${esc(costLabel(ending.cost))}`}</p>
         <h1>${esc(ending.title)}</h1>
       </header>
       ${seal()}
@@ -389,7 +389,11 @@ function renderEnding() {
       <div class="card-story">
         <p class="narration ending-text">${esc(ending.text)}</p>
         <p class="ending-comment">${esc(ending.comment)}</p>
-        ${open ? `<div class="open-epilogue"><p class="open-title">开放式尾声</p><p>${esc(open.line)}</p><div class="open-tags">${fragments.map((fragment) => `<span>${esc(fragment)}</span>`).join('')}</div></div>` : ''}
+        ${open ? `<div class="open-epilogue">
+          <p class="open-title">${ending.kind === 'special' ? '这一生的坐标' : '开放式尾声'}</p>
+          ${ending.kind === 'special' ? '' : `<p>${esc(open.line)}</p>`}
+          <div class="open-tags">${fragments.map((fragment) => `<span>${esc(fragment)}</span>`).join('')}</div>
+        </div>` : ''}
         ${state.premise ? `<p class="premise-line">你带着：${esc(state.premise)}</p>` : ''}
         <p class="ending-run">你喂饱了：${desires.length > 0 ? desires.map(([key, count]) => `${DESIRE[key] ?? key}×${count}`).join('、') : '没有记下任何欲望'}</p>
         <div class="lastline">
@@ -551,13 +555,32 @@ function toggleAuto() {
 /* 结局图鉴                                                            */
 /* ------------------------------------------------------------------ */
 
+function galleryRows(items, seen, labelOf) {
+  return items.map((item) => {
+    const got = seen.has(item.id)
+    return `
+      <details class="gallery-card ${got ? 'open' : 'locked'}">
+        <summary>
+          <span class="gallery-index">${esc(labelOf(item))}</span>
+          <span class="gallery-title ${got ? '' : 'locked-title'}">${got ? esc(item.title) : '未解锁'}</span>
+          <span class="gallery-sub">${got ? esc(item.subtitle) : esc(item.hint)}</span>
+        </summary>
+        ${got
+          ? `<p class="gallery-text">${esc(item.text)}</p><p class="gallery-comment">${esc(item.comment)}</p>`
+          : `<p class="gallery-hint">提示：${esc(item.hint)}</p>`}
+      </details>`
+  }).join('')
+}
+
 function showGallery() {
   stopAuto()
   const seen = seenSet()
   const costIndex = new Map(lifeData.costs.map((cost, index) => [cost.id, index]))
+  const matrix = lifeData.endings.filter((item) => item.kind !== 'special')
+  const special = lifeData.endings.filter((item) => item.kind === 'special')
   const groups = lifeData.themes.map((theme) => ({
     theme,
-    rows: lifeData.endings
+    rows: matrix
       .filter((item) => item.theme === theme.id)
       .sort((a, b) => (costIndex.get(a.cost) ?? 0) - (costIndex.get(b.cost) ?? 0))
   }))
@@ -569,27 +592,16 @@ function showGallery() {
         <div>
           <p class="eyebrow">结局图鉴</p>
           <h2>${seen.size} / ${lifeData.endings.length}</h2>
-          <p class="modal-sub">五个主题 × 六个代价位。锁着的格子，只给一句提示。</p>
+          <p class="modal-sub">五个主题 × 六个代价位，外加三十种特殊人生。锁着的格子，只给一句提示。</p>
         </div>
         <button class="close" data-close aria-label="关闭">×</button>
       </div>
       ${groups.map(({ theme, rows }) => `
         <p class="group-title">${esc(theme.label)}</p>
-        ${rows.map((item) => {
-          const got = seen.has(item.id)
-          return `
-            <details class="gallery-card ${got ? 'open' : 'locked'}">
-              <summary>
-                <span class="gallery-index">${esc(theme.label)} · ${esc(costLabel(item.cost))}</span>
-                <span class="gallery-title ${got ? '' : 'locked-title'}">${got ? esc(item.title) : '未解锁'}</span>
-                <span class="gallery-sub">${got ? esc(item.subtitle) : esc(item.hint)}</span>
-              </summary>
-              ${got
-                ? `<p class="gallery-text">${esc(item.text)}</p><p class="gallery-comment">${esc(item.comment)}</p>`
-                : `<p class="gallery-hint">提示：${esc(item.hint)}</p>`}
-            </details>`
-        }).join('')}
+        ${galleryRows(rows, seen, (item) => `${theme.label} · ${costLabel(item.cost)}`)}
       `).join('')}
+      <p class="group-title">另一种答案</p>
+      ${galleryRows(special, seen, () => '特别')}
       <p class="modal-foot">图鉴存在这台设备的 localStorage 里。换一台设备不会同步。</p>
     </div>`
   document.body.append(overlay)
