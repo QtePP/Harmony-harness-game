@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>三国人生 · 离线 demo</title>
+<style>
+  :root {
+    --paper: #f2eadb;
+    --paper-2: #e9dfcc;
+    --card: rgba(255, 253, 247, 0.78);
+    --ink: #211c16;
+    --ink-2: #4a4238;
+    --muted: #807567;
+    --line: rgba(74, 66, 56, 0.18);
+    --accent: #9b2c24;
+    --accent-2: #b4453a;
+    --gold: #a8864f;
+    --green: #2f6b4f;
+    --shadow: 0 18px 50px rgba(62, 48, 32, 0.12);
+    --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.65), transparent 38%),
+      radial-gradient(circle at 100% 20%, rgba(155, 44, 36, 0.06), transparent 34%),
+      repeating-linear-gradient(0deg, rgba(74, 66, 56, 0.028) 0 1px, transparent 1px 4px),
+      linear-gradient(160deg, var(--paper), var(--paper-2));
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, select:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  #app {
+    width: min(100%, 760px);
+    margin: 0 auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px max(56px, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- 顶栏 ---------- */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0 20px;
+  }
+
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .brand p {
+    margin: 2px 0 0;
+    font-size: 10.5px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .seal {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #f9efe2;
+    font-family: var(--serif);
+    font-size: 19px;
+    line-height: 1;
+    box-shadow: inset 0 0 0 2px rgba(255, 245, 230, 0.18), 0 4px 12px rgba(155, 44, 36, 0.28);
+    flex: 0 0 auto;
+  }
+
+  .top-actions { display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+
+  .ghost {
+    border: 0;
+    background: transparent;
+    color: var(--ink-2);
+    font-size: 12px;
+    padding: 8px 8px;
+    border-radius: 8px;
+  }
+  .ghost:hover { background: rgba(74, 66, 56, 0.07); }
+  .ghost .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* ---------- 开场 ---------- */
+  .hero {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 36px 0 48px;
+  }
+
+  .hero-seal {
+    width: 92px;
+    height: 92px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fbeee0;
+    font-family: var(--serif);
+    font-size: 54px;
+    line-height: 1;
+    box-shadow: inset 0 0 0 3px rgba(255, 245, 230, 0.16), 0 20px 50px rgba(155, 44, 36, 0.26);
+    animation: stamp 0.6s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  }
+
+  .kicker {
+    margin: 28px 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .hero h1, .ending h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+  }
+  .hero h1 { font-size: clamp(42px, 11vw, 64px); }
+
+  .tagline {
+    margin: 22px 0 0;
+    font-family: var(--serif);
+    font-size: clamp(17px, 4.4vw, 21px);
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+  }
+
+  .lede {
+    max-width: 30em;
+    margin: 18px auto 0;
+    font-family: var(--serif);
+    font-size: 14px;
+    line-height: 1.95;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 34px;
+  }
+
+  .primary, .secondary, .text {
+    border-radius: 999px;
+    padding: 12px 24px;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+  }
+  .primary {
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff8ee;
+    box-shadow: 0 10px 26px rgba(155, 44, 36, 0.22);
+  }
+  .primary:hover { background: var(--accent-2); }
+  .primary:active, .secondary:active, .text:active { transform: scale(0.98); }
+
+  .secondary {
+    border: 1px solid var(--line);
+    background: rgba(255, 253, 247, 0.55);
+    color: var(--ink-2);
+  }
+  .secondary:hover { border-color: rgba(155, 44, 36, 0.35); }
+
+  .text {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .text:hover { color: var(--accent); }
+  .text.active { color: var(--accent); }
+
+  .wide { width: 100%; margin-top: 20px; }
+
+  .footnote {
+    margin: 44px 0 0;
+    font-size: 10.5px;
+    line-height: 1.8;
+    color: rgba(128, 117, 103, 0.85);
+    letter-spacing: 0.03em;
+  }
+
+  /* ---------- 场景 ---------- */
+  .stage { animation: rise 0.32s ease both; }
+
+  .meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .meta span + span::before {
+    content: "·";
+    margin-right: 12px;
+    color: var(--line);
+  }
+
+  .timeskip {
+    margin: 16px 0 0;
+    font-family: var(--serif);
+    font-size: 12.5px;
+    color: var(--gold);
+    letter-spacing: 0.12em;
+  }
+
+  .scene { padding: 26px 0 6px; }
+
+  .act {
+    margin: 0 0 10px;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .progress { color: var(--muted); letter-spacing: 0.08em; }
+
+  .scene h2 {
+    margin: 0 0 18px;
+    font-family: var(--serif);
+    font-size: clamp(26px, 7vw, 34px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.3;
+  }
+
+  .narration {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: clamp(16.5px, 4.3vw, 18.5px);
+    line-height: 1.95;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+
+  /* ---------- 数值 ---------- */
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 24px 0 22px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(255, 253, 247, 0.55);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+  }
+  .chip b {
+    font-weight: 500;
+    font-size: 9.5px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .chip.warn { border-color: rgba(168, 134, 79, 0.5); color: #7b5c2e; }
+  .chip.danger { border-color: rgba(155, 44, 36, 0.45); color: var(--accent); }
+
+  /* ---------- 选项 ---------- */
+  .choices { display: flex; flex-direction: column; gap: 9px; }
+
+  .choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    padding: 15px 17px;
+    text-align: left;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 0 2px 0 rgba(74, 66, 56, 0.03);
+    transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+  }
+  .choice:hover {
+    border-color: rgba(155, 44, 36, 0.42);
+    background: #fffdf8;
+  }
+  .choice:active { transform: translateY(1px); }
+
+  .choice-label {
+    font-family: var(--serif);
+    font-size: 16.5px;
+    line-height: 1.5;
+    letter-spacing: 0.03em;
+  }
+  .choice-arrow {
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1;
+    opacity: 0.55;
+    transition: transform 0.14s ease, opacity 0.14s ease;
+  }
+  .choice:hover .choice-arrow { transform: translateX(3px); opacity: 1; }
+
+  /* ---------- 判定 ---------- */
+  .check-card {
+    padding: 18px;
+    border: 1px dashed rgba(155, 44, 36, 0.32);
+    border-radius: 10px;
+    background: rgba(255, 253, 247, 0.45);
+  }
+  .check-line {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 16px;
+    letter-spacing: 0.04em;
+  }
+  .check-hint { margin: 8px 0 16px; font-size: 12px; color: var(--muted); }
+  .check-card .primary { width: 100%; margin-top: 2px; }
+
+  /* ---------- 结算 ---------- */
+  .result { padding-top: 22px; }
+  .eyebrow {
+    margin: 0 0 8px;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .result-title {
+    margin: 0 0 14px;
+    font-family: var(--serif);
+    font-size: clamp(28px, 7.5vw, 38px);
+    letter-spacing: 0.08em;
+  }
+  .result-text { margin-bottom: 18px; }
+  .roll {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .muted { color: var(--muted); }
+
+  .deltas { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 16px; }
+  .delta {
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .delta.up { color: var(--green); background: rgba(47, 107, 79, 0.08); }
+  .delta.down { color: var(--accent); background: rgba(155, 44, 36, 0.07); }
+
+  .departure {
+    margin: 0 0 14px;
+    font-size: 11.5px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+
+  .history {
+    margin: 6px 0 0;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .history summary { cursor: pointer; letter-spacing: 0.12em; color: var(--gold); }
+  .history p { margin: 10px 0 0; font-family: var(--serif); line-height: 1.85; }
+
+  /* ---------- 工具栏 ---------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .persona { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .persona select {
+    border: 1px solid var(--line);
+    background: rgba(255, 253, 247, 0.6);
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 11px;
+    color: var(--ink-2);
+  }
+  .hint {
+    margin: 10px 0 0;
+    font-size: 10.5px;
+    color: rgba(128, 117, 103, 0.8);
+    line-height: 1.7;
+  }
+
+  /* ---------- 终章 ---------- */
+  .epilogue .act { color: var(--gold); }
+
+  /* ---------- 结局 ---------- */
+  .ending {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 36px 0 52px;
+    animation: rise 0.4s ease both;
+  }
+  .ending-seal {
+    width: 76px;
+    height: 76px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #fbeee0;
+    font-family: var(--serif);
+    font-size: 44px;
+    box-shadow: inset 0 0 0 3px rgba(255, 245, 230, 0.16), 0 16px 40px rgba(155, 44, 36, 0.24);
+  }
+  .ending h1 { font-size: clamp(40px, 12vw, 58px); margin: 0; }
+  .ending-sub {
+    margin: 12px 0 0;
+    font-family: var(--serif);
+    font-size: 15px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+  .ending-text {
+    max-width: 30em;
+    margin: 26px auto 0;
+    font-family: var(--serif);
+    font-size: 15.5px;
+    line-height: 2.05;
+    letter-spacing: 0.02em;
+    text-align: left;
+    color: var(--ink);
+  }
+  .ending-comment {
+    max-width: 30em;
+    margin: 18px auto 0;
+    font-family: var(--serif);
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--muted);
+    text-align: left;
+  }
+  .ending-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+    margin-top: 30px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .ending-stats b { color: var(--ink); font-weight: 600; }
+  .all-done { margin: 18px 0 0; font-size: 11px; letter-spacing: 0.16em; color: var(--gold); }
+  .ending-actions { display: flex; gap: 10px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+
+  /* ---------- 图鉴 ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+    background: rgba(32, 26, 20, 0.42);
+    backdrop-filter: blur(6px);
+    animation: fade 0.18s ease both;
+  }
+  .modal {
+    width: min(100%, 720px);
+    max-height: min(86vh, 900px);
+    overflow: auto;
+    padding: 22px;
+    border: 1px solid rgba(74, 66, 56, 0.2);
+    border-radius: 14px;
+    background: var(--paper);
+    box-shadow: var(--shadow);
+    animation: rise 0.28s ease both;
+  }
+  .modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .modal-head h2 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 30px;
+    font-variant-numeric: tabular-nums;
+  }
+  .modal-head .close { font-size: 22px; line-height: 1; padding: 4px 10px; }
+  .gallery { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+  .gallery-card {
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: rgba(255, 253, 247, 0.55);
+    padding: 12px 14px;
+  }
+  .gallery-card.locked { opacity: 0.62; }
+  .gallery-card summary {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .gallery-card summary::-webkit-details-marker { display: none; }
+  .gallery-card.open summary::after {
+    content: "▾";
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 11px;
+    transition: transform 0.14s ease;
+  }
+  .gallery-card.open[open] summary::after { transform: rotate(180deg); }
+  .gallery-index {
+    font-size: 10px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    flex: 0 0 auto;
+  }
+  .gallery-title {
+    font-family: var(--serif);
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    flex: 0 0 auto;
+  }
+  .gallery-sub {
+    font-family: var(--serif);
+    font-size: 11.5px;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .gallery-hint { margin: 2px 0 0; font-size: 11px; color: var(--muted); }
+  .gallery-text {
+    margin: 12px 0 0;
+    font-family: var(--serif);
+    font-size: 13.5px;
+    line-height: 1.9;
+    color: var(--ink-2);
+  }
+  .gallery-comment { margin: 8px 0 0; font-size: 11px; color: var(--gold); }
+  .modal-foot { margin: 16px 0 0; font-size: 10.5px; color: var(--muted); line-height: 1.7; }
+
+  /* ---------- 动画 ---------- */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes stamp {
+    from { opacity: 0; transform: scale(1.35) rotate(-4deg); }
+    to { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  @media (max-width: 540px) {
+    #app { padding-left: 15px; padding-right: 15px; }
+    .top { padding-bottom: 14px; }
+    .hero { min-height: calc(100vh - 96px); padding-top: 20px; }
+    .lede { font-size: 13px; }
+    .scene { padding-top: 22px; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+    .chip { padding: 4px 7px; font-size: 11px; justify-content: center; }
+    .choice { padding: 14px 15px; }
+    .ending-text { font-size: 14.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>(()=>{var Ye={schema:1,note:"\u8282\u70B9\u8868\u3002historical:true \u6807\u8BB0\u53F2\u8F7D\u8D70\u5411\uFF1B\u5176\u4F59\u662F\u504F\u79BB\uFF08\u626E\u6F14\u6A21\u5F0F\u4E0B\u5141\u8BB8\uFF0C\u4EE3\u4EF7\u7531 destiny.js \u8BA1\uFF09\u3002freeChoice:true \u8868\u793A\u53F2\u65E0\u5B9A\u8BBA\uFF0C\u4E0D\u6309\u504F\u79BB\u8BA1\u3002",acts:[{id:"zhuojun",name:"\u7B2C\u4E00\u5E55\xB7\u6DBF\u90E1",from:161,to:184,ageFrom:0,ageTo:23,place:"zhuojun",placeName:"\u6DBF\u53BF",summary:"\u8D29\u5C65\u7EC7\u5E2D\u3002\u6851\u6811\u4E0B\u7684\u7AE5\u8A00\u3002\u5E08\u4ECE\u5362\u690D\u3002",scenes:[{id:"mulberry",title:"\u6851\u6811",narration:"\u820D\u4E1C\u5357\u89D2\u7BF1\u4E0A\u6709\u6851\u6811\u751F\u9AD8\u4E94\u4E08\u4F59\uFF0C\u9065\u671B\u89C1\u7AE5\u7AE5\u5982\u5C0F\u8F66\u76D6\u3002\u4F60\u4E0E\u540C\u5B97\u8BF8\u513F\u620F\u4E8E\u6811\u4E0B\u3002",kind:"moral",historical:"\u4F60\u6307\u7740\u90A3\u68F5\u6811\u8BF4\uFF1A\u543E\u5FC5\u5F53\u4E58\u6B64\u7FBD\u8446\u76D6\u8F66\u3002\u53D4\u7236\u5218\u5B50\u656C\u60CA\u9053\uFF1A\u6C5D\u52FF\u5984\u8BED\uFF0C\u706D\u543E\u95E8\u4E5F\u3002",options:[{id:"say_it",label:"\u8BF4\u51FA\u6765",historical:!0,effects:{fame:3,trust:0,talent:0},note:"\u53D4\u7236\u53D8\u8272\u3002\u6B64\u4E8B\u540E\u6765\u88AB\u4EBA\u8BB0\u4F4F\u3002"},{id:"keep_silent",label:"\u4E0D\u8BF4",historical:!1,effects:{fame:0,trust:0,talent:0},note:"\u65E0\u4EBA\u77E5\u6653\u3002\u540D\u671B\u4E0D\u6DA8\uFF0C\u4E5F\u4E0D\u62DB\u7978\u3002"},{id:"climb_it",label:"\u722C\u4E0A\u53BB\u5750\u5728\u6811\u6748\u4E0A",historical:!1,effects:{fame:1,trust:2,talent:0,hp:-3},note:"\u65CF\u4E2D\u5B69\u7AE5\u4ECE\u6B64\u670D\u4F60\uFF0C\u53D4\u7236\u6253\u4F60\u4E00\u987F\u3002"}],atAge:5},{id:"trade",title:"\u7EC7\u5E2D\u8D29\u5C65",narration:"\u7236\u5F18\u65E9\u4EA1\u3002\u4F60\u4E0E\u6BCD\u8D29\u5C65\u7EC7\u5E2D\u4E3A\u4E1A\uFF0C\u65E5\u5165\u4E0D\u8FC7\u6570\u94B1\u3002",kind:"ability",attribute:"mei",difficulty:40,historical:"\u540C\u5B97\u5218\u5143\u8D77\u5E38\u8D44\u7ED9\u4F60\uFF0C\u4E0E\u5B50\u5218\u5FB7\u7136\u7B49\u3002\u5143\u8D77\u59BB\u6120\u66F0\uFF1A\u5404\u4E00\u5BB6\uFF0C\u4F55\u5E38\u8D44\u4E4B\uFF1F\u5143\u8D77\u66F0\uFF1A\u543E\u5B97\u4E2D\u6709\u6B64\u513F\uFF0C\u975E\u5E38\u4EBA\u4E5F\u3002",successText:"\u4F60\u628A\u5E2D\u5B50\u5356\u7ED9\u4E86\u4E00\u4E2A\u8FC7\u8DEF\u7684\u5546\u4EBA\uFF0C\u591A\u5F97\u4E86\u4E24\u500D\u4EF7\u94B1\u3002\u4ED6\u8BF4\u4F60\u8BF4\u8BDD\u8BA9\u4EBA\u613F\u610F\u591A\u542C\u4E00\u53E5\u3002",failureText:"\u5E2D\u5B50\u6CA1\u5356\u51FA\u53BB\u3002\u4F60\u5728\u5E02\u4E0A\u7AD9\u5230\u65E5\u843D\uFF0C\u53EA\u6362\u56DE\u534A\u6597\u7C9F\u3002",effects:{success:{gold:4,fame:1},failure:{gold:0,hp:-2}},atAge:12},{id:"study",title:"\u5E08\u4E8B\u5362\u690D",narration:"\u5E74\u5341\u4E94\uFF0C\u6BCD\u4F7F\u884C\u5B66\u3002\u4F60\u4E0E\u540C\u5B97\u5218\u5FB7\u7136\u3001\u8FBD\u897F\u516C\u5B59\u74D2\u4FF1\u4E8B\u5362\u690D\u3002",kind:"moral",historical:"\u4F60\u4E0D\u751A\u4E50\u8BFB\u4E66\uFF0C\u559C\u72D7\u9A6C\u97F3\u4E50\u7F8E\u8863\u670D\u3002\u4F46\u5584\u4E0B\u4EBA\uFF0C\u559C\u6012\u4E0D\u5F62\u4E8E\u8272\u3002",options:[{id:"study_hard",label:"\u82E6\u8BFB\u7ECF\u4E49",historical:!1,effects:{fame:2,trust:0,talent:0},attributeGain:{zhi:6,zheng:4},note:"\u5362\u690D\u591A\u770B\u4F60\u4E00\u773C\u3002\u4F46\u4F60\u4E0D\u518D\u662F\u90A3\u4E2A\u559C\u72D7\u9A6C\u7684\u4EBA\u3002"},{id:"befriend",label:"\u7ED3\u4EA4\u8C6A\u4FA0",historical:!0,effects:{fame:4,trust:2,talent:2},attributeGain:{mei:5},note:"\u5C11\u5E74\u4E89\u9644\u4E4B\u3002\u516C\u5B59\u74D2\u4E0E\u4F60\u4E3A\u53CB\uFF0C\u4F60\u4EE5\u5144\u4E8B\u4E4B\u3002"},{id:"idle",label:"\u7EC8\u65E5\u72D7\u9A6C\u97F3\u4E50",historical:!1,effects:{fame:-1,trust:0,talent:0,gold:-3},attributeGain:{wu:3},note:"\u5362\u690D\u672A\u8D23\uFF0C\u4F46\u4E5F\u6CA1\u8BB0\u4F4F\u4F60\u3002"}],atAge:15},{id:"merchants",title:"\u4E2D\u5C71\u5927\u5546",narration:"\u4E2D\u5C71\u5927\u5546\u5F20\u4E16\u5E73\u3001\u82CF\u53CC\u7B49\u8D40\u7D2F\u5343\u91D1\uFF0C\u8D29\u9A6C\u5468\u65CB\u4E8E\u6DBF\u90E1\u3002",kind:"ability",attribute:"mei",difficulty:55,historical:"\u89C1\u800C\u5F02\u4E4B\uFF0C\u4E43\u591A\u4E0E\u4E4B\u91D1\u8D22\u3002\u5148\u4E3B\u7531\u662F\u5F97\u7528\u5408\u5F92\u4F17\u3002",successText:"\u4ED6\u4EEC\u8BF7\u4F60\u5403\u4E86\u4E00\u987F\u996D\uFF0C\u6563\u5E2D\u65F6\u7559\u4E0B\u4E94\u5341\u91D1\u3002\u5F20\u4E16\u5E73\u8BF4\uFF1A\u6B64\u513F\u975E\u5E38\u4EBA\u3002",failureText:"\u4ED6\u4EEC\u5BA2\u5BA2\u6C14\u6C14\u5730\u542C\u4F60\u8BF4\u5B8C\uFF0C\u7136\u540E\u8D70\u4E86\u3002\u4F60\u7684\u8BDD\u6CA1\u6709\u5206\u91CF\u2014\u2014\u4F60\u8FD8\u662F\u4E2A\u5356\u5E2D\u5B50\u7684\u3002",effects:{success:{gold:50,fame:5,talent:1},failure:{fame:0,gold:0}},atAge:20}]},{id:"anxi",name:"\u7B2C\u4E8C\u5E55\xB7\u5B89\u559C",from:184,to:190,ageFrom:23,ageTo:29,place:"anxi",placeName:"\u5B89\u559C",summary:"\u9EC4\u5DFE\u8D77\u3002\u7387\u5173\u5F20\u4ECE\u90B9\u9756\u8BA8\u8D3C\uFF0C\u9664\u5B89\u559C\u5C09\u3002\u7763\u90AE\u81F3\uFF0C\u6756\u4E8C\u767E\uFF0C\u5F03\u5B98\u4EA1\u547D\u3002",scenes:[{id:"uprising",title:"\u9EC4\u5DFE\u8D77",narration:"\u4E2D\u5E73\u5143\u5E74\uFF0C\u9EC4\u5DFE\u8D3C\u8D77\uFF0C\u90E1\u53BF\u5404\u4E3E\u4E49\u5175\u3002\u4F60\u5728\u6DBF\u53BF\u805A\u8D77\u4E00\u652F\u4EBA\u9A6C\u3002",kind:"moral",historical:"\u5173\u7FBD\u3001\u5F20\u98DE\u4E3A\u4E4B\u5FA1\u4FAE\u3002\u5148\u4E3B\u4E0E\u4E8C\u4EBA\u5BDD\u5219\u540C\u5E8A\uFF0C\u6069\u82E5\u5144\u5F1F\u3002",options:[{id:"sworn",label:"\u4E0E\u5173\u5F20\u540C\u5BDD\uFF0C\u6069\u82E5\u5144\u5F1F",historical:!0,effects:{fame:6,trust:8,talent:5},note:"\u6B64\u540E\u4E09\u5341\u5E74\uFF0C\u6B64\u4E8C\u4EBA\u672A\u79BB\u4F60\u5DE6\u53F3\u3002"},{id:"hire",label:"\u4EE5\u8D22\u52DF\u5175\uFF0C\u8D4F\u7F5A\u5206\u660E",historical:!1,effects:{fame:2,trust:1,talent:1,gold:-20},note:"\u961F\u4F0D\u66F4\u50CF\u519B\u961F\uFF0C\u4F46\u4E0D\u50CF\u5BB6\u3002"},{id:"alone",label:"\u72EC\u81EA\u6295\u519B",historical:!1,effects:{fame:0,trust:0,talent:0},note:"\u8F7B\u88C5\u4E0A\u8DEF\u3002\u4F60\u5C11\u4E86\u4E24\u53CC\u624B\uFF0C\u4E5F\u5C11\u4E86\u4E24\u4E2A\u62D6\u7D2F\u3002"}],atAge:23},{id:"battle",title:"\u8BA8\u8D3C",narration:"\u4F60\u7387\u5176\u5C5E\u4ECE\u6821\u5C09\u90B9\u9756\u8BA8\u9EC4\u5DFE\u3002",kind:"ability",attribute:"tong",difficulty:58,historical:"\u6709\u529F\uFF0C\u9664\u5B89\u559C\u5C09\u3002",successText:"\u4E00\u6218\u7834\u8D3C\uFF0C\u65A9\u9996\u6570\u5341\u3002\u90B9\u9756\u4E0A\u5176\u529F\uFF0C\u9664\u4F60\u4E3A\u5B89\u559C\u5C09\u3002",failureText:"\u4F60\u8D25\u4E86\u4E00\u9635\uFF0C\u9000\u4FDD\u53BF\u57CE\u3002\u529F\u4E0D\u8DB3\u4EE5\u53D9\uFF0C\u53EA\u8BB0\u4E86\u4E2A\u540D\u3002",effects:{success:{fame:6,troops:30,gold:5},failure:{fame:0,troops:-10,hp:-10}},atAge:24},{id:"duyou",title:"\u7763\u90AE\u81F3",narration:"\u8BCF\u4E66\uFF1A\u5176\u6709\u519B\u529F\u4E3A\u957F\u540F\u8005\uFF0C\u5F53\u6C99\u6C70\u4E4B\u3002\u7763\u90AE\u81F3\u5B89\u559C\uFF0C\u5F53\u9063\u4F60\u3002\u4F60\u53BB\u9A7F\u820D\u6C42\u89C1\uFF0C\u7763\u90AE\u79F0\u75BE\u4E0D\u80AF\u89C1\u3002",kind:"moral",historical:"\u5148\u4E3B\u6068\u4E4B\uFF0C\u56E0\u8FD8\u6CBB\uFF0C\u5C06\u540F\u5352\u66F4\u8BE3\u4F20\u820D\uFF0C\u7A81\u5165\u95E8\uFF0C\u8A00\u6211\u88AB\u5E9C\u541B\u5BC6\u6559\u6536\u7763\u90AE\u3002\u9042\u5C31\u5E8A\u7F1A\u4E4B\uFF0C\u5C06\u51FA\u5230\u754C\uFF0C\u81EA\u89E3\u5176\u7EF6\u4EE5\u7CFB\u7763\u90AE\u9888\uFF0C\u7F1A\u4E4B\u8457\u6811\uFF0C\u97AD\u6756\u767E\u4F59\u4E0B\uFF0C\u6B32\u6740\u4E4B\u3002\u7763\u90AE\u6C42\u54C0\uFF0C\u4E43\u91CA\u53BB\u4E4B\u3002",options:[{id:"beat",label:"\u7F1A\u4E4B\u8457\u6811\uFF0C\u6756\u4E8C\u767E\uFF0C\u5F03\u5B98\u4EA1\u547D",historical:!0,effects:{fame:10,trust:6,talent:2,gold:-5},demand:{troops:0},note:"\u4F60\u4E0D\u518D\u6709\u5B98\u8EAB\u3002\u4F46\u5929\u4E0B\u4EBA\u77E5\u9053\u5218\u5907\u4E0D\u53D7\u8FB1\u3002"},{id:"endure",label:"\u5FCD\u4E0B\uFF0C\u4EA4\u5370\u79BB\u53BB",historical:!1,effects:{fame:-6,trust:-4,talent:0},note:"\u4F60\u4FDD\u4F4F\u4E86\u6027\u547D\u548C\u6E05\u767D\uFF0C\u4E5F\u4FDD\u4F4F\u4E86\u300C\u53EF\u4EE5\u88AB\u4EBA\u9063\u6563\u300D\u7684\u540D\u58F0\u3002"},{id:"bribe",label:"\u8D3F\u8D42\u7763\u90AE\uFF0C\u6C42\u7559\u4EFB",historical:!1,effects:{fame:-8,trust:-3,talent:0,gold:-25},note:"\u5B98\u4F4D\u4FDD\u4F4F\u4E86\u3002\u8FD9\u4E8B\u82E5\u4F20\u51FA\u53BB\uFF0C\u4F60\u4EE5\u540E\u8BF4\u7684\u8BDD\u5C31\u4E0D\u503C\u94B1\u4E86\u3002"},{id:"kill",label:"\u6740\u4E4B",historical:!1,effects:{fame:-4,trust:2,talent:0,gold:-10},note:"\u53F2\u8F7D\u4F60\u6B32\u6740\u4E4B\u800C\u672A\u6740\u3002\u6740\u4E86\uFF0C\u4F60\u5C31\u662F\u53E6\u4E00\u4E2A\u8463\u5353\u3002"}],atAge:25},{id:"after",title:"\u4EA1\u547D",narration:"\u5F03\u5B98\u4E4B\u540E\uFF0C\u4F60\u5E26\u7740\u5173\u7FBD\u3001\u5F20\u98DE\u4EA1\u547D\u5954\u9003\u3002",kind:"ability",attribute:"zhi",difficulty:45,historical:"\u540E\u4E3A\u9AD8\u5510\u4EE4\uFF0C\u4E3A\u8D3C\u6240\u7834\uFF0C\u5F80\u5954\u516C\u5B59\u74D2\u3002",successText:"\u4F60\u907F\u5F00\u4E86\u8FFD\u6355\uFF0C\u8F97\u8F6C\u6295\u5230\u516C\u5B59\u74D2\u5904\u3002\u4ED6\u4E0A\u8868\u4E3E\u4F60\u4E3A\u522B\u90E8\u53F8\u9A6C\u3002",failureText:"\u4F60\u88AB\u5730\u65B9\u6355\u540F\u62FF\u4F4F\uFF0C\u5173\u62BC\u6708\u4F59\uFF0C\u9760\u65E7\u8BC6\u758F\u901A\u624D\u8131\u8EAB\u3002",effects:{success:{fame:2,troops:15},failure:{fame:-2,hp:-15,gold:-5}},atAge:26}]},{id:"pingyuan",name:"\u7B2C\u4E09\u5E55\xB7\u5E73\u539F",from:191,to:193,ageFrom:30,ageTo:32,place:"pingyuan",placeName:"\u5E73\u539F",summary:"\u4E3A\u5E73\u539F\u76F8\u3002\u5916\u5FA1\u5BC7\uFF0C\u5185\u5C6F\u7CAE\uFF0C\u4E0E\u65E0\u5B98\u804C\u8005\u540C\u5E2D\u3002\u5218\u5E73\u9063\u523A\u5BA2\uFF0C\u523A\u5BA2\u4E0D\u5FCD\u523A\u3002",scenes:[{id:"govern",title:"\u6CBB\u5E73\u539F",narration:"\u4F60\u5728\u5E73\u539F\uFF0C\u5916\u5FA1\u8D3C\u5BC7\uFF0C\u5185\u5219\u5C6F\u7CAE\uFF0C\u5206\u53D1\u7ED9\u767E\u59D3\u3002\u58EB\u4E4B\u4E0B\u8005\uFF0C\u5FC5\u4E0E\u540C\u5E2D\u800C\u5750\uFF0C\u540C\u7C0B\u800C\u98DF\u3002",kind:"ability",attribute:"zheng",difficulty:50,historical:"\u7531\u662F\u5F97\u4F17\u5FC3\u3002",successText:"\u4E00\u90E1\u5F52\u5FC3\u3002\u65E0\u5B98\u804C\u7684\u4EBA\u4E5F\u80FD\u4E0E\u4F60\u540C\u5E2D\uFF0C\u5E73\u539F\u4EBA\u8BF4\u4ECE\u672A\u89C1\u8FC7\u8FD9\u6837\u7684\u76F8\u3002",failureText:"\u7CAE\u6CA1\u5C6F\u4F4F\u3002\u8C6A\u5F3A\u622A\u4E86\u4F60\u7684\u7CAE\u9053\uFF0C\u767E\u59D3\u5F00\u59CB\u5728\u591C\u91CC\u79BB\u5F00\u3002",effects:{success:{fame:8,trust:5,grain:20},failure:{fame:-2,grain:-10}}},{id:"assassin",title:"\u523A\u5BA2",narration:"\u5E73\u539F\u4EBA\u5218\u5E73\u7D20\u8F7B\u4F60\uFF0C\u803B\u4E3A\u4E4B\u4E0B\uFF0C\u9063\u5BA2\u523A\u4F60\u3002\u4F60\u4E0D\u77E5\u5176\u4E3A\u523A\u5BA2\uFF0C\u5F85\u4E4B\u751A\u539A\u3002",kind:"moral",historical:"\u5BA2\u4E0D\u5FCD\u523A\uFF0C\u8BED\u4E4B\u800C\u53BB\u3002\u5176\u5F97\u4EBA\u5FC3\u5982\u6B64\u3002",options:[{id:"treat_well",label:"\u5F85\u4E4B\u5982\u5E38\u5BA2",historical:!0,effects:{fame:8,trust:6,talent:1},note:"\u523A\u5BA2\u544A\u4EE5\u5B9E\u60C5\u800C\u53BB\u3002\u6B64\u4E8B\u4F20\u5F00\uFF0C\u5929\u4E0B\u7686\u77E5\u5E73\u539F\u76F8\u5F85\u4EBA\u5982\u6B64\u3002"},{id:"guard",label:"\u5FC3\u5B58\u6212\u5907\uFF0C\u6697\u5E03\u62A4\u536B",historical:!1,effects:{fame:0,trust:1,talent:0},note:"\u4F60\u6D3B\u7740\uFF0C\u4F46\u4EC0\u4E48\u4E5F\u6CA1\u53D1\u751F\u2014\u2014\u4E5F\u6CA1\u4EBA\u8BB0\u4F4F\u3002"},{id:"suspect",label:"\u7591\u800C\u6740\u4E4B",historical:!1,effects:{fame:-12,trust:-8,talent:0},note:"\u4F60\u6740\u4E86\u4E00\u4E2A\u65E0\u8F9C\u7684\u4EBA\u3002\u5E73\u539F\u4ECE\u6B64\u6015\u4F60\uFF0C\u4E0D\u518D\u4EB2\u4F60\u3002"}]},{id:"kongru",title:"\u5B54\u878D\u6C42\u6551",narration:"\u9EC4\u5DFE\u4F59\u515A\u7BA1\u4EA5\u56F4\u5317\u6D77\uFF0C\u5B54\u878D\u4F7F\u592A\u53F2\u6148\u7A81\u56F4\u6C42\u6551\u4E8E\u4F60\u3002\u592A\u53F2\u6148\u8BF4\uFF1A\u5B54\u5317\u6D77\u77E5\u4E16\u95F4\u6709\u5218\u5907\u90AA\uFF1F",kind:"ability",attribute:"mei",difficulty:60,historical:"\u5148\u4E3B\u60CA\u66F0\uFF1A\u5B54\u5317\u6D77\u77E5\u4E16\u95F4\u6709\u5218\u5907\u90AA\uFF01\u5373\u9063\u7CBE\u5175\u4E09\u5343\u968F\u592A\u53F2\u6148\u6551\u4E4B\u3002\u8D3C\u95FB\u5175\u81F3\uFF0C\u6563\u8D70\u3002",successText:"\u4F60\u9063\u4E09\u5343\u4EBA\u8D74\u5317\u6D77\uFF0C\u56F4\u89E3\u3002\u5B54\u878D\u8BB0\u4F4F\u4F60\u7684\u540D\u5B57\uFF0C\u5929\u4E0B\u4E5F\u8BB0\u4F4F\u4E86\u3002",failureText:"\u4F60\u53EA\u6D3E\u4E86\u4E94\u767E\u4EBA\uFF0C\u676F\u6C34\u8F66\u85AA\u3002\u5317\u6D77\u6CA1\u89E3\u56F4\uFF0C\u4F60\u4E5F\u8D54\u4E86\u4E00\u652F\u4EBA\u9A6C\u3002",effects:{success:{fame:12,troops:-30,talent:2},failure:{fame:-2,troops:-20}}}]},{id:"xuzhou",name:"\u7B2C\u56DB\u5E55\xB7\u5F90\u5DDE",from:194,to:196,ageFrom:33,ageTo:35,place:"xiapi",placeName:"\u4E0B\u90B3",summary:"\u9676\u8C26\u4E34\u7EC8\uFF1A\u975E\u5218\u5907\u4E0D\u80FD\u5B89\u6B64\u5DDE\u3002\u9886\u5F90\u5DDE\u7267\u3002\u5415\u5E03\u6765\u6295\uFF0C\u5584\u5F85\u4E4B\u3002\u5415\u5E03\u4E58\u865A\u593A\u4E0B\u90B3\u3002",scenes:[{id:"inherit",title:"\u9676\u8C26\u8BA9\u5DDE",narration:"\u9676\u8C26\u75C5\u7B03\uFF0C\u8C13\u522B\u9A7E\u9E8B\u7AFA\u66F0\uFF1A\u975E\u5218\u5907\u4E0D\u80FD\u5B89\u6B64\u5DDE\u4E5F\u3002\u8C26\u6B7B\uFF0C\u7AFA\u7387\u5DDE\u4EBA\u8FCE\u4F60\u3002",kind:"moral",historical:"\u5148\u4E3B\u672A\u6562\u5F53\u3002\u9648\u767B\u3001\u5B54\u878D\u529D\u4E4B\uFF0C\u9042\u9886\u5F90\u5DDE\u3002",options:[{id:"accept",label:"\u9886\u5F90\u5DDE\u7267",historical:!0,effects:{fame:10,trust:4,talent:3,troops:100,gold:40},note:"\u4F60\u6709\u4E86\u7B2C\u4E00\u5757\u771F\u6B63\u7684\u57FA\u4E1A\u3002\u4E5F\u4ECE\u6B64\u6210\u4E86\u522B\u4EBA\u773C\u91CC\u7684\u9776\u5B50\u3002"},{id:"refuse",label:"\u8BA9\u4E0E\u8881\u672F",historical:!1,effects:{fame:4,trust:2,talent:0},note:"\u8881\u672F\u9A84\u7EB5\uFF0C\u5F90\u5DDE\u5FC5\u4E71\u3002\u4F60\u4FDD\u4F4F\u4E86\u540D\u58F0\uFF0C\u4E5F\u5931\u53BB\u4E86\u673A\u4F1A\u3002"},{id:"conditional",label:"\u53D7\u4E4B\uFF0C\u4F46\u5148\u7EA6\u6CD5\u4E09\u7AE0\u4E8E\u5DDE\u4EBA",historical:!1,effects:{fame:6,trust:8,talent:2,troops:80,gold:30},note:"\u4F60\u63A5\u5F97\u6BD4\u522B\u4EBA\u6162\u4E00\u6B65\uFF0C\u4F46\u63A5\u5F97\u66F4\u7A33\u3002"}]},{id:"lvbu_arrives",title:"\u5415\u5E03\u6765\u6295",narration:"\u5415\u5E03\u4E3A\u66F9\u64CD\u6240\u8D25\uFF0C\u6765\u6295\u3002\u4ED6\u8BF7\u4F60\u4E8E\u5E10\u4E2D\u5750\uFF0C\u4EE4\u59BB\u5973\u62DC\u4F60\uFF0C\u914C\u9152\u996E\u98DF\uFF0C\u547C\u4F60\u4E3A\u5F1F\u3002",kind:"moral",historical:"\u5148\u4E3B\u89C1\u5E03\u8BED\u8A00\u65E0\u5E38\uFF0C\u5916\u7136\u4E4B\u800C\u5185\u4E0D\u8BF4\u3002\u4ECD\u4F7F\u5E03\u5C6F\u5C0F\u6C9B\u3002",options:[{id:"host",label:"\u5584\u5F85\u4E4B\uFF0C\u4F7F\u5C6F\u5C0F\u6C9B",historical:!0,effects:{fame:6,trust:2,talent:0},note:"\u4F60\u517B\u4E86\u4E00\u5934\u72FC\u3002\u5929\u4E0B\u4EBA\u8BF4\u4F60\u539A\u9053\u3002"},{id:"refuse_host",label:"\u62D2\u4E4B\u95E8\u5916",historical:!1,effects:{fame:-4,trust:1,talent:0},note:"\u5415\u5E03\u6068\u4F60\u3002\u4F46\u4ED6\u4E5F\u6CA1\u6709\u7406\u7531\u5728\u4E0B\u90B3\u7A7A\u865A\u65F6\u6345\u4F60\u4E00\u5200\u3002"},{id:"kill_lvbu",label:"\u8BF1\u800C\u6740\u4E4B",historical:!1,effects:{fame:-14,trust:-6,talent:0},note:"\u4F60\u6740\u4E86\u5929\u4E0B\u7B2C\u4E00\u52C7\u5C06\uFF0C\u4E5F\u6740\u4E86\u300C\u4EC1\u4E49\u300D\u8FD9\u4E24\u4E2A\u5B57\u3002"}]},{id:"betrayal",title:"\u4E0B\u90B3\u4E4B\u53D8",narration:"\u4F60\u4E0E\u8881\u672F\u76F8\u6301\u4E8E\u76F1\u7719\u3001\u6DEE\u9634\u3002\u5415\u5E03\u4E58\u4E0B\u90B3\u7A7A\u865A\uFF0C\u4E0E\u66F9\u8C79\u8054\u7CFB\uFF0C\u53D1\u52A8\u5175\u53D8\uFF0C\u8D76\u8D70\u5F20\u98DE\uFF0C\u63B3\u4F60\u59BB\u5B50\u3002",kind:"ability",attribute:"zhi",difficulty:68,historical:"\u5148\u4E3B\u8F6C\u6218\u6D77\u897F\uFF0C\u52BF\u5B64\u529B\u7AED\uFF0C\u4E43\u5411\u5415\u5E03\u6C42\u548C\u3002\u5E03\u8FD8\u5176\u59BB\u5B50\u3002",successText:"\u4F60\u56DE\u519B\u53CA\u65F6\uFF0C\u4FDD\u4F4F\u4E86\u4E0B\u90B3\u7684\u4E00\u534A\u3002\u5415\u5E03\u9000\u5C6F\u5C0F\u6C9B\uFF0C\u6682\u65F6\u76F8\u5B89\u3002",failureText:"\u4E0B\u90B3\u4E22\u4E86\uFF0C\u59BB\u5B50\u88AB\u63B3\u3002\u4F60\u8F6C\u6218\u6D77\u897F\uFF0C\u519B\u4E2D\u7EDD\u7CAE\uFF0C\u51FA\u73B0\u4E86\u4EBA\u76F8\u98DF\u3002",effects:{success:{fame:2,troops:-40},failure:{fame:-4,troops:-70,gold:-20,hp:-20}}}]},{id:"xudu",name:"\u7B2C\u4E94\u5E55\xB7\u8BB8\u90FD",from:197,to:201,ageFrom:36,ageTo:40,place:"xudu",placeName:"\u8BB8\u90FD",summary:"\u5F52\u66F9\u64CD\uFF0C\u4E3A\u5DE6\u5C06\u519B\u3002\u716E\u9152\u8BBA\u82F1\u96C4\uFF0C\u5931\u7BB8\u501F\u96F7\u3002\u8863\u5E26\u8BCF\u3002\u6295\u8881\u7ECD\uFF0C\u6295\u5218\u8868\u3002",scenes:[{id:"join_caocao",title:"\u5F52\u66F9",narration:"\u5415\u5E03\u518D\u653B\uFF0C\u4F60\u5175\u8D25\uFF0C\u59BB\u5B50\u590D\u88AB\u63B3\u3002\u8D70\u6295\u65E0\u8DEF\uFF0C\u53EA\u5F97\u5F52\u987A\u66F9\u64CD\u3002\u4ED6\u539A\u5F85\u4F60\uFF0C\u4EE5\u4E3A\u8C6B\u5DDE\u7267\u3001\u5DE6\u5C06\u519B\uFF0C\u51FA\u5219\u540C\u8206\uFF0C\u5750\u5219\u540C\u5E2D\u3002",kind:"moral",historical:"\u7A0B\u6631\u529D\u66F9\u64CD\uFF1A\u89C2\u5218\u5907\u6709\u96C4\u624D\u800C\u751A\u5F97\u4F17\u5FC3\uFF0C\u7EC8\u4E0D\u4E3A\u4EBA\u4E0B\uFF0C\u4E0D\u5982\u65E9\u56FE\u4E4B\u3002\u64CD\u66F0\uFF1A\u65B9\u4ECA\u6536\u82F1\u96C4\u65F6\u4E5F\uFF0C\u6740\u4E00\u4EBA\u800C\u5931\u5929\u4E0B\u4E4B\u5FC3\uFF0C\u4E0D\u53EF\u3002",options:[{id:"submit",label:"\u5C48\u8EAB\u4E8B\u4E4B\uFF0C\u5F90\u56FE\u540E\u8BA1",historical:!0,effects:{fame:2,trust:2,talent:1,troops:30},note:"\u4F60\u5728\u8BB8\u90FD\u79CD\u83DC\u3002\u5929\u4E0B\u4EBA\u4EE5\u4E3A\u4F60\u8BA4\u4E86\u3002"},{id:"flee",label:"\u4E0D\u53D7\u5176\u5B98\uFF0C\u4EA1\u8D70",historical:!1,effects:{fame:-2,trust:1,talent:0},note:"\u4F60\u4FDD\u4F4F\u4E86\u9AA8\u6C14\uFF0C\u4E5F\u5931\u53BB\u4E86\u552F\u4E00\u4E00\u6B21\u63A5\u8FD1\u4E2D\u67A2\u7684\u673A\u4F1A\u3002"},{id:"plot_early",label:"\u8868\u9762\u5F52\u987A\uFF0C\u5373\u523B\u8054\u7ED3\u53CD\u66F9\u4E4B\u4EBA",historical:!1,effects:{fame:4,trust:3,talent:2},note:"\u4F60\u63D0\u524D\u4E24\u5E74\u8D70\u4E0A\u8863\u5E26\u8BCF\u90A3\u6761\u8DEF\u3002\u98CE\u9669\u63D0\u524D\uFF0C\u6536\u76CA\u4E5F\u63D0\u524D\u3002"}]},{id:"hero_wine",title:"\u716E\u9152\u8BBA\u82F1\u96C4",narration:"\u66F9\u64CD\u4ECE\u5BB9\u8C13\u4F60\u66F0\uFF1A\u4ECA\u5929\u4E0B\u82F1\u96C4\uFF0C\u552F\u4F7F\u541B\u4E0E\u64CD\u8033\u3002\u672C\u521D\u4E4B\u5F92\uFF0C\u4E0D\u8DB3\u6570\u4E5F\u3002",kind:"ability",attribute:"mei",difficulty:65,historical:"\u5148\u4E3B\u65B9\u98DF\uFF0C\u5931\u5315\u7BB8\u3002\u4F1A\u5929\u96F7\u9707\uFF0C\u5148\u4E3B\u66F0\uFF1A\u5723\u4EBA\u4E91\u300C\u8FC5\u96F7\u98CE\u70C8\u5FC5\u53D8\u300D\uFF0C\u826F\u6709\u4EE5\u4E5F\u3002\u4E00\u9707\u4E4B\u5A01\uFF0C\u4E43\u53EF\u81F3\u4E8E\u6B64\u4E5F\u3002",successText:"\u4F60\u501F\u96F7\u63A9\u8FC7\u3002\u66F9\u64CD\u7B11\u4E86\uFF0C\u4ECE\u6B64\u4E0D\u518D\u8BD5\u4F60\u3002\u4ED6\u77E5\u9053\u4F60\u6015\u96F7\uFF0C\u4E0D\u77E5\u9053\u4F60\u6015\u4ED6\u3002",failureText:"\u4F60\u7684\u624B\u6296\u88AB\u770B\u5728\u773C\u91CC\u3002\u66F9\u64CD\u6CA1\u8BF4\u4EC0\u4E48\uFF0C\u4F46\u4ECE\u90A3\u5929\u8D77\uFF0C\u4F60\u95E8\u53E3\u591A\u4E86\u51E0\u4E2A\u4EBA\u3002",effects:{success:{fame:3,trust:0},failure:{fame:-3,hp:-5}}},{id:"edict",title:"\u8863\u5E26\u8BCF",narration:"\u8463\u627F\u79F0\u53D7\u732E\u5E1D\u8863\u5E26\u4E2D\u5BC6\u8BCF\uFF0C\u8C0B\u8BDB\u66F9\u64CD\uFF0C\u9080\u4F60\u540C\u8C0B\u3002",kind:"moral",historical:"\u5148\u4E3B\u672A\u53D1\u3002\u540E\u4E8B\u53D1\uFF0C\u8463\u627F\u7B49\u7686\u4F0F\u8BDB\u3002",options:[{id:"join",label:"\u4E0E\u8463\u627F\u540C\u8C0B",historical:!0,effects:{fame:8,trust:4,talent:1},note:"\u4F60\u628A\u547D\u62BC\u5728\u4E86\u4E00\u5C01\u771F\u5047\u96BE\u8FA8\u7684\u8BCF\u4E66\u4E0A\u3002"},{id:"decline",label:"\u5A49\u62D2\uFF0C\u53EA\u4F5C\u4E0D\u77E5",historical:!1,effects:{fame:-4,trust:-2,talent:0},note:"\u4F60\u6D3B\u5F97\u66F4\u4E45\u3002\u4F46\u300C\u6C49\u8D3C\u4E0D\u4E24\u7ACB\u300D\u8FD9\u53E5\u8BDD\uFF0C\u4F60\u4EE5\u540E\u8BF4\u5F97\u6CA1\u90A3\u4E48\u7406\u76F4\u6C14\u58EE\u3002"},{id:"report",label:"\u544A\u53D1\u4EE5\u6C42\u81EA\u4FDD",historical:!1,effects:{fame:-20,trust:-12,talent:0,gold:30},note:"\u66F9\u64CD\u8D4F\u4E86\u4F60\u3002\u5929\u4E0B\u4EBA\u4E5F\u4ECE\u6B64\u77E5\u9053\u4E86\u4F60\u662F\u4EC0\u4E48\u4EBA\u3002"}]},{id:"yuan_shao",title:"\u6295\u8881\u7ECD",narration:"\u4F60\u6740\u5F90\u5DDE\u523A\u53F2\u8F66\u80C4\uFF0C\u4E0E\u8881\u7ECD\u8FDE\u5175\u3002\u66F9\u64CD\u4EB2\u5F81\uFF0C\u4F60\u5927\u8D25\uFF0C\u59BB\u5B50\u88AB\u63B3\uFF0C\u5173\u7FBD\u88AB\u64D2\u3002\u4F60\u8D70\u9752\u5DDE\uFF0C\u8881\u8C2D\u8FCE\u4F60\uFF0C\u8881\u7ECD\u51FA\u90BA\u57CE\u4E8C\u767E\u91CC\u76F8\u8FCE\u3002",kind:"ability",attribute:"mei",difficulty:55,historical:"\u7ECD\u4EE5\u4E3A\u8D24\uFF0C\u5F85\u4E4B\u751A\u539A\u3002\u4F60\u5F85\u4E86\u4E00\u4E2A\u591A\u6708\uFF0C\u4EA1\u6563\u58EB\u5352\u7A0D\u96C6\u3002",successText:"\u8881\u7ECD\u4EE5\u4E0A\u5BBE\u4E4B\u793C\u5F85\u4F60\uFF0C\u6563\u5352\u6E10\u5F52\u3002\u4F60\u5728\u4ED6\u5E10\u4E0B\u91CD\u65B0\u6709\u4E86\u51E0\u5343\u4EBA\u3002",failureText:"\u8881\u7ECD\u5F85\u4F60\u5BA2\u6C14\uFF0C\u5374\u4E0D\u7ED9\u4F60\u5175\u3002\u4F60\u7684\u65E7\u90E8\u6563\u4E86\u5927\u534A\uFF0C\u6295\u4E86\u522B\u5904\u3002",effects:{success:{troops:60,fame:2},failure:{troops:10,fame:-2}}}]},{id:"xinye",name:"\u7B2C\u516D\u5E55\xB7\u65B0\u91CE",from:202,to:207,ageFrom:41,ageTo:46,place:"xinye",placeName:"\u65B0\u91CE",summary:"\u5C6F\u65B0\u91CE\uFF0C\u5B88\u8346\u5DDE\u5317\u95E8\u3002\u535A\u671B\u5761\u8BBE\u4F0F\u7834\u590F\u4FAF\u60C7\u3002\u56DB\u5341\u4E03\u5C81\uFF0C\u4E09\u987E\u8305\u5E90\u3002",scenes:[{id:"bowang",title:"\u535A\u671B\u5761",narration:"\u5218\u8868\u4F7F\u4F60\u5317\u4FB5\uFF0C\u590F\u4FAF\u60C7\u3001\u4E8E\u7981\u3001\u674E\u5178\u5357\u4E0B\u3002\u4F60\u8BBE\u4F0F\uFF0C\u70E7\u5C6F\u4F2A\u9041\u3002",kind:"ability",attribute:"zhi",difficulty:60,historical:"\u60C7\u7B49\u8FFD\u4E4B\uFF0C\u4E3A\u4F0F\u5175\u6240\u7834\u3002",successText:"\u590F\u4FAF\u60C7\u5927\u8D25\u800C\u9000\u3002\u8346\u5DDE\u4EBA\u7B2C\u4E00\u6B21\u89C9\u5F97\uFF0C\u8FD9\u4E2A\u5BA2\u5C06\u4E0D\u53EA\u662F\u4E2A\u539A\u9053\u4EBA\u3002",failureText:"\u4F0F\u6CA1\u8BBE\u6210\uFF0C\u53CD\u88AB\u590F\u4FAF\u60C7\u54AC\u4F4F\uFF0C\u6298\u4E86\u4E00\u9635\u3002\u5218\u8868\u4ECE\u6B64\u66F4\u7591\u4F60\u3002",effects:{success:{fame:8,troops:20,trust:3},failure:{fame:-3,troops:-25}}},{id:"sigh",title:"\u9AC0\u8089\u590D\u751F",narration:"\u4F60\u5728\u8346\u5DDE\u6570\u5E74\uFF0C\u4E45\u4E0D\u9A91\u6218\u3002\u4E00\u65E5\u5982\u5395\uFF0C\u89C1\u9AC0\u91CC\u8089\u751F\uFF0C\u6168\u7136\u6D41\u6D95\u3002",kind:"moral",historical:"\u5148\u4E3B\u66F0\uFF1A\u543E\u5E38\u8EAB\u4E0D\u79BB\u978D\uFF0C\u9AC0\u8089\u7686\u6D88\u3002\u4ECA\u4E0D\u590D\u9A91\uFF0C\u9AC0\u91CC\u8089\u751F\u3002\u65E5\u6708\u82E5\u9A70\uFF0C\u8001\u5C06\u81F3\u77E3\uFF0C\u800C\u529F\u4E1A\u4E0D\u5EFA\uFF0C\u662F\u4EE5\u60B2\u8033\u3002",options:[{id:"weep",label:"\u5BF9\u5218\u8868\u8BF4\u51FA\u771F\u5FC3\u8BDD",historical:!0,effects:{fame:3,trust:4,talent:0},note:"\u5218\u8868\u542C\u4E86\uFF0C\u656C\u4F60\uFF0C\u4E5F\u66F4\u9632\u4F60\u3002"},{id:"hide",label:"\u63A9\u9970\u8FC7\u53BB",historical:!1,effects:{fame:0,trust:0,talent:0},note:"\u6CA1\u4EBA\u77E5\u9053\u4F60\u5728\u60F3\u4EC0\u4E48\u3002\u8FD9\u5728\u4E00\u4E2A\u5BC4\u4EBA\u7BF1\u4E0B\u7684\u4EBA\u8EAB\u4E0A\uFF0C\u662F\u597D\u4E8B\u3002"},{id:"raise_troops",label:"\u6697\u4E2D\u52DF\u5175\uFF0C\u4E0D\u7B49\u5218\u8868",historical:!1,effects:{fame:-3,trust:1,talent:1,troops:40,gold:-20},note:"\u4F60\u5077\u5077\u6512\u8D77\u4E86\u81EA\u5DF1\u7684\u5175\u3002\u5218\u8868\u82E5\u77E5\u9053\uFF0C\u4F60\u5C31\u662F\u4E0B\u4E00\u4E2A\u5415\u5E03\u3002"}]},{id:"three_visits",title:"\u4E09\u987E\u8305\u5E90",narration:"\u5F90\u5EB6\u8350\u8BF8\u845B\u4EAE\uFF0C\u4E14\u66F0\uFF1A\u6B64\u4EBA\u53EF\u5C31\u89C1\uFF0C\u4E0D\u53EF\u5C48\u81F4\u4E5F\u3002\u5C06\u519B\u5B9C\u6789\u9A7E\u987E\u4E4B\u3002",kind:"moral",historical:"\u5148\u4E3B\u9042\u8BE3\u4EAE\uFF0C\u51E1\u4E09\u5F80\uFF0C\u4E43\u89C1\u3002",options:[{id:"three_times",label:"\u4E09\u5F80\uFF0C\u4E43\u89C1",historical:!0,effects:{fame:10,trust:8,talent:10},note:"\u9686\u4E2D\u5BF9\u3002\u4F60\u4ECE\u6B64\u6709\u4E86\u65B9\u5411\u3002"},{id:"once",label:"\u4E00\u5F80\uFF0C\u4E0D\u89C1\u5219\u7F62",historical:!1,effects:{fame:-2,trust:0,talent:0},note:"\u4F60\u6CA1\u89C1\u5230\u4ED6\u3002\u53F2\u4E66\u91CC\u90A3\u4E2A\u300C\u4E09\u987E\u300D\uFF0C\u6CA1\u6709\u4E86\u3002"},{id:"summon",label:"\u9063\u4F7F\u53EC\u4E4B",historical:!1,effects:{fame:-6,trust:-2,talent:0},note:"\u5F90\u5EB6\u8BF4\u5F97\u6E05\u695A\uFF1A\u4E0D\u53EF\u5C48\u81F4\u3002\u4F60\u504F\u504F\u5C48\u81F4\u4E86\u4ED6\u3002"}]}]},{id:"changban",name:"\u7B2C\u4E03\u5E55\xB7\u957F\u5742",from:208,to:208,ageFrom:47,ageTo:47,place:"dangyang",placeName:"\u5F53\u9633",summary:"\u66F9\u64CD\u5357\u4E0B\uFF0C\u5218\u742E\u964D\u3002\u4F60\u643A\u6C11\u6E21\u6C5F\uFF0C\u65E5\u884C\u5341\u4F59\u91CC\u3002\u957F\u5742\u5761\uFF0C\u5F03\u59BB\u5B50\uFF0C\u4E0E\u6570\u5341\u9A91\u8D70\u3002",scenes:[{id:"the_choice",title:"\u643A\u6C11\u6E21\u6C5F",narration:"\u4F60\u8FC7\u8944\u9633\uFF0C\u8346\u5DDE\u4EBA\u591A\u5F52\u4F60\u3002\u81F3\u5F53\u9633\uFF0C\u4F17\u5341\u4F59\u4E07\uFF0C\u8F8E\u91CD\u6570\u5343\u4E24\uFF0C\u65E5\u884C\u5341\u4F59\u91CC\u3002\u6216\u8C13\u5148\u4E3B\u66F0\uFF1A\u5B9C\u901F\u884C\u4FDD\u6C5F\u9675\u3002\u4ECA\u867D\u62E5\u5927\u4F17\uFF0C\u88AB\u7532\u8005\u5C11\uFF0C\u82E5\u66F9\u516C\u5175\u81F3\uFF0C\u4F55\u4EE5\u62D2\u4E4B\uFF1F",kind:"moral",historical:"\u5148\u4E3B\u66F0\uFF1A\u592B\u6D4E\u5927\u4E8B\u5FC5\u4EE5\u4EBA\u4E3A\u672C\uFF0C\u4ECA\u4EBA\u5F52\u543E\uFF0C\u543E\u4F55\u5FCD\u5F03\u53BB\uFF01",options:[{id:"stay_with_people",label:"\u643A\u6C11\u540C\u884C\uFF0C\u65E5\u884C\u5341\u4F59\u91CC",historical:!0,effects:{fame:15,trust:10,talent:2,troops:-80,gold:-20,hp:-10},note:"\u4F60\u5FC5\u88AB\u8FFD\u4E0A\u3002\u519B\u961F\u4F1A\u6563\u3002\u4F46\u4F60\u4ECE\u6B64\u6709\u4E86\u300C\u4EE5\u4EBA\u4E3A\u672C\u300D\u8FD9\u56DB\u4E2A\u5B57\u3002"},{id:"abandon",label:"\u5F03\u6C11\u901F\u8D70\uFF0C\u4FDD\u6C5F\u9675",historical:!1,effects:{fame:-12,trust:-6,talent:0,troops:20},note:"\u519B\u961F\u4FDD\u5168\u3002\u5341\u4F59\u4E07\u4EBA\u843D\u5728\u540E\u9762\u3002\u8FD9\u4EF6\u4E8B\u4F1A\u88AB\u8BB0\u4F4F\uFF0C\u800C\u4E14\u4F1A\u88AB\u53CD\u590D\u63D0\u8D77\u3002"},{id:"split",label:"\u5206\u5175\uFF1A\u5173\u7FBD\u7387\u8239\u5148\u884C\uFF0C\u4F60\u5E26\u5C11\u6570\u4EBA\u6BBF\u540E",historical:!1,effects:{fame:6,trust:5,talent:1,troops:-40,hp:-15},note:"\u4E24\u5934\u90FD\u4E0D\u5706\u6EE1\uFF0C\u4F46\u4E24\u5934\u90FD\u6CA1\u4E22\u3002\u53F2\u4E66\u4E0A\u6CA1\u6709\u8FD9\u4E00\u7B14\u3002"}]},{id:"chase",title:"\u957F\u5742\u5761",narration:"\u66F9\u64CD\u5F03\u8F8E\u91CD\uFF0C\u8F7B\u519B\u6025\u884C\uFF0C\u4E00\u65E5\u4E00\u591C\u4E09\u767E\u4F59\u91CC\uFF0C\u53CA\u4E8E\u5F53\u9633\u4E4B\u957F\u5742\u3002",kind:"ability",attribute:"tong",difficulty:75,historical:"\u5148\u4E3B\u5F03\u59BB\u5B50\uFF0C\u4E0E\u8BF8\u845B\u4EAE\u3001\u5F20\u98DE\u3001\u8D75\u4E91\u7B49\u6570\u5341\u9A91\u8D70\u3002\u5F20\u98DE\u5C06\u4E8C\u5341\u9A91\u62D2\u540E\u3002",successText:"\u5F20\u98DE\u636E\u6C34\u65AD\u6865\uFF0C\u778B\u76EE\u6A2A\u77DB\u66F0\uFF1A\u8EAB\u662F\u5F20\u76CA\u5FB7\u4E5F\uFF0C\u53EF\u6765\u5171\u51B3\u6B7B\uFF01\u654C\u7686\u65E0\u6562\u8FD1\u8005\u3002\u4F60\u5F97\u4EE5\u659C\u8D8B\u6C49\u6D25\u3002",failureText:"\u961F\u4F0D\u5F7B\u5E95\u6563\u4E86\u3002\u4F60\u53EA\u5E26\u51FA\u6570\u5341\u9A91\uFF0C\u8F8E\u91CD\u3001\u767E\u59D3\u3001\u59BB\u5B50\u5C3D\u843D\u66F9\u519B\u4E4B\u624B\u3002",effects:{success:{fame:4,troops:-30,hp:-10},failure:{fame:0,troops:-60,gold:-30,hp:-25}}}]}]};function _t(e){let t=e>>>0;return t===0&&(t=2654435769),t^=t<<13,t>>>=0,t^=t>>>17,t^=t<<5,t>>>=0,t}function J(e,t){let n=_t(e);return{value:n%t+1,state:n}}function He(e){return J(e,100)}function Ke(e,t){if(!Array.isArray(t)||t.length===0)return{value:void 0,state:e};let n=J(e,t.length);return{value:t[n.value-1],state:n.state}}function Je(e){let t=2166136261,n=String(e);for(let r=0;r<n.length;r+=1)t^=n.charCodeAt(r),t=Math.imul(t,16777619)>>>0;return t===0?2654435769:t}var Ve=["wu","tong","zhi","zheng","mei"];var We={trivial:20,easy:35,normal:50,hard:65,severe:80,desperate:92},It=10,Ot=95,Ae=20,O={CRITICAL_SUCCESS:"critical_success",SUCCESS:"success",PARTIAL:"partial",FAILURE:"failure",CRITICAL_FAILURE:"critical_failure"},jn={[O.CRITICAL_SUCCESS]:2,[O.SUCCESS]:1,[O.PARTIAL]:0,[O.FAILURE]:-1,[O.CRITICAL_FAILURE]:-2};function we(e,t){let n=Number.isFinite(t)?t:We.normal;if(!Number.isFinite(e))return n;let r=Math.round(e);return Math.min(Ot,Math.max(It,r))}function Ee(e,t){return typeof e=="string"&&Ve.includes(e)?e:Ve.includes(t)?t:"mei"}function Ct(e){return e>=Ae?O.CRITICAL_SUCCESS:e>=0?O.SUCCESS:e>-Ae?O.PARTIAL:e>-2*Ae?O.FAILURE:O.CRITICAL_FAILURE}function Lt(e){if(!Array.isArray(e))return 0;let t=0;for(let n of e){let r=n==null?void 0:n.value;Number.isFinite(r)&&(t+=Math.trunc(r))}return t}function Xe(e){var c;let t=Ee(e.attribute,"mei"),n=we(e.difficulty,We.normal),r=(c=e.attrs)!=null?c:{},o=Number(r[t]),i=Number.isFinite(o)?Math.trunc(o):0,a=Array.isArray(e.modifiers)?e.modifiers:[],s=Lt(a),f=He(e.state),u=f.value+i+s,l=u-n;return{outcome:Ct(l),margin:l,roll:f.value,total:u,difficulty:n,attribute:t,attributeValue:i,modifierTotal:s,modifiers:a,state:f.state}}var Qe=["fame","trust","talent","gold","grain","troops","hp"];function jt(e){let t={};for(let n of Qe){let r=e==null?void 0:e[n];t[n]=Number.isFinite(r)?Math.trunc(r):0}return t}var be=["fame","trust","talent"],Se=["gold","grain","troops","hp"];function fe(e,t,n=Qe){let r=jt(t);for(let o of n){let i=r[o];if(i===0)continue;let s=(Number.isFinite(e[o])?e[o]:0)+i;be.includes(o)||o==="hp"?e[o]=Math.min(100,Math.max(0,s)):e[o]=Math.max(0,s)}return e}function ye(e){let t=e==null?void 0:e.drift;return Number.isFinite(t)?Math.min(100,Math.max(0,t)):0}function Ut(e){let t=Math.min(30,Math.round(ye({drift:e})*.35));return{value:-t,raw:t,reason:t===0?"":`\u5929\u4E0B\u4FA7\u76EE\uFF08\u52BF ${t}\uFF09`}}function Dt(e,t){return(e==null?void 0:e.freeChoice)===!0?!1:(t==null?void 0:t.historical)!==!0}function Ze(e){var l,c,p,d,b;let t=(l=e.node)!=null?l:{},n=(c=e.branch)!=null?c:{},r=(p=e.state)!=null?p:{},o=(d=e.resources)!=null?d:{},i=[],a=ye(r),s=Dt(t,n);s&&(a+=10,i.push("\u504F\u79BB\u53F2\u8F7D"));let f=(b=n.demand)!=null?b:{},u=0;for(let h of["troops","gold","grain"]){let x=Number(f[h]);if(!Number.isFinite(x)||x<=0)continue;let v=Number(o[h]),w=Number.isFinite(v)?v:0;w<x&&(u+=(x-w)/x)}return u>0&&(a+=Math.round(u*.5*10)/10,i.push(`\u5B9E\u529B\u4E0D\u8DB3\uFF08\u7F3A\u53E3 ${u.toFixed(2)}\uFF09`)),a=Math.min(100,Math.max(0,a)),{drift:a,pressure:Ut(a),departure:s,shortfall:u,reasons:i}}function Te(e){return{drift:Math.max(0,ye(e)-2)}}function et(e){let t=ye({drift:e});return t===0?"\u5929\u4E0B\u672A\u89C9":t<15?"\u7565\u6709\u98CE\u95FB":t<35?"\u4EBA\u591A\u4FA7\u76EE":t<60?"\u56DB\u65B9\u7591\u4E4B":t<85?"\u5929\u4E0B\u5171\u7591":"\u4E3E\u4E16\u7686\u654C"}var Pt=["\u6625","\u590F","\u79CB","\u51AC"],qt=[1,4,7,10];function Bt(e){let t=(e%4+4)%4;return qt[t]}function tt(e){let t=(e%4+4)%4;return Pt[t]}var Gt=161;function Yt(e){return Math.max(0,Math.trunc(e)-Gt)}function nt(e,t=1){let n=Math.max(0,Math.trunc(Number.isFinite(t)?t:1)),r=Number.isFinite(e==null?void 0:e.turn)?e.turn:0,o=Number.isFinite(e==null?void 0:e.year)?e.year:184,i=r+n,a=Math.floor(i/4),s=o+a,f=(i%4+4)%4;return{year:s,month:Bt(f),day:1,turn:f,season:tt(f),age:Yt(s)}}function Me(e){var r,o;let t=Number.isFinite(e==null?void 0:e.year)?e.year:184,n=(o=e==null?void 0:e.season)!=null?o:tt((r=e==null?void 0:e.turn)!=null?r:0);return`${t}\u5E74\xB7${n}`}var Ht=[{from:184,name:"\u4E2D\u5E73",base:184},{from:190,name:"\u521D\u5E73",base:190},{from:194,name:"\u5174\u5E73",base:194},{from:196,name:"\u5EFA\u5B89",base:196}];function ke(e){let t=null;for(let r of Ht)e>=r.from&&(t=r);if(t===null)return"";let n=e-t.base+1;return n===1?`${t.name}\u5143\u5E74`:`${t.name}${Kt(n)}\u5E74`}var xe=["\u96F6","\u4E00","\u4E8C","\u4E09","\u56DB","\u4E94","\u516D","\u4E03","\u516B","\u4E5D"];function Kt(e){let t=Math.trunc(e);if(!Number.isFinite(t)||t<0)return"\u3007";if(t<10)return xe[t];if(t<20)return`\u5341${t%10===0?"":xe[t%10]}`;if(t<100){let n=Math.floor(t/10),r=t%10;return`${xe[n]}\u5341${r===0?"":xe[r]}`}return String(t)}var Jt=["calm","wary","warm","cold","hostile","calculating"],Vt={kindness:12,aid:8,betrayal:-25,insult:-10,defeat:-6,gift:6,oath:20,abandonment:-30},Wt=12,Xt={guanyu:{name:"\u5173\u7FBD",courtesy:"\u4E91\u957F",attrs:{wu:95,tong:88,zhi:72,zheng:55,mei:70},traits:["\u4E49","\u50B2\u4E0A\u800C\u4E0D\u5FCD\u4E0B"],note:"\u4EA1\u547D\u5954\u6DBF\u90E1\uFF0C\u4E0E\u5148\u4E3B\u540C\u5E8A\u5171\u5BDD\uFF0C\u5982\u5144\u5F1F"},zhangfei:{name:"\u5F20\u98DE",courtesy:"\u76CA\u5FB7",attrs:{wu:92,tong:78,zhi:55,zheng:40,mei:55},traits:["\u66B4\u800C\u65E0\u6069","\u656C\u7231\u541B\u5B50\u4E0D\u6064\u5C0F\u4EBA"],note:"\u5C11\u4E0E\u5173\u7FBD\u4FF1\u4E8B\u5148\u4E3B"},jianyong:{name:"\u7B80\u96CD",courtesy:"\u5BAA\u548C",attrs:{wu:30,tong:40,zhi:72,zheng:68,mei:74},traits:["\u5584\u8C08","\u6ED1\u7A3D"],note:"\u5C11\u4E0E\u5148\u4E3B\u6709\u65E7\uFF0C\u968F\u4ECE\u5468\u65CB"},luzhi:{name:"\u5362\u690D",courtesy:"\u5B50\u5E72",attrs:{wu:62,tong:80,zhi:88,zheng:85,mei:78},traits:["\u521A\u6BC5\u6709\u5927\u8282"],note:"\u6DBF\u90E1\u4EBA\uFF0C\u5218\u5907\u3001\u516C\u5B59\u74D2\u7686\u5E08\u4E8B\u4E4B"},gongsunzan:{name:"\u516C\u5B59\u74D2",courtesy:"\u4F2F\u572D",attrs:{wu:82,tong:76,zhi:58,zheng:50,mei:62},traits:["\u5584\u9A91\u5C04","\u521A\u610E"],note:"\u4E0E\u5148\u4E3B\u540C\u5E08\u5362\u690D\uFF0C\u5148\u4E3B\u4EE5\u5144\u4E8B\u4E4B"},liuyuanqi:{name:"\u5218\u5143\u8D77",courtesy:"",attrs:{wu:30,tong:40,zhi:60,zheng:62,mei:66},traits:["\u4ED7\u4E49"],note:"\u5E38\u8D44\u7ED9\u5148\u4E3B\uFF0C\u4E0E\u5B50\u5218\u5FB7\u7136\u7B49"},zhangshiping:{name:"\u5F20\u4E16\u5E73",courtesy:"",attrs:{wu:25,tong:35,zhi:65,zheng:70,mei:60},traits:["\u4E2D\u5C71\u5BCC\u5546"],note:"\u4E0E\u82CF\u53CC\u7B49\u8D40\u7D2F\u5343\u91D1\uFF0C\u8D29\u9A6C\u5468\u65CB\u4E8E\u6DBF\u90E1"},sujiang:{name:"\u82CF\u53CC",courtesy:"",attrs:{wu:25,tong:35,zhi:65,zheng:70,mei:58},traits:["\u4E2D\u5C71\u5BCC\u5546"],note:"\u540C\u4E0A"},zoujing:{name:"\u90B9\u9756",courtesy:"",attrs:{wu:60,tong:62,zhi:55,zheng:50,mei:55},traits:[],note:"\u6821\u5C09\uFF0C\u5148\u4E3B\u7387\u5176\u5C5E\u4ECE\u4E4B\u8BA8\u9EC4\u5DFE"},duyou:{name:"\u7763\u90AE",courtesy:"",attrs:{wu:30,tong:35,zhi:45,zheng:48,mei:30},traits:["\u50B2\u6162"],note:"\u5949\u8BCF\u6C70\u9009\u4EE5\u519B\u529F\u4E3A\u957F\u540F\u8005"},liuping:{name:"\u5218\u5E73",courtesy:"",attrs:{wu:35,tong:40,zhi:50,zheng:52,mei:40},traits:["\u7D20\u8F7B\u5148\u4E3B"],note:"\u5E73\u539F\u4EBA\uFF0C\u803B\u4E3A\u4E4B\u4E0B\uFF0C\u9063\u5BA2\u523A\u4E4B"},cishi:{name:"\u523A\u5BA2",courtesy:"",attrs:{wu:65,tong:40,zhi:50,zheng:30,mei:45},traits:[],note:"\u53D7\u5218\u5E73\u4E4B\u4F7F\uFF0C\u4E0D\u5FCD\u523A\uFF0C\u8BED\u4E4B\u800C\u53BB"}};function Qt(e,t=0){let n=Xt[e];return n===void 0?null:{id:e,name:n.name,courtesy:n.courtesy,attrs:{...n.attrs},traits:[...n.traits],note:n.note,mood:"calm",memories:[],met:!1,dispositionSeed:t}}function rt(e){var n,r;if(e==null)return 0;let t=Number.isFinite(e.dispositionSeed)?e.dispositionSeed:0;for(let o of(n=e.memories)!=null?n:[]){let i=(r=Vt[o.kind])!=null?r:0;t+=i*(Number.isFinite(o.weight)?o.weight:1)}return Math.max(-100,Math.min(100,Math.round(t)))}function it(e,t){var i,a,s;if(e==null)return e;let n={kind:(i=t.kind)!=null?i:"kindness",text:String((a=t.text)!=null?a:""),turn:Number.isFinite(t.turn)?t.turn:0,weight:Number.isFinite(t.weight)?t.weight:1},r=[...(s=e.memories)!=null?s:[],n],o=r.slice(Math.max(0,r.length-Wt));return{...e,memories:o,met:!0}}function ot(e,t,n=0,r=!0){var s;let o=(s=e.people)!=null?s:{};if(o[t]!==void 0)return{state:e,person:o[t]};let i=Qt(t,n);if(i===null)return{state:e,person:null};let a={...i,met:r};return{state:{...e,people:{...o,[t]:a}},person:a}}function at(e,t){var n;return t==null?e:{...e,people:{...(n=e.people)!=null?n:{},[t.id]:t}}}function st(e){var r;let t=e.rng,n={...(r=e.people)!=null?r:{}};for(let o of Object.keys(n)){let i=n[o],a=J(t,6);if(t=a.state,a.value!==1)continue;let s=rt(i),f=s>=20?["warm","calm"]:s<=-20?["cold","wary"]:Jt,u=a.value%f.length;n[o]={...i,mood:f[u]}}return{...e,people:n,rng:t}}var ze={liubei:{name:"\u5218\u5907",power:3,seat:"zhuojun",holds:[],stance:{},from:184},caocao:{name:"\u66F9\u64CD",power:16,seat:"chenliu",home:"yanzhou",holds:["yanzhou"],stance:{},from:184},yuanshao:{name:"\u8881\u7ECD",power:26,seat:"ye",home:"jizhou",holds:["jizhou"],stance:{},from:184},gongsunzan:{name:"\u516C\u5B59\u74D2",power:18,seat:"ji",home:"youzhou",holds:["youzhou"],stance:{},from:184},taoqian:{name:"\u9676\u8C26",power:12,seat:"xiapi",home:"xuzhou",holds:["xuzhou"],stance:{},from:184},lvbu:{name:"\u5415\u5E03",power:10,seat:"puyang",home:"",holds:[],stance:{},from:192,to:198},liubiao:{name:"\u5218\u8868",power:22,seat:"xiangyang",home:"jingzhou",holds:["jingzhou"],stance:{},from:190},sunquan:{name:"\u5B59\u6743",power:14,seat:"wu",home:"yangzhou",holds:["yangzhou"],stance:{},from:200},liuzhang:{name:"\u5218\u748B",power:16,seat:"chengdu",home:"yizhou",holds:["yizhou"],stance:{},from:194},zhanglu:{name:"\u5F20\u9C81",power:9,seat:"hanzhong",home:"hanzhong",holds:["hanzhong"],stance:{},from:191},dongzhuo:{name:"\u8463\u5353",power:30,seat:"luoyang",home:"sili",holds:["sili"],stance:{},from:184,to:192}},Zt={sili:["yanzhou","yuzhou","jingzhou","hanzhong","jizhou"],yanzhou:["sili","jizhou","qingzhou","yuzhou","xuzhou"],yuzhou:["sili","yanzhou","xuzhou","jingzhou"],jizhou:["yanzhou","qingzhou","youzhou","sili"],qingzhou:["jizhou","yanzhou","xuzhou","youzhou"],youzhou:["jizhou","qingzhou"],xuzhou:["yanzhou","yuzhou","qingzhou","yangzhou","jingzhou"],jingzhou:["sili","yuzhou","xuzhou","yangzhou","yizhou"],yangzhou:["xuzhou","jingzhou"],yizhou:["jingzhou","hanzhong"],hanzhong:["sili","yizhou"]};function ve(e,t){return!(e==null||Number.isFinite(e.from)&&t<e.from||Number.isFinite(e.to)&&t>e.to)}var en={caocao:.55,yuanshao:.5,sunquan:.45,liubiao:.15,liuzhang:.1,gongsunzan:-.35,taoqian:-.25,lvbu:-.5,zhanglu:.05,dongzhuo:-.9,liubei:0};function tn(e,t){var o;let n=(o=en[e])!=null?o:0;if(n===0)return 0;let r=70;return n>0&&t>=r?Math.max(0,n*((100-t)/(100-r))*.3):n}function lt(e){var s,f,u;let t=JSON.parse(JSON.stringify((s=e.factions)!=null?s:ze)),n=Number.isFinite((f=e==null?void 0:e.clock)==null?void 0:f.year)?e.clock.year:184,r=e.rng;for(let l of Object.keys(t)){let c=t[l];l!=="liubei"&&Number.isFinite(c.to)&&n>c.to&&((u=c.holds)==null?void 0:u.length)>0&&(c.holds=[],c.power=0)}let o={};for(let l of Object.keys(t))o[l]=Number.isFinite(t[l].power)?t[l].power:0;for(let l of Object.keys(t)){if(l==="liubei")continue;let c=t[l];if(c.power<=0)continue;if(!Array.isArray(c.holds)||c.holds.length===0){c.power=Math.round(c.power*.55*10)/10;continue}if(!ve(c,n))continue;let d=J(r,5);r=d.state;let b=d.value-3,h=tn(l,c.power)+b*.25;c.power=Math.round(Math.min(100,Math.max(0,c.power+h))*10)/10}let i=[],a=nn(t,r,n);r=a.state,a.event!==null&&i.push(a.event);for(let l of Object.keys(t)){if(l==="liubei")continue;let c=t[l];if(!ve(c,n))continue;let p=Math.floor(o[l]/5),d=Math.floor(c.power/5);d!==p&&(a.event!==null&&a.event.faction===l||i.push({faction:l,kind:d>p?"rise":"decline",text:d>p?`${c.name}\u4E4B\u52BF\u6E10\u76DB\uFF08${p*5} \u2192 ${d*5}\uFF09`:`${c.name}\u4E4B\u52BF\u6E10\u8870\uFF08${p*5} \u2192 ${d*5}\uFF09`}))}return{state:{...e,factions:t,rng:r},events:i}}function nn(e,t,n){var p;let r=[],o=Object.keys(e);for(let d of o){let b=e[d];if(d!=="liubei"&&ve(b,n)&&!(!Array.isArray(b.holds)||b.holds.length===0))for(let h of o){if(h===d||h==="liubei")continue;let x=e[h];if(!ve(x,n)||!Array.isArray(x.holds)||x.holds.length===0)continue;let v=$=>$===x.home,w=$=>v($)?3.6:2.4;for(let $ of x.holds){if(b.power<x.power*w($))continue;let M=(p=Zt[$])!=null?p:[];b.holds.some(I=>M.includes(I))&&r.push({strongId:d,weakId:h,province:$})}}}if(r.length===0)return{state:t,event:null};let i=J(t,3);if(t=i.state,i.value!==1)return{state:t,event:null};let a=Ke(t,r),{strongId:s,weakId:f,province:u}=a.value,l=e[s],c=e[f];return c.holds=c.holds.filter(d=>d!==u),l.holds=[...l.holds,u],l.power=Math.min(100,l.power+3),c.power=Math.max(0,c.power-3),{state:a.state,event:{faction:s,kind:"conquest",text:`${l.name}\u53D6${on(u)}\u4E8E${c.name}\u4E4B\u624B`}}}var rn={sili:"\u53F8\u96B6",yanzhou:"\u5156\u5DDE",jizhou:"\u5180\u5DDE",youzhou:"\u5E7D\u5DDE",xuzhou:"\u5F90\u5DDE",jingzhou:"\u8346\u5DDE",yangzhou:"\u626C\u5DDE",yizhou:"\u76CA\u5DDE",qingzhou:"\u9752\u5DDE",yuzhou:"\u8C6B\u5DDE",hanzhong:"\u6C49\u4E2D"};function on(e){var t;return(t=rn[e])!=null?t:e}function ct(e,t){let n=Number.isFinite(e)?e:0,o=(Number.isFinite(t)?t:0)-n,i=Math.round(o*.6);return Math.max(-35,Math.min(35,-i))}function ut(e){var t,n;return Number.isFinite((n=(t=e==null?void 0:e.factions)==null?void 0:t.liubei)==null?void 0:n.power)?e.factions.liubei.power:0}function ft(e){var a,s,f,u,l,c,p,d,b;let t=(a=e.factions)!=null?a:ze,n=Number((f=(s=e==null?void 0:e.player)==null?void 0:s.resources)==null?void 0:f.troops)||0,r=Number((l=(u=e==null?void 0:e.player)==null?void 0:u.counters)==null?void 0:l.fame)||0,o=Array.isArray((c=t.liubei)==null?void 0:c.holds)?t.liubei.holds.length:0,i=Math.round((Math.log10(1+n)*18+r*.25+o*6)*10)/10;return{...e,factions:{...t,liubei:{...t.liubei,power:i,seat:(b=(d=e.place)!=null?d:(p=t.liubei)==null?void 0:p.seat)!=null?b:"zhuojun"}}}}var an=184,sn=200;function Ne(e,t){var o,i,a,s;let r=[...Array.isArray(e.log)?e.log:[],{turn:(i=(o=e.clock)==null?void 0:o.turn)!=null?i:0,year:(s=(a=e.clock)==null?void 0:a.year)!=null?s:184,...t}];return{...e,log:r.slice(Math.max(0,r.length-sn))}}function dt(e){var n;let t=new Map;for(let r of(n=e==null?void 0:e.acts)!=null?n:[])t.set(r.id,r);return t}function de(e,t){var i;let n=t.get(e.act),r=Array.isArray(n==null?void 0:n.scenes)?n.scenes:[],o=Number.isFinite(e.scene)?e.scene:0;return{act:n,scene:(i=r[o])!=null?i:null,index:o,total:r.length}}function pt(e,t){let{scene:n}=de(e,t),r=Number.isFinite(n==null?void 0:n.atAge)?n.atAge:null;if(r===null)return null;let o=Number.isFinite(e.age)?e.age:0;if(o>=r)return null;let i=Math.max(1,(r-o)*4),a=gt(e,i);return{state:a.state,moved:i,targetAge:r,events:a.events}}function ht(e,t,n,r){var c,p,d,b,h,x,v,w,$,M,j,I,D,P,q,R,B,G,X,Q,Z,ee,te,ne,re,ie,oe,ae,se,le,ce,ue;let o=Array.isArray(n.options)?n.options:[],i=o.find(A=>A.id===r);if(i===void 0)throw new Error(`\u300C${n.title}\u300D\u6CA1\u6709\u8FD9\u4E2A\u9009\u9879\uFF1A${r}\u3002\u53EF\u9009\uFF1A${o.map(A=>A.id).join(" / ")}`);let a=Ze({node:{freeChoice:n.freeChoice===!0},branch:i,state:e,resources:{troops:(d=(p=(c=e.player)==null?void 0:c.resources)==null?void 0:p.troops)!=null?d:0,gold:(x=(h=(b=e.player)==null?void 0:b.resources)==null?void 0:h.gold)!=null?x:0,grain:($=(w=(v=e.player)==null?void 0:v.resources)==null?void 0:w.grain)!=null?$:0}}),s={...(j=(M=e.player)==null?void 0:M.resources)!=null?j:{}},f={...(D=(I=e.player)==null?void 0:I.counters)!=null?D:{}};fe(f,i.effects,be),fe(s,i.effects,Se);let u={...(q=(P=e.player)==null?void 0:P.attrs)!=null?q:{}};if(i.attributeGain!==void 0&&typeof i.attributeGain=="object")for(let A of Object.keys(i.attributeGain)){let K=Number(i.attributeGain[A]);if(!Number.isFinite(K))continue;let ge=Number.isFinite(u[A])?u[A]:0;u[A]=Math.min(100,Math.max(0,ge+Math.trunc(K)))}let l={...e,drift:a.drift,player:{...e.player,attrs:u,counters:f,resources:{...s,gold:Math.max(0,Math.trunc((R=s.gold)!=null?R:0)),grain:Math.max(0,Math.trunc((B=s.grain)!=null?B:0)),troops:Math.max(0,Math.trunc((G=s.troops)!=null?G:0)),hp:Math.min(100,Math.max(0,Math.trunc((X=s.hp)!=null?X:100)))}},counters:{...(Q=e.counters)!=null?Q:{},choicesMade:((ee=(Z=e.counters)==null?void 0:Z.choicesMade)!=null?ee:0)+1,deviations:((ne=(te=e.counters)==null?void 0:te.deviations)!=null?ne:0)+(a.departure?1:0)}};if(typeof i.grantTitle=="string"&&i.grantTitle.length>0){let A=Array.isArray(l.player.titles)?l.player.titles:[];A.includes(i.grantTitle)||(l={...l,player:{...l.player,titles:[...A,i.grantTitle]}})}if(i.setsFlag!==void 0&&typeof i.setsFlag=="object"&&(l={...l,flags:{...(re=l.flags)!=null?re:{},...i.setsFlag}}),typeof i.rememberBy=="string"&&i.rememberBy.length>0){let A=ot(l,i.rememberBy,0);l=A.state;let K=it(A.person,{kind:(ie=i.memoryKind)!=null?ie:"kindness",text:(oe=i.memoryText)!=null?oe:i.label,turn:(se=(ae=l.clock)==null?void 0:ae.turn)!=null?se:0});l=at(l,K)}return l=Ne(l,{kind:"choice",act:(le=t==null?void 0:t.id)!=null?le:"",scene:n.id,text:i.note.length>0?`${i.label}\u2014\u2014${i.note}`:i.label,departure:a.departure,drift:a.drift}),{state:l,branch:i,priced:a,effects:(ce=i.effects)!=null?ce:{},attributeGain:(ue=i.attributeGain)!=null?ue:null}}function mt(e,t,n,r){var h,x,v,w,$,M,j,I,D,P,q,R,B,G,X,Q,Z,ee,te,ne,re,ie,oe,ae,se,le,ce,ue,A,K;let o=Ee((h=r==null?void 0:r.attribute)!=null?h:n.attribute,(x=n.attribute)!=null?x:"mei"),i=we(Number.isFinite(r==null?void 0:r.difficulty)?r.difficulty:n.difficulty,(v=n.difficulty)!=null?v:50),a=[],s=n.targetFaction;if(typeof s=="string"){let ge=(M=($=(w=e.factions)==null?void 0:w.liubei)==null?void 0:$.power)!=null?M:0,Be=(D=(I=(j=e.factions)==null?void 0:j[s])==null?void 0:I.power)!=null?D:0,Ge=ct(ge,Be);Ge!==0&&a.push({value:Ge,reason:`\u654C\u6211\u4E4B\u52BF\uFF08${Be} vs ${ge}\uFF09`})}let f=Number.isFinite(e.drift)?e.drift:0;f>0&&a.push({value:-Math.min(30,Math.round(f*.35)),reason:"\u5929\u4E0B\u4FA7\u76EE"});let u=Xe({state:(P=e.rng)!=null?P:0,attrs:(R=(q=e.player)==null?void 0:q.attrs)!=null?R:{},attribute:o,difficulty:i,modifiers:a}),l=u.outcome==="success"||u.outcome==="critical_success"?(G=(B=n.effects)==null?void 0:B.success)!=null?G:{}:(Q=(X=n.effects)==null?void 0:X.failure)!=null?Q:{},c={...(ee=(Z=e.player)==null?void 0:Z.resources)!=null?ee:{}},p={...(ne=(te=e.player)==null?void 0:te.counters)!=null?ne:{}};fe(p,l,be),fe(c,l,Se);let d={...e,rng:u.state,drift:Te(e).drift,player:{...e.player,counters:p,resources:{...c,gold:Math.max(0,Math.trunc((re=c.gold)!=null?re:0)),grain:Math.max(0,Math.trunc((ie=c.grain)!=null?ie:0)),troops:Math.max(0,Math.trunc((oe=c.troops)!=null?oe:0)),hp:Math.min(100,Math.max(0,Math.trunc((ae=c.hp)!=null?ae:100)))}},counters:{...(se=e.counters)!=null?se:{},choicesMade:((ce=(le=e.counters)==null?void 0:le.choicesMade)!=null?ce:0)+1}},b=u.outcome==="success"||u.outcome==="critical_success"?(ue=n.successText)!=null?ue:"":(A=n.failureText)!=null?A:"";return d=Ne(d,{kind:"check",act:(K=t==null?void 0:t.id)!=null?K:"",scene:n.id,text:b,outcome:u.outcome,roll:u.roll,margin:u.margin}),{state:d,result:u,effects:l,text:b}}function gt(e,t=1){var s,f,u,l;let n=e,r=[],o=Math.max(1,Math.trunc(t));for(let c=0;c<o;c+=1){let p=nt(n.clock,1);if(n={...n,clock:p,age:p.age,counters:{...(s=n.counters)!=null?s:{},turnsPlayed:((u=(f=n.counters)==null?void 0:f.turnsPlayed)!=null?u:0)+1}},p.year<an)continue;let d=lt(n);n=d.state,r.push(...d.events),n=st(n),n={...n,drift:Te(n).drift}}n=ft(n);let i=new Map,a=[];for(let c of r){let p=(l=c.faction)!=null?l:c.text;if(i.has(p)){let d=a.indexOf(i.get(p));a.splice(d,1)}i.set(p,c),a.push(c)}for(let c of a)n=Ne(n,{kind:"world",text:c.text});return{state:n,events:a}}function Fe(e,t){let n=t.get(e.act),r=Array.isArray(n==null?void 0:n.scenes)?n.scenes:[],o=Number.isFinite(e.scene)?e.scene:0;if(o+1<r.length)return{...e,scene:o+1};let i=Array.from(t.keys()),a=i.indexOf(e.act),s=t.get(i[a+1]);if(s===void 0)return{...e,act:"end",scene:0};let f={...e,act:s.id,actName:s.name,scene:0,place:s.place},u=Number.isFinite(s.ageFrom)?s.ageFrom:0,l=Number.isFinite(f.age)?f.age:0;if(l<u){let c=(u-l)*4;f=gt(f,Math.max(1,c)).state,f={...f,act:s.id,actName:s.name,scene:0,place:s.place}}return f}function bt(e){return e.factions!==void 0?e:{...e,factions:JSON.parse(JSON.stringify(ze))}}var Re=(e,t,n)=>Math.min(n,Math.max(t,Number.isFinite(e)?e:t)),V={act:"\u7EC8\u7AE0",title:"\u767D\u5E1D",when:"\u5EFA\u5B89\u4E8C\u5341\u4E94\u5E74\xB7\u6210\u90FD",narration:"\u66F9\u64CD\u5DF2\u6B7B\uFF0C\u66F9\u4E15\u53D7\u7985\uFF0C\u6C49\u5BA4\u7684\u6700\u540E\u4E00\u5757\u724C\u4F4D\u88AB\u4ECE\u8BB8\u90FD\u632A\u8D70\u3002\u6210\u90FD\u7FA4\u81E3\u4E09\u6B21\u4E0A\u8868\uFF0C\u8BF7\u4F60\u5373\u7687\u5E1D\u4F4D\u3002\u8346\u5DDE\u5DF2\u5931\uFF0C\u4E91\u957F\u3001\u7FFC\u5FB7\u90FD\u4E0D\u5728\u4E86\u3002\u4F60\u4E94\u5341\u4E5D\u5C81\u3002",options:[{id:"crown",label:"\u79F0\u5E1D\uFF0C\u7EED\u6C49",note:"\u7FA4\u81E3\u5C71\u547C\u4E07\u5C81\u3002\u4F60\u63A5\u8FC7\u7389\u73BA\uFF0C\u8BF4\uFF1A\u6C49\u5BA4\u6CA1\u6709\u4EA1\u3002",effects:{fame:8,trust:4,drift:5,hp:-5}},{id:"decline",label:"\u4E0D\u79F0\u5E1D\uFF0C\u7EC8\u8EAB\u6C49\u81E3",note:"\u4F60\u628A\u529D\u8FDB\u8868\u538B\u5728\u6848\u5E95\uFF0C\u53EA\u53D7\u6C49\u4E2D\u738B\u5370\u3002",effects:{trust:12,fame:-6,drift:-5}},{id:"king",label:"\u79F0\u6C49\u4E2D\u738B\uFF0C\u5272\u636E\u4E00\u65B9",note:"\u4E0D\u79F0\u5C0A\u53F7\uFF0C\u4E0D\u5317\u4F10\uFF0C\u5B88\u4F4F\u5251\u9601\u4EE5\u5357\u3002",effects:{fame:3,troops:10,drift:8}},{id:"war",label:"\u503E\u56FD\u4F10\u5434\uFF0C\u4E3A\u4E91\u957F\u62A5\u4EC7",note:"\u4F60\u70B9\u8D77\u76CA\u5DDE\u5168\u90E8\u5175\u9A6C\uFF0C\u987A\u6C5F\u800C\u4E0B\u3002",effects:{troops:.5,hp:-25,trust:-8,drift:20}},{id:"retire",label:"\u5F52\u8FD8\u5370\u7EF6\uFF0C\u56DE\u6DBF\u90E1",note:"\u4F60\u628A\u5370\u7EF6\u6302\u5728\u5802\u4E0A\uFF0C\u5E26\u51E0\u4E2A\u8001\u5352\u56DE\u5317\u65B9\u3002",effects:{troops:0,fame:-30,trust:-10,drift:-10}}]},Y=[{id:"zhaolie",title:"\u662D\u70C8",subtitle:"\u6C49\u5BA4\u6CA1\u6709\u4EA1",text:"\u7AE0\u6B66\u5143\u5E74\uFF0C\u4F60\u5728\u6210\u90FD\u5373\u7687\u5E1D\u4F4D\u3002\u6C49\u5BA4\u6CA1\u6709\u4EA1\uFF0C\u53EA\u662F\u9000\u5230\u4E86\u5251\u9601\u4EE5\u5357\u3002\u4F60\u518C\u5C01\u8BF8\u845B\u4EAE\u4E3A\u4E1E\u76F8\uFF0C\u7ACB\u5218\u7985\u4E3A\u592A\u5B50\u3002\u4E09\u5E74\u540E\uFF0C\u4F60\u5728\u767D\u5E1D\u57CE\u6258\u5B64\uFF0C\u8BF4\u201C\u5982\u5176\u4E0D\u624D\uFF0C\u541B\u53EF\u81EA\u53D6\u201D\u3002\u6C5F\u98CE\u5F88\u51B7\uFF0C\u4F60\u6B7B\u65F6\u516D\u5341\u4E09\u5C81\u3002\u53F2\u79F0\u662D\u70C8\u7687\u5E1D\u3002",comment:"\u540D\u671B\u4E0E\u4FE1\u4E49\u90FD\u5151\u73B0\u4E86\uFF0C\u4EE3\u4EF7\u662F\u4E8C\u5341\u5E74\u7684\u98A0\u6C9B\u3002",hint:"\u79F0\u5E1D\uFF0C\u4E14\u540D\u671B\u4E0E\u4FE1\u4E49\u90FD\u591F\u3002"},{id:"dufu",title:"\u72EC\u592B",subtitle:"\u4F60\u8D62\u4E86\u4F4D\u7F6E",text:"\u4F60\u79F0\u4E86\u5E1D\uFF0C\u5374\u4E0D\u518D\u4FE1\u4EFB\u4F55\u4EBA\u3002\u65E7\u90E8\u4E00\u4E2A\u4E2A\u5916\u653E\uFF0C\u8C0F\u8005\u4E00\u4E2A\u4E2A\u4E0B\u72F1\u3002\u6210\u90FD\u7684\u5BAB\u57CE\u8D8A\u4FEE\u8D8A\u9AD8\uFF0C\u671D\u4F1A\u4E0A\u7684\u58F0\u97F3\u8D8A\u6765\u8D8A\u5C11\u3002\u4F60\u6B7B\u65F6\uFF0C\u592A\u5B50\u5E74\u5E7C\uFF0C\u6743\u81E3\u5F53\u56FD\u3002\u53F2\u4E66\u5199\u4F60\u201C\u6709\u9AD8\u7956\u4E4B\u98CE\u201D\uFF0C\u53C8\u5728\u540E\u9762\u8865\u4E86\u4E00\u53E5\u201C\u7136\u6027\u591A\u7591\u201D\u3002",comment:"\u4F60\u8D62\u4E86\u4F4D\u7F6E\uFF0C\u8F93\u4E86\u4EBA\u3002",hint:"\u79F0\u5E1D\uFF0C\u4F46\u4FE1\u4E49\u4E0D\u8DB3\u3002"},{id:"renzhe",title:"\u4EC1\u8005",subtitle:"\u53F2\u4E66\u6CA1\u6709\u672C\u7EAA",text:"\u4F60\u6CA1\u6709\u79F0\u5E1D\u3002\u66F9\u4E15\u7684\u4F7F\u8005\u6765\uFF0C\u4F60\u53EA\u53D7\u6C49\u4E2D\u738B\u5370\uFF0C\u4E0D\u79F0\u5C0A\u53F7\u3002\u7FA4\u81E3\u8BF4\u4F60\u61E6\uFF0C\u4F60\u8BF4\uFF1A\u201C\u6C49\u5BA4\u4E0D\u53EF\u590D\u5174\uFF0C\u767E\u59D3\u4E0D\u53EF\u518D\u82E6\u3002\u201D\u4F60\u6B7B\u65F6\uFF0C\u76CA\u5DDE\u767E\u59D3\u81EA\u53D1\u7F62\u5E02\u4E09\u65E5\u3002\u53F2\u4E66\u6CA1\u6709\u7ED9\u4F60\u672C\u7EAA\uFF0C\u53EA\u5728\u300A\u5148\u4E3B\u4F20\u300B\u91CC\u5199\u4E86\u4E00\u53E5\uFF1A\u201C\u5176\u5F97\u4EBA\u5FC3\u5982\u6B64\u3002\u201D",comment:"\u6CA1\u6709\u672C\u7EAA\uFF0C\u4E0D\u7B49\u4E8E\u6CA1\u6709\u5206\u91CF\u3002",hint:"\u4E0D\u79F0\u5E1D\uFF0C\u4E14\u4FE1\u4E49\u8DB3\u591F\u9AD8\u3002"},{id:"pianan",title:"\u504F\u5B89",subtitle:"\u4E0D\u8D4C",text:"\u4F60\u5B88\u4F4F\u4E86\u76CA\u5DDE\uFF0C\u4E5F\u5B88\u4F4F\u4E86\u6C49\u4E2D\u7684\u51E0\u9053\u5173\u9698\u3002\u6CA1\u6709\u5317\u4F10\uFF0C\u6CA1\u6709\u79F0\u5E1D\uFF0C\u4E5F\u6CA1\u6709\u518D\u4E22\u57CE\u3002\u4F60\u6B7B\u65F6\uFF0C\u8700\u4E2D\u65E0\u5927\u6218\uFF0C\u5E9C\u5E93\u6709\u4F59\u7CAE\u3002\u540E\u4EBA\u8BF4\u4F60\u201C\u4FDD\u5B88\u201D\uFF0C\u4E5F\u6709\u4EBA\u8BF4\uFF0C\u90A3\u662F\u4E71\u4E16\u91CC\u6700\u96BE\u7684\u4E00\u79CD\u672C\u4E8B\u3002",comment:"\u4E0D\u8D4C\uFF0C\u4E5F\u662F\u4E00\u79CD\u8D4C\u3002",hint:"\u4E0D\u79F0\u5E1D\uFF0C\u4FE1\u4E49\u4E5F\u4E0D\u8DB3\u3002"},{id:"hanzhong",title:"\u6C49\u4E2D\u738B",subtitle:"\u6700\u5C0F\u7684\u4E00\u65B9",text:"\u4F60\u79F0\u6C49\u4E2D\u738B\uFF0C\u4E0D\u79F0\u5E1D\u3002\u9B4F\u3001\u5434\u3001\u6C49\u4E09\u65B9\u5E76\u7ACB\uFF0C\u4F60\u8FD9\u4E00\u65B9\u6700\u5C0F\uFF0C\u5374\u6700\u7A33\u3002\u4F60\u6B7B\u65F6\uFF0C\u9B4F\u56FD\u6B63\u5728\u5185\u6597\uFF0C\u5434\u56FD\u6B63\u5728\u6362\u592A\u5B50\u3002\u4F60\u7684\u513F\u5B50\u5B88\u4E86\u56DB\u5341\u5E74\u3002\u53F2\u5BB6\u628A\u4F60\u653E\u8FDB\u201C\u5272\u636E\u201D\u4E00\u7C7B\uFF0C\u5374\u4E0D\u5F97\u4E0D\u627F\u8BA4\uFF1A\u90A3\u4E00\u9685\uFF0C\u662F\u4E09\u56FD\u91CC\u6700\u540E\u7184\u7684\u706F\u3002",comment:"\u6700\u5C0F\u7684\u4E00\u65B9\uFF0C\u6700\u4E45\u7684\u4E00\u76CF\u706F\u3002",hint:"\u79F0\u738B\uFF0C\u4E0D\u79F0\u5E1D\u3002"},{id:"zhixi",title:"\u7EC7\u5E2D\u8005",subtitle:"\u4ECE\u5E02\u4E95\u6765",text:"\u4F60\u628A\u5370\u7EF6\u6302\u5728\u5802\u4E0A\uFF0C\u5E26\u7740\u51E0\u4E2A\u8001\u5352\u56DE\u4E86\u6DBF\u90E1\u3002\u5E02\u96C6\u4E0A\u6CA1\u4EBA\u8BA4\u5F97\u4F60\uFF0C\u4F60\u91CD\u65B0\u652F\u8D77\u5E2D\u644A\u3002\u6709\u4EBA\u95EE\u4F60\u5E74\u8F7B\u65F6\u505A\u8FC7\u4EC0\u4E48\uFF0C\u4F60\u8BF4\uFF1A\u201C\u5356\u8FC7\u5E2D\u5B50\u3002\u201D\u4F60\u6B7B\u65F6\uFF0C\u5BB6\u91CC\u53EA\u6709\u4E00\u5F20\u65E7\u5E2D\u3002",comment:"\u4ED6\u4ECE\u5E02\u4E95\u6765\uFF0C\u56DE\u5E02\u4E95\u53BB\u3002",hint:"\u5F52\u8FD8\u5370\u7EF6\u3002"},{id:"zaoshi",title:"\u86A4\u4E16",subtitle:"\u706B\u7184\u4E4B\u540E",text:"\u5937\u9675\u7684\u706B\u70E7\u4E86\u4E03\u767E\u91CC\u3002\u4F60\u9000\u5230\u767D\u5E1D\u57CE\uFF0C\u75C5\u6CA1\u6709\u518D\u8D77\u3002\u4F60\u6B7B\u65F6\u516D\u5341\u4E8C\u5C81\uFF0C\u8EAB\u8FB9\u53EA\u6709\u8BF8\u845B\u4EAE\u548C\u674E\u4E25\u3002\u4F60\u628A\u5218\u7985\u6258\u7ED9\u4ED6\u4EEC\uFF0C\u8BF4\uFF1A\u201C\u52FF\u4EE5\u6076\u5C0F\u800C\u4E3A\u4E4B\uFF0C\u52FF\u4EE5\u5584\u5C0F\u800C\u4E0D\u4E3A\u3002\u201D\u90A3\u662F\u4F60\u4E00\u751F\u6700\u540E\u4E00\u53E5\u8BDD\u3002",comment:"\u706B\u7184\u4E4B\u540E\uFF0C\u6C5F\u8FD8\u662F\u90A3\u6761\u6C5F\u3002",hint:"\u503E\u56FD\u4F10\u5434\uFF0C\u8EAB\u4F53\u5148\u57AE\u3002"},{id:"jiedi",title:"\u4E3E\u4E16\u7686\u654C",subtitle:"\u5929\u4E0B\u7686\u654C",text:"\u4F60\u503E\u56FD\u4F10\u5434\uFF0C\u9B4F\u56FD\u4E58\u865A\u800C\u5165\uFF0C\u5357\u4E2D\u4E09\u90E1\u53CD\u4E86\uFF0C\u4E1C\u5434\u65AD\u4E86\u7CAE\u9053\u3002\u4F60\u9000\u5230\u6C38\u5B89\uFF0C\u56DB\u9762\u90FD\u662F\u654C\u4EBA\u3002\u4F60\u6B7B\u65F6\uFF0C\u6210\u90FD\u7684\u4F7F\u8005\u8FD8\u5728\u8DEF\u4E0A\u3002\u53F2\u4E66\u5199\uFF1A\u201C\u5148\u4E3B\u8D25\u7EE9\uFF0C\u8FD8\u6C38\u5B89\uFF0C\u9042\u5D29\u3002\u201D",comment:"\u4F60\u628A\u5929\u4E0B\u90FD\u53D8\u6210\u4E86\u654C\u4EBA\uFF0C\u5929\u4E0B\u4E5F\u5C31\u628A\u4F60\u53D8\u6210\u4E86\u4E00\u4E2A\u4EBA\u3002",hint:"\u503E\u56FD\u4F10\u5434\uFF0C\u5929\u4E0B\u7686\u654C\u3002"}],k=Object.fromEntries(Y.map(e=>[e.id,e])),yt=["fame","trust","talent"],xt=["gold","grain","troops","hp"];function vt(e,t){var s,f,u,l,c,p,d,b;let n=V.options.find(h=>h.id===t);if(n===void 0)return e;let r=(s=e.player)!=null?s:{},o={...(f=r.counters)!=null?f:{}},i={...(u=r.resources)!=null?u:{}},a=Number.isFinite(e.drift)?e.drift:0;for(let[h,x]of Object.entries((l=n.effects)!=null?l:{})){let v=Number(x);Number.isFinite(v)&&(h==="drift"?a+=v:h==="troops"&&v>0&&v<1?i.troops=Math.floor(((c=i.troops)!=null?c:0)*v):yt.includes(h)?o[h]=((p=o[h])!=null?p:0)+v:xt.includes(h)&&(i[h]=((d=i[h])!=null?d:0)+v))}for(let h of yt)o[h]=Re(o[h],0,100);for(let h of xt)i[h]=Math.max(0,Math.trunc(i[h]));return i.hp=Re(i.hp,0,100),a=Re(a,0,100),{...e,drift:a,player:{...r,counters:o,resources:i},flags:{...(b=e.flags)!=null?b:{},epilogue:t},log:[...Array.isArray(e.log)?e.log:[],{kind:"epilogue",text:n.label}]}}function zt(e){var i,a,s,f,u,l,c,p,d,b,h;let t=Number((s=(a=(i=e==null?void 0:e.player)==null?void 0:i.resources)==null?void 0:a.hp)!=null?s:100),n=Number((l=(u=(f=e==null?void 0:e.player)==null?void 0:f.counters)==null?void 0:u.fame)!=null?l:0),r=Number((d=(p=(c=e==null?void 0:e.player)==null?void 0:c.counters)==null?void 0:p.trust)!=null?d:0),o=(b=e==null?void 0:e.flags)==null?void 0:b.epilogue;if(t<=15)return k.zaoshi;switch(o){case"crown":return n>=70&&r>=55&&Number((h=e==null?void 0:e.drift)!=null?h:0)<=35?k.zhaolie:k.dufu;case"decline":return r>=65?k.renzhe:k.pianan;case"king":return k.hanzhong;case"retire":return k.zhixi;case"war":return t<=35?k.zaoshi:k.jiedi;default:return r>=65?k.renzhe:k.pianan}}var ln={wu:42,tong:40,zhi:48,zheng:45,mei:78},cn={fame:5,trust:20,talent:0},un={gold:3,grain:1,troops:0,hp:100};function fn(e){let t=typeof e=="string"&&e.length>0?e:"liubei",n=Je(t);return{schema:1,seed:n,rng:n,clock:{year:161,month:1,day:1,turn:0},age:0,act:"zhuojun",actName:"\u7B2C\u4E00\u5E55\xB7\u6DBF\u90E1",scene:0,player:{name:"\u5218\u5907",courtesy:"\u7384\u5FB7",attrs:{...ln},counters:{...cn},resources:{...un},tags:["\u5BD2\u95E8","\u7EC7\u5E2D\u8D29\u5C65","\u6C49\u5BA4\u5B97\u4EB2\uFF08\u8FDC\u652F\uFF09"],titles:[]},drift:0,people:{},flags:{},counters:{turnsPlayed:0,choicesMade:0,deviations:0},log:[]}}function $t(e,t){var r,o,i,a;let n=t.get(e.act);return{...e,actName:(o=(r=n==null?void 0:n.name)!=null?r:e.actName)!=null?o:"",place:(a=(i=n==null?void 0:n.place)!=null?i:e.place)!=null?a:""}}function _e(e,t){let n=pt(e,t);return n===null?{state:$t(e,t),skipped:null}:{state:$t(n.state,t),skipped:{turns:n.moved,targetAge:n.targetAge}}}function Ie(e,t){var s,f,u,l,c,p,d,b,h,x,v,w,$,M,j,I,D,P,q;let{act:n,scene:r,index:o,total:i}=de(e,t);if(r===null||e.act==="end")return{finished:!0,when:Me((s=e.clock)!=null?s:{}),era:ke((u=(f=e.clock)==null?void 0:f.year)!=null?u:161),age:(l=e.age)!=null?l:0,stats:Oe(e)};let a=r.kind==="moral"?(Array.isArray(r.options)?r.options:[]).map(R=>{var B,G;return{id:R.id,label:R.label,note:(B=R.note)!=null?B:"",effects:(G=R.effects)!=null?G:{},historical:R.historical===!0}}):[];return{finished:!1,when:Me((c=e.clock)!=null?c:{}),era:ke((d=(p=e.clock)==null?void 0:p.year)!=null?d:161),age:(b=e.age)!=null?b:0,place:(v=(x=(h=n==null?void 0:n.placeName)!=null?h:e.place)!=null?x:n==null?void 0:n.place)!=null?v:"",act:($=(w=n==null?void 0:n.name)!=null?w:e.actName)!=null?$:"",actId:(M=n==null?void 0:n.id)!=null?M:e.act,sceneId:r.id,index:o,total:i,title:(j=r.title)!=null?j:"",narration:(I=r.narration)!=null?I:"",historical:(D=r.historical)!=null?D:"",kind:r.kind,options:a,ability:r.kind==="ability"?{attribute:(P=r.attribute)!=null?P:"mei",difficulty:Number.isFinite(r.difficulty)?r.difficulty:50,targetFaction:(q=r.targetFaction)!=null?q:""}:null,stats:Oe(e)}}function Oe(e){var o,i,a,s,f,u,l,c,p,d,b;let t=(o=e.player)!=null?o:{},n=(i=t.counters)!=null?i:{},r=(a=t.resources)!=null?a:{};return{fame:(s=n.fame)!=null?s:0,trust:(f=n.trust)!=null?f:0,talent:(u=n.talent)!=null?u:0,drift:Number.isFinite(e.drift)?e.drift:0,mood:et(Number.isFinite(e.drift)?e.drift:0),gold:(l=r.gold)!=null?l:0,grain:(c=r.grain)!=null?c:0,troops:(p=r.troops)!=null?p:0,hp:(d=r.hp)!=null?d:100,attrs:{...(b=t.attrs)!=null?b:{}},power:ut(e)}}function At(e){let t=dt(e);function n(a){let s=bt(fn(a));return _e(s,t)}function r(a,s){var d,b,h,x,v,w,$,M;let{act:f,scene:u}=de(a,t);if(u===null||u.kind!=="moral")throw new Error("\u5F53\u524D\u4E0D\u662F\u6289\u62E9\u573A\u666F");let l=ht(a,f,u,s),c=Fe(l.state,t),p=_e(c,t);return{state:p.state,skipped:p.skipped,result:{kind:"choice",act:(d=f==null?void 0:f.name)!=null?d:"",title:(b=u.title)!=null?b:"",sceneId:u.id,label:l.branch.label,note:(h=l.branch.note)!=null?h:"",effects:(x=l.effects)!=null?x:{},attributeGain:(v=l.attributeGain)!=null?v:null,departure:((w=l.priced)==null?void 0:w.departure)===!0,drift:(M=($=l.priced)==null?void 0:$.drift)!=null?M:a.drift},scene:Ie(p.state,t)}}function o(a){var p,d,b,h;let{act:s,scene:f}=de(a,t);if(f===null||f.kind!=="ability")throw new Error("\u5F53\u524D\u4E0D\u662F\u5224\u5B9A\u573A\u666F");let u=mt(a,s,f,{attribute:f.attribute,difficulty:f.difficulty}),l=Fe(u.state,t),c=_e(l,t);return{state:c.state,skipped:c.skipped,result:{kind:"check",act:(p=s==null?void 0:s.name)!=null?p:"",title:(d=f.title)!=null?d:"",sceneId:f.id,outcome:u.result.outcome,roll:u.result.roll,attribute:u.result.attribute,attributeValue:u.result.attributeValue,modifierTotal:u.result.modifierTotal,total:u.result.total,difficulty:u.result.difficulty,margin:u.result.margin,text:(b=u.text)!=null?b:"",effects:(h=u.effects)!=null?h:{}},scene:Ie(c.state,t)}}function i(a,s){let f=vt(a,s);return{state:f,ending:zt(f)}}return{acts:t,newRun:n,choose:r,attempt:o,finish:i,view:a=>Ie(a,t),stats:Oe}}var F=At(Ye),E=document.getElementById("app"),Ce="sanguo-demo-run-v1",wt="sanguo-demo-endings-v1",Le={wu:"\u6B66",tong:"\u7EDF",zhi:"\u667A",zheng:"\u653F",mei:"\u9B45"},dn={fame:"\u540D\u671B",trust:"\u4FE1\u4E49",talent:"\u4EBA\u624D",gold:"\u91D1",grain:"\u7CAE",troops:"\u5175",hp:"\u4F53\u529B"},pn={critical_success:"\u5927\u6210\u529F",success:"\u6210\u529F",partial:"\u672A\u6210",failure:"\u5931\u8D25",critical_failure:"\u5927\u5931\u8D25"},Et={ren:{name:"\u4EC1",trust:2,fame:1,talent:1,troops:-.3,gold:.1,grain:.1,hp:.6,historical:.4},ba:{name:"\u9738",trust:-.6,fame:1.2,talent:.5,troops:1,gold:.4,grain:.4,hp:.2,historical:-.4},wen:{name:"\u7A33",trust:.8,fame:.5,talent:.5,troops:.3,gold:.5,grain:.5,hp:1.2,historical:.2},yin:{name:"\u9690",trust:.5,fame:-1,talent:.2,troops:-1,gold:.5,grain:.5,hp:1,historical:-.3}},z=null,g=null,m=null,S=null,L="start",_=null,N=!1,pe=null,W="ren",he=!1,H=hn();function y(e){return String(e!=null?e:"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function hn(){var e;try{let t=JSON.parse((e=localStorage.getItem(wt))!=null?e:"[]");return new Set(Array.isArray(t)?t.filter(n=>k[n]!==void 0):[])}catch(t){return new Set}}function mn(){try{localStorage.setItem(wt,JSON.stringify([...H]))}catch(e){}}function St(){var e;try{let t=JSON.parse((e=localStorage.getItem(Ce))!=null?e:"null");if(t&&t.player&&t.clock&&typeof t.act=="string")return t}catch(t){}return null}function Tt(){try{localStorage.setItem(Ce,JSON.stringify(z))}catch(e){}}function je(){try{localStorage.removeItem(Ce)}catch(e){}}function gn(){var e;return((e=window.matchMedia)==null?void 0:e.call(window,"(prefers-reduced-motion: reduce)").matches)===!0}function C(){window.scrollTo({top:0,behavior:N||gn()?"auto":"smooth"})}function Mt(e){let t=Math.round((Number(e)||0)/4);return t<=1?"\u4E00\u5E74":`${t}\u5E74`}function bn(e,t){var r,o;let n=[];for(let[i,a]of Object.entries(e!=null?e:{})){let s=Number(a);if(!Number.isFinite(s)||s===0)continue;let f=(r=dn[i])!=null?r:i;n.push(`<span class="delta ${s>0?"up":"down"}">${f} ${s>0?"+":""}${s}</span>`)}for(let[i,a]of Object.entries(t!=null?t:{})){let s=Number(a);!Number.isFinite(s)||s===0||n.push(`<span class="delta up">${(o=Le[i])!=null?o:i} ${s>0?"+":""}${s}</span>`)}return n.length>0?`<div class="deltas">${n.join("")}</div>`:""}function Ue(e){let t=e.drift>=60?"danger":e.drift>=30?"warn":"",n=e.hp<=30?"danger":e.hp<=60?"warn":"";return`
+    <div class="stats" aria-label="\u5F53\u524D\u6570\u503C">
+      <span class="chip"><b>\u540D\u671B</b>${e.fame}</span>
+      <span class="chip"><b>\u4FE1\u4E49</b>${e.trust}</span>
+      <span class="chip"><b>\u4EBA\u624D</b>${e.talent}</span>
+      <span class="chip ${t}"><b>\u52BF</b>${e.drift}</span>
+      <span class="chip"><b>\u5175</b>${e.troops}</span>
+      <span class="chip"><b>\u91D1</b>${e.gold}</span>
+      <span class="chip"><b>\u7CAE</b>${e.grain}</span>
+      <span class="chip ${n}"><b>\u4F53\u529B</b>${e.hp}</span>
+    </div>`}function yn(e){var n;let t=e.era?` \xB7 ${e.era}`:"";return`<div class="meta"><span>${y(e.when)}${y(t)}</span><span>${e.age}\u5C81</span><span>${y((n=e.place)!=null?n:"")}</span></div>`}function xn(e){return e?`<p class="timeskip">\u65F6\u5149\u6D41\u8F6C\uFF1A${Mt(e.turns)}\u8FC7\u53BB\u3002</p>`:""}function vn(){return'<div class="brand"><span class="seal" aria-hidden="true">\u6F22</span><div><h1>\u4E09\u56FD\u4EBA\u751F</h1><p>\u79BB\u7EBF demo \xB7 161\u2014223</p></div></div>'}function De(e=""){return`
+    <header class="top">
+      ${vn()}
+      <div class="top-actions">
+        ${e}
+        <button class="ghost" data-gallery>\u7ED3\u5C40 <span class="count">${H.size}/${Y.length}</span></button>
+      </div>
+    </header>`}function Pe(){let e=St();L="start",N=!1,$e(),document.body.dataset.phase="start",E.innerHTML=`
+    <main class="hero">
+      <div class="hero-seal" aria-hidden="true">\u6F22</div>
+      <p class="kicker">\u6C49\u672B \xB7 \u5EF6\u71B9\u56DB\u5E74 \u2014 \u7AE0\u6B66\u4E09\u5E74</p>
+      <h1>\u4E09\u56FD\u4EBA\u751F</h1>
+      <p class="tagline">\u4F60\u626E\u6F14\u5218\u5907\uFF0C\u4ECE\u6DBF\u53BF\u7684\u4E00\u68F5\u6851\u6811\u5F00\u59CB\u3002</p>
+      <p class="lede">
+        23 \u4E2A\u573A\u666F\uFF0C\u4ECE\u4E94\u5C81\u6307\u6811\uFF0C\u5230\u767D\u5E1D\u6258\u5B64\u3002
+        \u9AB0\u5B50\u3001\u6570\u503C\u3001\u5929\u4E0B\u5927\u52BF\u90FD\u7531\u5F15\u64CE\u7B97\uFF1B\u4F60\u53EA\u505A\u9009\u62E9\u3002
+      </p>
+      <div class="hero-actions">
+        <button class="primary" data-start>\u5F00\u59CB\u8FD9\u4E00\u751F</button>
+        ${e?'<button class="secondary" data-resume>\u7EE7\u7EED\u4E0A\u5C40</button>':""}
+        <button class="text" data-gallery>\u7ED3\u5C40\u56FE\u9274 <span class="count">${H.size}/${Y.length}</span></button>
+      </div>
+      <p class="footnote">\u5355\u6587\u4EF6 \xB7 \u65E0\u7F51\u7EDC\u8BF7\u6C42 \xB7 \u5F15\u64CE\u4E0E\u5267\u60C5\u6765\u81EA @ohos/dsh-sanguo</p>
+    </main>`,me()}function kt(){var n,r;if(!g||g.finished)return Nt();L="play",document.body.dataset.phase="scene";let e=xn(_),t=g.kind==="moral"?`<div class="choices">${g.options.map(o=>`
+        <button class="choice" data-choice="${y(o.id)}">
+          <span class="choice-label">${y(o.label)}</span>
+          <span class="choice-arrow" aria-hidden="true">\u203A</span>
+        </button>`).join("")}</div>`:`<div class="check-card">
+        <p class="check-line">\u5224\u5B9A \xB7 ${(n=Le[g.ability.attribute])!=null?n:g.ability.attribute} ${(r=g.stats.attrs[g.ability.attribute])!=null?r:""}
+          <span class="muted">\u5BF9</span> \u96BE\u5EA6 ${g.ability.difficulty}</p>
+        <p class="check-hint">\u9AB0\u5B50\u7531\u5F15\u64CE\u63B7\u3002\u6210\u6216\u4E0D\u6210\uFF0C\u90FD\u4E0D\u7531\u4F60\u8BF4\u4E86\u7B97\u3002</p>
+        <button class="primary" data-roll>\u63B7\u9AB0</button>
+      </div>`;E.innerHTML=`
+    ${De('<button class="ghost" data-restart>\u91CD\u5F00</button>')}
+    <main class="stage" aria-live="polite">
+      ${yn(g)}
+      ${e}
+      <section class="scene">
+        <p class="act">${y(g.act)} <span class="progress">${g.index+1}/${g.total}</span></p>
+        <h2>${y(g.title)}</h2>
+        <p class="narration">${y(g.narration)}</p>
+      </section>
+      ${Ue(g.stats)}
+      ${t}
+      <div class="toolbar">
+        <button class="text ${N?"active":""}" data-auto>${N?"\u505C\u6B62\u63A8\u6F14":"\u672C\u673A\u63A8\u6F14"}</button>
+        <label class="persona">
+          <span>\u503E\u5411</span>
+          <select data-persona>
+            ${Object.entries(Et).map(([o,i])=>`<option value="${o}" ${o===W?"selected":""}>${i.name}</option>`).join("")}
+          </select>
+        </label>
+      </div>
+      <p class="hint">${N?"\u672C\u673A\u63A8\u6F14\u4E2D\uFF1A\u6743\u91CD + \u9AB0\uFF0C\u4E0D\u8054\u7F51\u3002":"\u300C\u672C\u673A\u63A8\u6F14\u300D\u4F1A\u6309\u6240\u9009\u503E\u5411\u81EA\u52A8\u8D70\u5B8C\u8FD9\u4E00\u751F\u3002"}</p>
+    </main>`,me(),qe()}function zn(){var r,o;if(L="play",document.body.dataset.phase="result",!m)return kt();let e=m.kind==="check",t=e?`<p class="eyebrow">\u5224\u5B9A \xB7 ${y(m.title)}</p>
+       <h2 class="result-title">${(r=pn[m.outcome])!=null?r:m.outcome}</h2>
+       <p class="roll">
+         ${(o=Le[m.attribute])!=null?o:m.attribute} ${m.attributeValue}
+         + \u9AB0 ${m.roll}
+         ${m.modifierTotal?` ${m.modifierTotal>0?"+":""}${m.modifierTotal}`:""}
+         = ${m.total}
+         <span class="muted">\u5BF9 \u96BE\u5EA6 ${m.difficulty}</span>
+       </p>
+       <p class="narration result-text">${y(m.text||(m.outcome==="success"||m.outcome==="critical_success"?"\u4E8B\u6210\u4E86\u3002":"\u4E8B\u6CA1\u6210\u3002"))}</p>`:`<p class="eyebrow">\u5DF2\u9009 \xB7 ${y(m.title)}</p>
+       <h2 class="result-title">${y(m.label)}</h2>
+       ${m.note?`<p class="narration result-text">${y(m.note)}</p>`:""}`,n=!e&&m.departure?`<p class="departure">\u504F\u79BB\u53F2\u8F7D \xB7 \u52BF \u2192 ${m.drift}</p>`:"";E.innerHTML=`
+    ${De()}
+    <main class="stage" aria-live="polite">
+      <section class="scene result">
+        ${t}
+        ${bn(m.effects,m.attributeGain)}
+        ${n}
+        ${m.historical?`<details class="history"><summary>\u53F2\u8F7D</summary><p>${y(m.historical)}</p></details>`:""}
+        ${_?`<p class="timeskip">\u65F6\u5149\u6D41\u8F6C\uFF1A${Mt(_.turns)}\u8FC7\u53BB\u3002</p>`:""}
+        ${Ue(F.stats(z))}
+        <button class="primary wide" data-continue>\u7EE7\u7EED</button>
+      </section>
+    </main>`,me(),qe()}function Nt(){L="play",document.body.dataset.phase="epilogue";let e=F.stats(z);E.innerHTML=`
+    ${De()}
+    <main class="stage" aria-live="polite">
+      <div class="meta"><span>${y(V.when)}</span><span>${z.age}\u5C81</span><span>\u6210\u90FD</span></div>
+      <section class="scene epilogue">
+        <p class="act">${y(V.act)}</p>
+        <h2>${y(V.title)}</h2>
+        <p class="narration">${y(V.narration)}</p>
+      </section>
+      ${Ue(e)}
+      <div class="choices">
+        ${V.options.map(t=>`
+          <button class="choice" data-epilogue="${y(t.id)}">
+            <span class="choice-label">${y(t.label)}</span>
+            <span class="choice-arrow" aria-hidden="true">\u203A</span>
+          </button>`).join("")}
+      </div>
+      <p class="hint">\u7EC8\u7AE0\u662F demo \u7684\u6536\u675F\u5C42\uFF1B\u5F15\u64CE\u5199\u5230\u8FD9\u91CC\uFF0C\u4E03\u4E2A act \u5230\u957F\u5742\u4E3A\u6B62\u3002</p>
+    </main>`,me(),qe()}function $n(){var n,r,o,i;L="ending",N=!1,$e(),document.body.dataset.phase="ending";let e=F.stats(z),t=H.size;E.innerHTML=`
+    <main class="ending">
+      <div class="ending-seal" aria-hidden="true">\u6F22</div>
+      <p class="kicker">${he?"\u65B0\u7ED3\u5C40":"\u7ED3\u5C40"} \xB7 ${t}/${Y.length}</p>
+      <h1>${y(S.title)}</h1>
+      <p class="ending-sub">${y(S.subtitle)}</p>
+      <p class="ending-text">${y(S.text)}</p>
+      ${S.comment&&S.comment!==S.subtitle?`<p class="ending-comment">${y(S.comment)}</p>`:""}
+      <div class="ending-stats">
+        <span>\u540D\u671B <b>${e.fame}</b></span>
+        <span>\u4FE1\u4E49 <b>${e.trust}</b></span>
+        <span>\u4EBA\u624D <b>${e.talent}</b></span>
+        <span>\u52BF <b>${e.drift}</b></span>
+        <span>\u9009\u62E9 <b>${(r=(n=z.counters)==null?void 0:n.choicesMade)!=null?r:0}</b></span>
+        <span>\u504F\u79BB <b>${(i=(o=z.counters)==null?void 0:o.deviations)!=null?i:0}</b></span>
+      </div>
+      ${t===Y.length?'<p class="all-done">\u5168\u7ED3\u5C40\u8FBE\u6210\u3002</p>':""}
+      <div class="ending-actions">
+        <button class="primary" data-start>\u518D\u6D3B\u4E00\u6B21</button>
+        <button class="secondary" data-gallery>\u7ED3\u5C40\u56FE\u9274</button>
+      </div>
+    </main>`,me()}function An(){U();let e=F.newRun(`liubei-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`);z=e.state,g=F.view(z),_=e.skipped,m=null,S=null,he=!1,L="play",je(),C(),T()}function wn(){U();let e=St();if(!e)return Pe();z=e,g=F.view(z),_=null,m=null,S=null,he=!1,L="play",C(),T()}function En(e){var r;if(!g||g.kind!=="moral")return;U();let t=g,n=F.choose(z,e);z=n.state,g=n.scene,_=n.skipped,m={...n.result,historical:(r=t.historical)!=null?r:""},C(),T()}function Sn(){var n;if(!g||g.kind!=="ability")return;U();let e=g,t=F.attempt(z);z=t.state,g=t.scene,_=t.skipped,m={...t.result,historical:(n=e.historical)!=null?n:""},C(),T()}function Tn(){m&&(U(),m=null,_=null,Tt(),C(),T())}function Ft(e){U();let t=F.finish(z,e);z=t.state,S=t.ending,he=!H.has(S.id),he&&(H.add(S.id),mn()),je(),C(),T()}function Mn(){U(),z=null,g=null,m=null,S=null,je(),C(),Pe()}function kn(e,t,n){var i,a,s,f;let r=(i=e.effects)!=null?i:{},o=0;for(let u of["trust","fame","talent","troops","gold","grain","hp"])o+=Number((a=r[u])!=null?a:0)*Number((s=n[u])!=null?s:0);return e.historical&&(o+=n.historical),t.hp<35&&Number((f=r.hp)!=null?f:0)<0&&(o-=4),t.drift>55&&e.historical===!1&&(o-=2),o+Math.random()*.9}function Nn(){let e=Et[W],t=null,n=-1/0;for(let r of g.options){let o=kn(r,g.stats,e);o>n&&(n=o,t=r)}return t==null?void 0:t.id}function Fn(){let e=F.stats(z);return W==="ren"?"decline":W==="ba"?e.troops>=45?"war":"crown":W==="wen"?"king":"retire"}function qe(){if($e(),!N||L!=="play"||S)return;pe=setTimeout(()=>{pe=null,Rn()},m?1200:950)}function $e(){pe!==null&&(clearTimeout(pe),pe=null)}function U(){N=!1,$e()}function Rn(){var e,t;if(!(!N||L!=="play")){if(m){m=null,_=null,Tt(),C(),T();return}if(g){if(g.finished){Ft(Fn());return}if(g.kind==="moral"){let n=Nn();if(n){let r=g,o=F.choose(z,n);z=o.state,g=o.scene,_=o.skipped,m={...o.result,historical:(e=r.historical)!=null?e:""},C(),T()}return}if(g.kind==="ability"){let n=g,r=F.attempt(z);z=r.state,g=r.scene,_=r.skipped,m={...r.result,historical:(t=n.historical)!=null?t:""},C(),T()}}}}function _n(){if(N){U(),T();return}N=!0,T()}function In(){N&&(U(),T());let e=document.querySelector(".overlay");e&&e.remove();let t=document.body.style.overflow;document.body.style.overflow="hidden";let n=document.createElement("div");n.className="overlay",n.innerHTML=`
+    <div class="modal" role="dialog" aria-modal="true" aria-label="\u7ED3\u5C40\u56FE\u9274">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">\u7ED3\u5C40\u56FE\u9274</p>
+          <h2>${H.size} / ${Y.length}</h2>
+        </div>
+        <button class="ghost close" data-close aria-label="\u5173\u95ED">\xD7</button>
+      </div>
+      <div class="gallery">
+        ${Y.map((i,a)=>H.has(i.id)?`<details class="gallery-card open">
+            <summary>
+              <span class="gallery-index">${String(a+1).padStart(2,"0")}</span>
+              <span class="gallery-title">${y(i.title)}</span>
+              <span class="gallery-sub">${y(i.subtitle)}</span>
+            </summary>
+            <p class="gallery-text">${y(i.text)}</p>
+            ${i.comment&&i.comment!==i.subtitle?`<p class="gallery-comment">${y(i.comment)}</p>`:""}
+          </details>`:`<div class="gallery-card locked">
+              <span class="gallery-index">${String(a+1).padStart(2,"0")}</span>
+              <div><p class="gallery-title">\u672A\u89E3\u9501</p><p class="gallery-hint">${y(i.hint)}</p></div>
+            </div>`).join("")}
+      </div>
+      <p class="modal-foot">\u7ED3\u5C40\u4E00\u65E6\u89E3\u9501\u4F1A\u7559\u5728\u8FD9\u53F0\u8BBE\u5907\u4E0A\uFF08localStorage\uFF09\u3002</p>
+    </div>`,document.body.appendChild(n);let r=()=>{n.remove(),document.body.style.overflow=t};n.addEventListener("click",i=>{i.target===n&&r()}),n.querySelector("[data-close]").addEventListener("click",r);let o=i=>{i.key==="Escape"&&(r(),document.removeEventListener("keydown",o))};document.addEventListener("keydown",o)}function me(){E.querySelectorAll("[data-start]").forEach(e=>e.addEventListener("click",An)),E.querySelectorAll("[data-resume]").forEach(e=>e.addEventListener("click",wn)),E.querySelectorAll("[data-gallery]").forEach(e=>e.addEventListener("click",In)),E.querySelectorAll("[data-restart]").forEach(e=>e.addEventListener("click",Mn)),E.querySelectorAll("[data-choice]").forEach(e=>{e.addEventListener("click",()=>En(e.dataset.choice))}),E.querySelectorAll("[data-roll]").forEach(e=>e.addEventListener("click",Sn)),E.querySelectorAll("[data-continue]").forEach(e=>e.addEventListener("click",Tn)),E.querySelectorAll("[data-epilogue]").forEach(e=>{e.addEventListener("click",()=>Ft(e.dataset.epilogue))}),E.querySelectorAll("[data-auto]").forEach(e=>e.addEventListener("click",_n)),E.querySelectorAll("[data-persona]").forEach(e=>{e.addEventListener("change",()=>{W=e.value,N&&T()})})}function T(){return L==="start"?Pe():S?$n():m?zn():!g||g.finished?Nt():kt()}T();})();
+</script>
+</body>
+</html>

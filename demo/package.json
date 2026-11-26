@@ -1,0 +1,12 @@
+{
+  "name": "sanguo-offline-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "simulate": "node simulate.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

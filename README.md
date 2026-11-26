@@ -14,6 +14,15 @@ deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、�
 
 ---
 
+## 离线 demo（不用装 App）
+
+[`demo/sanguo.html`](demo/sanguo.html) 是单文件离线版：下载后用浏览器打开即可，
+不需要 API Key、不需要网络、不需要 Node。它复用同一套引擎和 23 个场景，在长坂之后接一个
+demo 专属的「终章·白帝」，收束到 8 个结局；点「本机推演」可以按仁 / 霸 / 稳 / 隐四种倾向
+自动走完一生，全程不调用模型。构建与验收见 [`demo/README.md`](demo/README.md)。
+
+---
+
 ## 为什么单独一个仓
 
 外壳的产品身份是「一个能跑 dsh 的通用会话界面」。垂域内容（游戏、旅行、饮食）如果长在外壳里，
@@ -138,6 +147,7 @@ bash scripts/test.sh                 # 全部检查：单测 / ArkTS / LocalUnit
 | `agents/sanguo-life/` | 能真的玩的 pack（引擎驱动） |
 | `agents/sanguo-guide/` | 带自有设定集的三国向导（四源标注） |
 | `agents/match-coach/`、`openworld-guide/`、`story-guide/` | 三种不同输出契约的陪玩 pack |
+| `demo/` | 单文件离线 demo（`sanguo.html`）+ 构建脚本 + 8 结局可达性验收 |
 | `examples/counter-example-travel-card/` | **反例**：垂域状态卡片，保留作"我们不做这个"的证据 |
 
 ## 许可
