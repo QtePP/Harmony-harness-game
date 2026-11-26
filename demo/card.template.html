@@ -205,10 +205,23 @@
   .card-story {
     grid-column: 1 / 5;
     grid-row: 4 / 6;
+    position: relative;
     min-height: 0;
     overflow: auto;
     padding-right: 2px;
     scrollbar-width: none;
+  }
+  .card-story::after {
+    content: "漢";
+    position: absolute;
+    right: -4px;
+    bottom: -14px;
+    font-family: var(--serif);
+    font-size: 92px;
+    line-height: 1;
+    color: rgba(152, 45, 36, 0.045);
+    pointer-events: none;
+    user-select: none;
   }
   .card-story::-webkit-scrollbar { display: none; }
 
