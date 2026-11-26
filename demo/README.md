@@ -5,6 +5,7 @@
 - 三国 · 长页版：<https://qtepp.github.io/Harmony-harness-game/demo/sanguo.html>
 - 三国 · 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/card.html>
 - 如果 · 竖版卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/life.html>
+- 穿梭人生 · 副本：<https://qtepp.github.io/Harmony-harness-game/demo/instances.html>
 
 本地：
 
@@ -12,11 +13,12 @@
 open demo/sanguo.html          # 三国 · 长页版
 open demo/card.html            # 三国 · 4:6 单卡版
 open demo/life.html            # 如果 · 竖版单卡
+open demo/instances.html       # 穿梭人生 · 副本
 # 或者直接把文件拖进浏览器
 ```
 
-三个都是**单文件**：不需要安装 App、不需要 API Key、不需要网络、不需要 Node。
-三国两个约 105 KB，人生之书约 175 KB；页面没有任何外部请求。
+四个都是**单文件**：不需要安装 App、不需要 API Key、不需要网络、不需要 Node。
+三国两个约 105 KB，人生之书约 175 KB，副本约 118 KB；页面没有任何外部请求。
 
 ## 它是什么
 
@@ -115,6 +117,28 @@ npm run simulate    # 8 条固定计划，断言 8 个结局都出现
 
 `npm run simulate` 只验三国；人生之书的 **1,101,834** 条路径和 70 个结局在
 `@ohos/dsh-life/test/life.test.mjs` 里穷举验。
+
+## 穿梭人生：副本模式
+
+`instances.html` 把《如果》的同一套引擎（`@ohos/dsh-life/engine`）复用到**别人的一生**上：
+每个副本 3 页 × 3 个选择 × 3–4 种结局，共用六个数值、flags 和前置条件。
+
+| 副本 | 起点 | 你可能走到 |
+|---|---|---|
+| 月薪三千 | 东莞电子厂，24 岁 | 手艺人 / 停在流水线 / 县城小店 |
+| 嫁给爱情 | 广州，26 岁新婚 | 被爱的人 / 安静的家 / 一个人的房间 |
+| 一次误诊 | 省城医院，29 岁 | 第十一年 / 那一行字 / 白大褂 |
+| 守村人 | 湘西山村，33 岁 | 守村人 / 空村 / 把村子留下来 |
+| 榜一大哥 | 广州城中村，30 岁 | 榜一大哥 / 关掉直播 / 重新开始 |
+| 单身妈妈 | 县城，28 岁 | 一个人带大 / 两个人的家 / 另一种如果 |
+| 毕业送外卖 | 广州，23 岁待业 | 自己的店 / 骑手 / 县城 |
+| 多年以后 | 广州面试，30 岁 | 多年以后 / 那一巴掌 / 不回头 |
+| 高薪招聘 | 小城待业，24 岁 | 回来了 / 园区 / 劝住一个人 |
+| 富二代 | 广州，27 岁 | 一夜 / 重新开始 / 普通人 |
+
+副本标题的灵感来自 B 站 **[@穿梭人生Up](https://space.bilibili.com/603912861/upload/video)** 的 47 个视频
+（「穿梭人生副本。体验不同人生。」）；**剧情全部为本游戏原创**，不使用、不转录任何视频内容。
+抖音「潦草人生」话题的十种结局已经写进《如果》的结局池（图鉴里的「潦草人生」组）。
 
 ## 边界
 
