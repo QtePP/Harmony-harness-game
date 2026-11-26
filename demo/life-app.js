@@ -1,14 +1,27 @@
 /**
  * 如果（小狮日记 · 人生之书）—— 4:6 单卡 demo。
  *
- * 和 @ohos/dsh-sanguo 的卡片版同一套做法：引擎算数值，页面只负责把
- * 一章讲出来、把选项递到手上。没有模型、没有网络、没有外部依赖。
+ * 1985 年出生在广东阳江。2003 年高考，2026 年四十一岁。
+ * 六次选择 + 三次拷问；前一步决定后一步哪条路存在。
+ * 引擎算数值和结局，页面只负责把这一页讲出来。
+ *
+ * 离线、没有模型、没有网络请求。本机决策器是往前推演到结局的贪心搜索。
  */
 
 import lifeData from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-life/data/life.json'
-import { createSave, sceneOf, choose } from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-life/engine/life.js'
+import {
+  createSave,
+  sceneOf,
+  choose,
+  endingFor
+} from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-life/engine/life.js'
+import { decide, personaList } from './life-policy.js'
 
-const SAVE_KEY = 'xiaoshi-life-run-v1'
+const SAVE_KEY = 'xiaoshi-life-run-v2'
+const PREMISE_KEY = 'xiaoshi-life-premise-v2'
+const LINE_KEY = 'xiaoshi-life-lastline-v2'
+const SEEN_KEY = 'xiaoshi-life-seen-v2'
+
 const app = document.getElementById('app')
 
 const STATS = [
@@ -22,18 +35,21 @@ const STATS = [
 const DESIRE = {
   money: '钱', health: '健康', love: '被爱', freedom: '自由', parents: '被期待', self: '自己'
 }
-const PERSONAS = {
-  money: '钱', freedom: '自由', love: '被爱', parents: '被期待', self: '自己'
-}
+
+const themeLabel = (id) => lifeData.themes.find((theme) => theme.id === id)?.label ?? id
+const costLabel = (id) => lifeData.costs.find((cost) => cost.id === id)?.label ?? id
 
 let state = null
 let scene = null
 let result = null
 let ending = null
+let open = null
 let mode = 'start'
 let auto = false
 let autoTimer = null
 let persona = 'money'
+let decisionNote = ''
+let lastLine = ''
 
 /* ------------------------------------------------------------------ */
 /* 工具                                                                */
@@ -51,7 +67,7 @@ function esc(value) {
 function loadRun() {
   try {
     const raw = JSON.parse(localStorage.getItem(SAVE_KEY) ?? 'null')
-    if (raw && raw.stats && Number.isFinite(raw.chapter)) return raw
+    if (raw && raw.schema === 2 && raw.stats && Number.isFinite(raw.chapter)) return raw
   } catch { /* ignore */ }
   return null
 }
@@ -62,6 +78,41 @@ function saveRun() {
 
 function clearRun() {
   try { localStorage.removeItem(SAVE_KEY) } catch { /* ignore */ }
+}
+
+function loadPremise() {
+  try { return localStorage.getItem(PREMISE_KEY) ?? '' } catch { return '' }
+}
+
+function savePremise(value) {
+  try {
+    if (value) localStorage.setItem(PREMISE_KEY, value)
+    else localStorage.removeItem(PREMISE_KEY)
+  } catch { /* ignore */ }
+}
+
+function loadLine() {
+  try { return localStorage.getItem(LINE_KEY) ?? '' } catch { return '' }
+}
+
+function saveLine(value) {
+  try {
+    if (value) localStorage.setItem(LINE_KEY, value)
+    else localStorage.removeItem(LINE_KEY)
+  } catch { /* ignore */ }
+}
+
+function seenSet() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]')
+    return new Set(Array.isArray(raw) ? raw.filter((id) => typeof id === 'string') : [])
+  } catch { return new Set() }
+}
+
+function markSeen(id) {
+  const seen = seenSet()
+  seen.add(id)
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify([...seen])) } catch { /* ignore */ }
 }
 
 function top() {
@@ -77,7 +128,7 @@ function shell(inner, extra = '') {
     <main class="table">
       <section class="card ${extra}">${inner}</section>
       ${tools()}
-      <p class="note">4:6 单卡 · 如果 · 五章 · 六种答案 · 离线</p>
+      <p class="note">4:6 单卡 · 1985—2026 · 三十种答案 · 离线</p>
     </main>`
 }
 
@@ -89,7 +140,7 @@ function statsBar(stats) {
   return `
     <div class="card-stats life" aria-label="当前数值">
       ${STATS.map(([key, label]) =>
-        `<span class="chip ${key === 'regret' && stats.regret >= 60 ? 'danger' : key === 'health' && stats.health <= 40 ? 'danger' : ''}"><b>${label}</b>${stats[key]}</span>`
+        `<span class="chip ${key === 'regret' && stats.regret >= 55 ? 'danger' : key === 'health' && stats.health <= 40 ? 'danger' : ''}"><b>${label}</b>${stats[key]}</span>`
       ).join('')}
     </div>`
 }
@@ -102,19 +153,46 @@ function deltaChips(effects) {
     const label = STATS.find(([id]) => id === key)?.[1] ?? key
     rows.push(`<span class="delta ${value > 0 ? 'up' : 'down'}">${label} ${value > 0 ? '+' : ''}${value}</span>`)
   }
-  return rows.length > 0 ? `<div class="deltas">${rows.join('')}</div>` : ''
+  return rows.length > 0 ? `<div class="deltas">${rows.join('')}</div>` : '<p class="hint">这一步不改变数字，只改变你。</p>'
+}
+
+function journey(current) {
+  return `
+    <div class="journey" aria-label="时间线">
+      ${lifeData.chapters.map((chapter, index) => {
+        const cls = index < current ? 'done' : index === current ? 'now' : ''
+        return `<span class="journey-step ${cls}"><i></i><b>${String(chapter.year).slice(2)}</b></span>`
+      }).join('')}
+    </div>`
+}
+
+function premiseText(value) {
+  return String(value ?? '').replace(/^如果当年[，,]?\s*/, '')
+}
+
+function trace() {
+  const log = Array.isArray(state?.log) ? state.log : []
+  if (log.length === 0) return ''
+  const rows = log.slice(-4)
+  return `
+    <div class="trace">
+      <p class="trace-title">已经走过 · ${log.length}</p>
+      ${rows.map((entry) => `<p><span>${entry.age}岁</span>${esc(entry.title.replace(/^拷问 · /, ''))}：${esc(entry.label)}</p>`).join('')}
+    </div>`
 }
 
 function tools() {
-  if (mode === 'start' || ending) return ''
+  if (mode === 'start') return ''
+  const personas = personaList()
   return `
     <div class="tools">
-      <button data-auto>${auto ? '停止推演' : '本机推演'}</button>
-      <label class="persona">倾向
+      ${mode === 'play' ? `<button data-auto>${auto ? '停止推演' : '本机决策'}</button>` : ''}
+      ${mode === 'play' ? `<label class="persona">倾向
         <select data-persona>
-          ${Object.entries(PERSONAS).map(([key, label]) => `<option value="${key}" ${key === persona ? 'selected' : ''}>${label}</option>`).join('')}
+          ${personas.map((item) => `<option value="${item.id}" ${item.id === persona ? 'selected' : ''}>${item.label}</option>`).join('')}
         </select>
-      </label>
+      </label>` : ''}
+      <button data-gallery>图鉴</button>
       <button data-restart>重开</button>
     </div>`
 }
@@ -128,15 +206,23 @@ function renderStart() {
   auto = false
   clearAuto()
   const saved = loadRun()
+  const seen = seenSet()
+  const premise = loadPremise()
   app.innerHTML = shell(`
     <div class="back-inner">
       <div class="back-seal" aria-hidden="true">生</div>
-      <p class="back-kicker">小狮日记 · 1998—2033 · 临江</p>
+      <p class="back-kicker">1985 · 广东阳江 · 2026</p>
       <h1 class="back-title">如果</h1>
-      <p class="back-sub">人生之书<br>五次选择 · 六种答案</p>
+      <p class="back-sub">人生之书<br>六次选择 · 三次拷问 · 三十种答案</p>
+      <p class="back-memory">台风、录像厅、咸水歌。<br>1997 香港回归，2003 年你十八岁。</p>
+      <label class="premise-field">
+        <span>如果当年……</span>
+        <input data-premise maxlength="30" placeholder="可留空，写一句你的如果" value="${esc(premise)}">
+      </label>
       <div class="back-actions">
         <button class="gold" data-start>${saved ? '翻开新的一生' : '翻开第一页'}</button>
         ${saved ? '<button class="ghost-light" data-resume>继续上局</button>' : ''}
+        <button class="link-light" data-gallery>结局图鉴 ${seen.size} / ${lifeData.endings.length}</button>
       </div>
       <p class="back-foot">离线 · 无网络请求</p>
     </div>`, 'back')
@@ -147,10 +233,61 @@ function renderStart() {
 /* 章节                                                                */
 /* ------------------------------------------------------------------ */
 
+function eraChips(era) {
+  if (!era) return ''
+  return `
+    <div class="era" aria-label="年代符号">
+      <span class="era-source">那年 · ${esc(era.source)}</span>
+      ${(era.hot ?? []).map((item) => `<span class="era-item">${esc(item)}</span>`).join('')}
+    </div>`
+}
+
+function lockedPaths(options) {
+  const locked = options.filter((option) => option.locked)
+  if (locked.length === 0) return ''
+  return `<button class="locked-link" data-locked>当年没走的路 · ${locked.length}<span aria-hidden="true">›</span></button>`
+}
+
+function showLocked(options) {
+  stopAuto()
+  const locked = options.filter((option) => option.locked)
+  if (locked.length === 0) return
+  const overlay = document.createElement('div')
+  overlay.className = 'overlay'
+  overlay.innerHTML = `
+    <div class="modal locked-modal" role="dialog" aria-modal="true" aria-label="当年没走的路">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">当年没走的路</p>
+          <h2>${locked.length} 条</h2>
+          <p class="modal-sub">它们不是被删掉了，是你当年的选择没有把它们留出来。</p>
+        </div>
+        <button class="close" data-close aria-label="关闭">×</button>
+      </div>
+      ${locked.map((option) => `
+        <div class="locked-card">
+          <p class="locked-label">${esc(option.label)}</p>
+          <p class="locked-reason">${esc(option.lockReason)}</p>
+        </div>`).join('')}
+    </div>`
+  document.body.append(overlay)
+  const close = () => {
+    overlay.remove()
+    document.removeEventListener('keydown', onKey)
+  }
+  const onKey = (event) => { if (event.key === 'Escape') close() }
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+  overlay.querySelector('[data-close]').addEventListener('click', close)
+  document.addEventListener('keydown', onKey)
+}
+
 function renderScene() {
-  if (!scene || scene.finished) { finishRun(); return renderEnding() }
+  if (!scene || scene.finished) { finishRun(); return }
   mode = 'play'
-  const options = scene.options.map((option) => `
+  const isQuestion = scene.kind === 'question'
+  const title = isQuestion ? scene.title.replace(/^拷问 · /, '') : scene.title
+  const openOptions = scene.options.filter((option) => !option.locked)
+  const options = openOptions.map((option) => `
     <button class="choice" data-choice="${esc(option.id)}">
       <span class="choice-text"><span class="desire">${esc(option.desireLabel)}</span>${esc(option.label)}<span class="flag">${option.canon ? '当年' : '如果'}</span></span>
       <span class="arrow" aria-hidden="true">›</span>
@@ -159,15 +296,22 @@ function renderScene() {
   app.innerHTML = shell(`
     <div class="card-grid">
       <header class="card-head">
-        <p class="act">第${scene.chapter + 1}章 · ${esc(scene.title)} <span class="progress">${scene.chapter + 1}/${scene.total}</span></p>
-        <h1>${esc(scene.title)}</h1>
+        <p class="act">${isQuestion ? '拷问' : `第${scene.chapter + 1}页`} <span class="progress">${scene.chapter + 1}/${scene.total}</span></p>
+        <h1>${esc(title)}</h1>
       </header>
       ${seal()}
-      <div class="card-meta"><span>${scene.year}年</span><span>${scene.age}岁</span><span>${esc(state.tags.city)}</span></div>
+      <div class="card-meta"><span>${scene.year}年</span><span>${scene.age}岁</span><span>${esc(state.tags.city)}</span>${scene.premise ? `<span class="premise-meta">如果：${esc(premiseText(scene.premise))}</span>` : ''}</div>
       ${statsBar(scene.stats)}
-      <div class="card-story"><p class="narration">${esc(scene.narration)}</p></div>
-      <div class="card-actions ${scene.options.length > 4 ? 'many' : ''}">${options}</div>
-    </div>`)
+      <div class="card-story">
+        ${eraChips(scene.era)}
+        <p class="narration ${isQuestion ? 'question-text' : ''}">${esc(scene.narration)}</p>
+        ${trace()}
+        ${lockedPaths(scene.options)}
+        ${isQuestion ? '<p class="hint">没有标准答案。它只决定，十年后哪条路还在。</p>' : ''}
+        ${journey(scene.chapter)}
+      </div>
+      <div class="card-actions ${openOptions.length > 4 ? 'many' : ''} ${isQuestion ? 'question-actions' : ''}">${options}</div>
+    </div>`, isQuestion ? 'question-card' : '')
   bind()
 }
 
@@ -179,19 +323,28 @@ function renderResult() {
   mode = 'play'
   if (!result) return renderScene()
   const option = result.option
+  const nextIsQuestion = scene && scene.finished === false && scene.kind === 'question'
   app.innerHTML = shell(`
     <div class="card-grid">
       <header class="card-head">
-        <p class="act">第${result.chapter + 1}章 · ${esc(result.title)}</p>
+        <p class="act">第${result.chapter + 1}页 · ${esc(result.title)}</p>
         <h1>${esc(option.label)}</h1>
       </header>
       ${seal()}
-      <div class="card-meta"><span>${option.canon ? '当年' : '如果'}</span><span>欲望：${esc(DESIRE[option.desire] ?? option.desire)}</span></div>
+      <div class="card-meta">
+        <span>${option.canon ? '当年' : '如果'}</span>
+        <span>欲望：${esc(DESIRE[option.desire] ?? option.desire)}</span>
+        ${result.mult > 1 ? `<span class="compound">复利 ×${result.mult.toFixed(2)}</span>` : ''}
+      </div>
       ${statsBar(state.stats)}
       <div class="card-story">
         <p class="narration">${esc(option.note)}</p>
         ${deltaChips(result.effects)}
-        ${scene && !scene.finished ? `<p class="hint">下一章：${esc(scene.title)}</p>` : ''}
+        ${option.echo ? `<p class="echo"><span>多年以后</span>${esc(option.echo)}</p>` : ''}
+        ${decisionNote ? `<p class="decision"><b>本机决策器</b>${esc(decisionNote)}</p>` : ''}
+        ${scene && !scene.finished ? `<p class="hint">下一${nextIsQuestion ? '问' : '页'}：${esc(scene.title.replace(/^拷问 · /, ''))}</p>` : ''}
+        ${trace()}
+        ${journey(result.chapter)}
       </div>
       <div class="card-actions"><button class="primary" data-continue>继续</button></div>
     </div>`)
@@ -206,22 +359,35 @@ function renderEnding() {
   mode = 'ending'
   auto = false
   clearAuto()
+  if (!ending) return
+  lastLine = loadLine()
   const desires = Object.entries(state.desires ?? {}).filter(([, count]) => count > 0)
+  const fragments = open?.fragments ?? []
   app.innerHTML = shell(`
     <div class="card-grid">
       <header class="card-head">
-        <p class="act">结局 · 六种答案</p>
+        <p class="act">结局 · ${esc(themeLabel(ending.theme))} × ${esc(costLabel(ending.cost))}</p>
         <h1>${esc(ending.title)}</h1>
       </header>
       ${seal()}
-      <div class="card-meta">${esc(ending.subtitle)}</div>
+      <div class="card-meta"><span>${esc(ending.subtitle)}</span></div>
       ${statsBar(state.stats)}
       <div class="card-story">
         <p class="narration ending-text">${esc(ending.text)}</p>
         <p class="ending-comment">${esc(ending.comment)}</p>
+        ${open ? `<div class="open-epilogue"><p class="open-title">开放式尾声</p><p>${esc(open.line)}</p><div class="open-tags">${fragments.map((fragment) => `<span>${esc(fragment)}</span>`).join('')}</div></div>` : ''}
+        ${state.premise ? `<p class="premise-line">你带着：${esc(state.premise)}</p>` : ''}
         <p class="ending-run">你喂饱了：${desires.length > 0 ? desires.map(([key, count]) => `${DESIRE[key] ?? key}×${count}`).join('、') : '没有记下任何欲望'}</p>
+        <div class="lastline">
+          <label>写给自己的结局<input data-lastline maxlength="40" placeholder="一句你的如果" value="${esc(lastLine)}"></label>
+          <button class="secondary" data-save-line>留下</button>
+        </div>
+        ${lastLine ? `<p class="lastline-show">你的如果：${esc(lastLine)}</p>` : ''}
       </div>
-      <div class="card-actions ending-actions"><button class="primary" data-start>再活一次</button></div>
+      <div class="card-actions ending-actions">
+        <button class="primary" data-start>再活一次</button>
+        <button class="secondary" data-gallery>图鉴</button>
+      </div>
     </div>`, 'ending-card')
   bind()
 }
@@ -230,12 +396,17 @@ function renderEnding() {
 /* 行为                                                                */
 /* ------------------------------------------------------------------ */
 
-function startRun() {
+function startRun(premise = '') {
   stopAuto()
+  const value = String(premise ?? '').trim().slice(0, 30)
+  savePremise(value)
   state = createSave(`xiaoshi-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`)
+  state.premise = value
   scene = sceneOf(state, lifeData)
   result = null
   ending = null
+  open = null
+  decisionNote = ''
   mode = 'play'
   clearRun()
   top()
@@ -249,20 +420,23 @@ function resumeRun() {
   state = saved
   scene = sceneOf(state, lifeData)
   result = null
-  ending = scene.finished ? scene.ending : null
+  ending = null
+  open = null
+  decisionNote = ''
   mode = 'play'
   top()
   render()
 }
 
-function chooseOption(id) {
+function chooseOption(id, note = '') {
   if (!scene || scene.finished) return
-  stopAuto()
   const out = choose(state, lifeData, id)
   state = out.state
+  decisionNote = note
   result = {
     option: out.option,
     effects: out.effects,
+    mult: out.mult,
     chapter: scene.chapter,
     title: scene.title
   }
@@ -273,16 +447,19 @@ function chooseOption(id) {
 
 function continueAfterResult() {
   if (!result) return
-  stopAuto()
   result = null
+  decisionNote = ''
   saveRun()
   top()
   render()
 }
 
 function finishRun() {
-  if (ending || !scene || !scene.finished) return
-  ending = scene.ending
+  if (ending) return
+  if (!scene || !scene.finished) return
+  ending = scene.ending ?? sceneOf(state, lifeData).ending ?? endingFor(state, lifeData)
+  open = scene.open ?? null
+  markSeen(ending.id)
   clearRun()
 }
 
@@ -292,6 +469,8 @@ function restart() {
   scene = null
   result = null
   ending = null
+  open = null
+  decisionNote = ''
   clearRun()
   top()
   renderStart()
@@ -300,13 +479,6 @@ function restart() {
 /* ------------------------------------------------------------------ */
 /* 本机推演                                                            */
 /* ------------------------------------------------------------------ */
-
-function pickOption() {
-  const match = scene.options.find((option) => option.desire === persona)
-  if (match) return match.id
-  const canon = scene.options.find((option) => option.canon)
-  return canon?.id ?? scene.options[0]?.id
-}
 
 function scheduleAuto() {
   clearAuto()
@@ -327,31 +499,26 @@ function clearAuto() {
 function stopAuto() {
   auto = false
   clearAuto()
+  decisionNote = ''
 }
 
 function autoStep() {
   if (!auto || mode !== 'play') return
   if (result) {
     result = null
+    decisionNote = ''
     saveRun()
     render()
     return
   }
-  if (!scene) return
-  if (scene.finished) {
+  if (!scene || scene.finished) {
     finishRun()
     render()
     return
   }
-  const id = pickOption()
-  if (id) {
-    const out = choose(state, lifeData, id)
-    state = out.state
-    result = { option: out.option, effects: out.effects, chapter: scene.chapter, title: scene.title }
-    scene = out.next
-    top()
-    render()
-  }
+  const decision = decide(state, lifeData, persona)
+  if (!decision) return
+  chooseOption(decision.id, decision.reason)
 }
 
 function toggleAuto() {
@@ -361,7 +528,64 @@ function toggleAuto() {
     return
   }
   auto = true
+  decisionNote = ''
   render()
+}
+
+/* ------------------------------------------------------------------ */
+/* 结局图鉴                                                            */
+/* ------------------------------------------------------------------ */
+
+function showGallery() {
+  stopAuto()
+  const seen = seenSet()
+  const costIndex = new Map(lifeData.costs.map((cost, index) => [cost.id, index]))
+  const groups = lifeData.themes.map((theme) => ({
+    theme,
+    rows: lifeData.endings
+      .filter((item) => item.theme === theme.id)
+      .sort((a, b) => (costIndex.get(a.cost) ?? 0) - (costIndex.get(b.cost) ?? 0))
+  }))
+  const overlay = document.createElement('div')
+  overlay.className = 'overlay'
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="结局图鉴">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">结局图鉴</p>
+          <h2>${seen.size} / ${lifeData.endings.length}</h2>
+          <p class="modal-sub">五个主题 × 六种代价。锁着的格子，只给一句提示。</p>
+        </div>
+        <button class="close" data-close aria-label="关闭">×</button>
+      </div>
+      ${groups.map(({ theme, rows }) => `
+        <p class="group-title">${esc(theme.label)}</p>
+        ${rows.map((item) => {
+          const got = seen.has(item.id)
+          return `
+            <details class="gallery-card ${got ? 'open' : 'locked'}">
+              <summary>
+                <span class="gallery-index">${esc(theme.label)} · ${esc(costLabel(item.cost))}</span>
+                <span class="gallery-title">${got ? esc(item.title) : '？？？'}</span>
+                <span class="gallery-sub">${got ? esc(item.subtitle) : esc(item.hint)}</span>
+              </summary>
+              ${got
+                ? `<p class="gallery-text">${esc(item.text)}</p><p class="gallery-comment">${esc(item.comment)}</p>`
+                : `<p class="gallery-hint">提示：${esc(item.hint)}</p>`}
+            </details>`
+        }).join('')}
+      `).join('')}
+      <p class="modal-foot">图鉴存在这台设备的 localStorage 里。换一台设备不会同步。</p>
+    </div>`
+  document.body.append(overlay)
+  const close = () => {
+    overlay.remove()
+    document.removeEventListener('keydown', onKey)
+  }
+  const onKey = (event) => { if (event.key === 'Escape') close() }
+  overlay.addEventListener('click', (event) => { if (event.target === overlay) close() })
+  overlay.querySelector('[data-close]').addEventListener('click', close)
+  document.addEventListener('keydown', onKey)
 }
 
 /* ------------------------------------------------------------------ */
@@ -369,11 +593,23 @@ function toggleAuto() {
 /* ------------------------------------------------------------------ */
 
 function bind() {
-  app.querySelectorAll('[data-start]').forEach((node) => node.addEventListener('click', startRun))
+  app.querySelectorAll('[data-start]').forEach((node) => {
+    node.addEventListener('click', () => {
+      const input = app.querySelector('[data-premise]')
+      startRun(input ? input.value : loadPremise())
+    })
+  })
   app.querySelectorAll('[data-resume]').forEach((node) => node.addEventListener('click', resumeRun))
   app.querySelectorAll('[data-restart]').forEach((node) => node.addEventListener('click', restart))
+  app.querySelectorAll('[data-gallery]').forEach((node) => node.addEventListener('click', showGallery))
+  app.querySelectorAll('[data-locked]').forEach((node) => {
+    node.addEventListener('click', () => showLocked(scene ? scene.options : []))
+  })
   app.querySelectorAll('[data-choice]').forEach((node) => {
-    node.addEventListener('click', () => chooseOption(node.dataset.choice))
+    node.addEventListener('click', () => {
+      stopAuto()
+      chooseOption(node.dataset.choice)
+    })
   })
   app.querySelectorAll('[data-continue]').forEach((node) => node.addEventListener('click', continueAfterResult))
   app.querySelectorAll('[data-auto]').forEach((node) => node.addEventListener('click', toggleAuto))
@@ -383,17 +619,34 @@ function bind() {
       if (auto) render()
     })
   })
+  app.querySelectorAll('[data-save-line]').forEach((node) => {
+    node.addEventListener('click', () => {
+      const input = app.querySelector('[data-lastline]')
+      lastLine = input ? input.value.trim().slice(0, 40) : ''
+      saveLine(lastLine)
+      renderEnding()
+    })
+  })
+  const premise = app.querySelector('[data-premise]')
+  if (premise) {
+    premise.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') startRun(premise.value)
+    })
+  }
 }
 
 function render() {
   if (mode === 'start') {
     renderStart()
+    return
+  }
+  if (result) {
+    renderResult()
   } else {
     if (!ending && scene && scene.finished) finishRun()
     if (ending) renderEnding()
-    else if (result) renderResult()
-    else if (!scene || scene.finished) { finishRun(); renderEnding() }
-    else renderScene()
+    else if (scene) renderScene()
+    else renderStart()
   }
   if (auto && mode === 'play' && !ending) scheduleAuto()
 }
