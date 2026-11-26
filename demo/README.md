@@ -33,7 +33,7 @@ open demo/sanguo.html          # macOS
 |---|---|
 | `app.js` | 界面与流程（开场 / 场景 / 结算 / 终章 / 结局 / 图鉴） |
 | `endings.js` | 终章五个选择 + 8 个结局 + 判定条件 |
-| `game.js` | 把纯 JS 引擎包成浏览器可用的控制器；开局状态在这里 |
+| `game.js` | 把纯 JS 引擎包成浏览器可用的控制器；开局状态是 `engine/state.js` 的 `createSave` 副本（浏览器不能 import `node:fs`），引擎改字段时要同步 |
 | `template.html` | 单文件骨架与全部 CSS |
 | `build.mjs` | esbuild 打包 + 把 JS 内联进 HTML |
 | `simulate.mjs` | 无头验收：23 个场景能走到 end，8 个结局全部可达 |
