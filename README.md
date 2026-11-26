@@ -19,7 +19,7 @@ deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、�
 在线试玩：<https://qtepp.github.io/Harmony-harness-game/>
 
 [`demo/sanguo.html`](demo/sanguo.html)（三国 · 长页）、[`demo/card.html`](demo/card.html)
-（三国 · 4:6 单卡）和 [`demo/life.html`](demo/life.html)（如果 · 4:6 单卡）都是单文件
+（三国 · 4:6 单卡）和 [`demo/life.html`](demo/life.html)（如果 · 竖版单卡）都是单文件
 离线版：下载后用浏览器打开即可，不需要 API Key、不需要网络、不需要 Node。
 它复用同一套引擎和十二幕 38 个场景，结局由第十一幕称帝、第十二幕夷陵/白帝的关键选择与末局
 数值决定；点「本机推演」可以按仁 / 霸 / 稳 / 隐四种倾向自动走完一生，全程不调用模型。

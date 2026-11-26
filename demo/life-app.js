@@ -64,6 +64,9 @@ function esc(value) {
     .replace(/'/g, '&#39;')
 }
 
+const PAGE_NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+const pageNum = (index) => PAGE_NUM[index] ?? String(index + 1)
+
 function loadRun() {
   try {
     const raw = JSON.parse(localStorage.getItem(SAVE_KEY) ?? 'null')
@@ -128,7 +131,7 @@ function shell(inner, extra = '') {
     <main class="table">
       <section class="card ${extra}">${inner}</section>
       ${tools()}
-      <p class="note">4:6 单卡 · 1985—2026 · 三十种答案 · 离线</p>
+      <p class="note">竖版单卡 · 1985—2026 · 三十种答案 · 离线</p>
     </main>`
 }
 
@@ -139,9 +142,14 @@ function seal() {
 function statsBar(stats) {
   return `
     <div class="card-stats life" aria-label="当前数值">
-      ${STATS.map(([key, label]) =>
-        `<span class="chip ${key === 'regret' && stats.regret >= 55 ? 'danger' : key === 'health' && stats.health <= 40 ? 'danger' : ''}"><b>${label}</b>${stats[key]}</span>`
-      ).join('')}
+      ${STATS.map(([key, label]) => {
+        const value = stats[key] ?? 0
+        const danger = (key === 'regret' && value >= 55) || (key === 'health' && value <= 40)
+        return `<span class="stat ${danger ? 'danger' : ''}">
+          <span class="stat-top"><b>${label}</b><i>${value}</i></span>
+          <span class="stat-bar"><span style="width:${value}%"></span></span>
+        </span>`
+      }).join('')}
     </div>`
 }
 
@@ -166,6 +174,15 @@ function journey(current) {
     </div>`
 }
 
+function footline(current, options = null) {
+  const locked = options === null ? 0 : options.filter((option) => option.locked).length
+  return `
+    <div class="card-footline">
+      ${journey(current)}
+      ${locked > 0 ? `<button class="locked-link" data-locked title="当年没走的路" aria-label="当年没走的路"><b>锁</b>${locked}</button>` : ''}
+    </div>`
+}
+
 function premiseText(value) {
   return String(value ?? '').replace(/^如果当年[，,]?\s*/, '')
 }
@@ -173,12 +190,10 @@ function premiseText(value) {
 function trace() {
   const log = Array.isArray(state?.log) ? state.log : []
   if (log.length === 0) return ''
-  const rows = log.slice(-4)
-  return `
-    <div class="trace">
-      <p class="trace-title">已经走过 · ${log.length}</p>
-      ${rows.map((entry) => `<p><span>${entry.age}岁</span>${esc(entry.title.replace(/^拷问 · /, ''))}：${esc(entry.label)}</p>`).join('')}
-    </div>`
+  const rows = log.slice(-2)
+  return `<p class="trace-line"><span>已走</span>${rows.map((entry) =>
+    `${entry.age}岁 ${esc(entry.title.replace(/^拷问 · /, ''))}：${esc(entry.label)}`
+  ).join(' → ')}</p>`
 }
 
 function tools() {
@@ -245,7 +260,7 @@ function eraChips(era) {
 function lockedPaths(options) {
   const locked = options.filter((option) => option.locked)
   if (locked.length === 0) return ''
-  return `<button class="locked-link" data-locked>当年没走的路 · ${locked.length}<span aria-hidden="true">›</span></button>`
+  return `<button class="locked-link" data-locked><b>锁</b>${locked.length}</button>`
 }
 
 function showLocked(options) {
@@ -296,7 +311,7 @@ function renderScene() {
   app.innerHTML = shell(`
     <div class="card-grid">
       <header class="card-head">
-        <p class="act">${isQuestion ? '拷问' : `第${scene.chapter + 1}页`} <span class="progress">${scene.chapter + 1}/${scene.total}</span></p>
+        <p class="act">${isQuestion ? '拷问' : `第${pageNum(scene.chapter)}页`} <span class="progress">${scene.chapter + 1}/${scene.total}</span></p>
         <h1>${esc(title)}</h1>
       </header>
       ${seal()}
@@ -306,10 +321,9 @@ function renderScene() {
         ${eraChips(scene.era)}
         <p class="narration ${isQuestion ? 'question-text' : ''}">${esc(scene.narration)}</p>
         ${trace()}
-        ${lockedPaths(scene.options)}
         ${isQuestion ? '<p class="hint">没有标准答案。它只决定，十年后哪条路还在。</p>' : ''}
-        ${journey(scene.chapter)}
       </div>
+      ${footline(scene.chapter, scene.options)}
       <div class="card-actions ${openOptions.length > 4 ? 'many' : ''} ${isQuestion ? 'question-actions' : ''}">${options}</div>
     </div>`, isQuestion ? 'question-card' : '')
   bind()
@@ -327,7 +341,7 @@ function renderResult() {
   app.innerHTML = shell(`
     <div class="card-grid">
       <header class="card-head">
-        <p class="act">第${result.chapter + 1}页 · ${esc(result.title)}</p>
+        <p class="act">第${pageNum(result.chapter)}页 · ${esc(result.title)}</p>
         <h1>${esc(option.label)}</h1>
       </header>
       ${seal()}
@@ -344,10 +358,10 @@ function renderResult() {
         ${decisionNote ? `<p class="decision"><b>本机决策器</b>${esc(decisionNote)}</p>` : ''}
         ${scene && !scene.finished ? `<p class="hint">下一${nextIsQuestion ? '问' : '页'}：${esc(scene.title.replace(/^拷问 · /, ''))}</p>` : ''}
         ${trace()}
-        ${journey(result.chapter)}
       </div>
+      ${footline(result.chapter)}
       <div class="card-actions"><button class="primary" data-continue>继续</button></div>
-    </div>`)
+    </div>`, 'result-card')
   bind()
 }
 
@@ -384,6 +398,7 @@ function renderEnding() {
         </div>
         ${lastLine ? `<p class="lastline-show">你的如果：${esc(lastLine)}</p>` : ''}
       </div>
+      ${footline(lifeData.chapters.length)}
       <div class="card-actions ending-actions">
         <button class="primary" data-start>再活一次</button>
         <button class="secondary" data-gallery>图鉴</button>
@@ -554,7 +569,7 @@ function showGallery() {
         <div>
           <p class="eyebrow">结局图鉴</p>
           <h2>${seen.size} / ${lifeData.endings.length}</h2>
-          <p class="modal-sub">五个主题 × 六种代价。锁着的格子，只给一句提示。</p>
+          <p class="modal-sub">五个主题 × 六个代价位。锁着的格子，只给一句提示。</p>
         </div>
         <button class="close" data-close aria-label="关闭">×</button>
       </div>
@@ -566,7 +581,7 @@ function showGallery() {
             <details class="gallery-card ${got ? 'open' : 'locked'}">
               <summary>
                 <span class="gallery-index">${esc(theme.label)} · ${esc(costLabel(item.cost))}</span>
-                <span class="gallery-title">${got ? esc(item.title) : '？？？'}</span>
+                <span class="gallery-title ${got ? '' : 'locked-title'}">${got ? esc(item.title) : '未解锁'}</span>
                 <span class="gallery-sub">${got ? esc(item.subtitle) : esc(item.hint)}</span>
               </summary>
               ${got

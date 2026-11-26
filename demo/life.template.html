@@ -11,11 +11,11 @@
     --paper-2: #efe2cc;
     --ink: #211b15;
     --ink-2: #4d4438;
-    --muted: #827463;
+    --muted: #736553;
     --line: rgba(77, 68, 56, 0.18);
     --red: #982d24;
     --red-2: #7b1f1a;
-    --gold: #b28a4e;
+    --gold: #a37a3f;
     --gold-2: #d9b77e;
     --green: #2f6b4f;
     --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
@@ -977,6 +977,364 @@
       transition-duration: 0.001ms !important;
     }
   }
+
+  /* ================================================================
+     v3 · 可读性重做
+     目标：手机上一眼能读，卡面仍然是一张 4:6 的纸。
+     做法：六格仪表盘、页脚时间线、选项 13.4–14.5px、正文 15px。
+     ================================================================ */
+
+  .table {
+    gap: 14px;
+    padding: max(20px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .card {
+    width: min(92vw, 430px);
+    border-radius: 18px;
+    box-shadow:
+      0 34px 90px rgba(0, 0, 0, 0.66),
+      0 2px 0 rgba(255, 255, 255, 0.18) inset,
+      0 0 0 1px rgba(178, 138, 78, 0.52);
+  }
+  .card::before {
+    inset: 8px;
+    border-radius: 12px;
+    border-color: rgba(152, 45, 36, 0.22);
+  }
+
+  .card-grid {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+    gap: 7px 10px;
+    padding: 20px 19px 16px;
+  }
+
+  .card-head h1 {
+    font-size: 27px;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .act { font-size: 10px; letter-spacing: 0.13em; }
+  .card-seal {
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
+    border-radius: 5px;
+  }
+
+  .card-meta {
+    grid-column: 1 / 5;
+    grid-row: 2;
+    gap: 4px 12px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .card-meta span + span::before { margin-right: 10px; }
+  .premise-meta {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 六格仪表盘：比两行胶囊更像一块 HUD，也省一行高度 */
+  .card-stats.life {
+    grid-column: 1 / 5;
+    grid-row: 3;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+  .stat-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-top b {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+  }
+  .stat-top i {
+    font-style: normal;
+    font-size: 13.5px;
+    line-height: 1.05;
+    color: var(--ink-2);
+  }
+  .stat-bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(77, 68, 56, 0.13);
+    overflow: hidden;
+  }
+  .stat-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgba(178, 138, 78, 0.62), var(--gold));
+    transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .stat.danger .stat-top i { color: var(--red); }
+  .stat.danger .stat-bar span { background: linear-gradient(90deg, rgba(152, 45, 36, 0.55), var(--red)); }
+
+  .card-story {
+    grid-column: 1 / 5;
+    grid-row: 4;
+    padding-right: 3px;
+  }
+  .narration {
+    margin-bottom: 7px;
+    font-size: 15px;
+    line-height: 1.76;
+    letter-spacing: 0.01em;
+  }
+  .question-text { font-size: 17px; line-height: 1.82; }
+  .question-card .card-story::after { content: "问"; }
+  .result-card .card-story::after { content: "择"; }
+  .hint { font-size: 10.5px; line-height: 1.6; }
+
+  .era { gap: 4px; margin-bottom: 7px; font-size: 9.5px; }
+  .era-source { font-size: 9.5px; letter-spacing: 0.06em; }
+  .era-item { padding: 1.5px 5px; font-size: 9px; border-radius: 4px; }
+
+  .trace-line {
+    margin: 6px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--serif);
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .trace-line span {
+    margin-right: 5px;
+    font-family: var(--sans);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+
+  /* 页脚：时间线 + 锁住的路，放在选项上面，不再和正文抢高度 */
+  .card-footline {
+    grid-column: 1 / 5;
+    grid-row: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 19px;
+    padding-top: 5px;
+    border-top: 1px solid rgba(77, 68, 56, 0.16);
+  }
+  .journey {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    gap: 1px;
+    align-items: center;
+  }
+  .journey-step { gap: 2px; font-size: 8px; }
+  .journey-step i { width: 3px; height: 3px; }
+  .journey-step.now i { width: 5px; height: 5px; }
+
+  .locked-link {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    width: auto;
+    margin: 0;
+    min-height: 24px;
+    padding: 2px 8px 2px 6px;
+    border: 1px solid rgba(178, 138, 78, 0.4);
+    border-radius: 999px;
+    background: rgba(178, 138, 78, 0.07);
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 9.5px;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+  }
+  .locked-link b {
+    font-weight: 500;
+    font-size: 8px;
+    color: var(--red);
+  }
+  .locked-link:hover { background: rgba(178, 138, 78, 0.14); }
+
+  /* 选项：14.5px，31px 高；8 个也放得下 */
+  .card-actions {
+    grid-column: 1 / 5;
+    grid-row: 6;
+    gap: 5px;
+  }
+  .choice {
+    min-height: 31px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border-color: rgba(77, 68, 56, 0.2);
+    font-size: 14.5px;
+    line-height: 1.28;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset;
+    transition-property: transform, border-color, background-color, box-shadow;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out;
+  }
+  .choice:hover {
+    border-color: rgba(152, 45, 36, 0.45);
+    background: #fffdf8;
+    box-shadow: 0 3px 10px rgba(77, 68, 56, 0.08);
+    transform: translateY(-1px);
+  }
+  .choice:active { transform: scale(0.992); }
+  .choice-text { gap: 6px; }
+  .choice .arrow { font-size: 17px; }
+  .desire {
+    padding: 0 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    line-height: 1.6;
+  }
+  .flag { font-size: 9px; }
+  .card-actions.many .choice {
+    min-height: 29px;
+    padding: 3px 9px;
+    font-size: 13.8px;
+  }
+  .card-actions.many { gap: 4px; }
+
+  .primary, .secondary { font-size: 14px; }
+  .primary { min-height: 44px; }
+  .secondary { min-height: 38px; }
+
+  /* 卡背 */
+  .back-inner { padding: 30px 26px; }
+  .back-seal { width: 76px; height: 76px; font-size: 44px; border-radius: 8px; }
+  .back-kicker {
+    margin: 18px 0 8px;
+    font-size: 9.5px;
+    letter-spacing: 0.26em;
+  }
+  .back-title {
+    font-size: 48px;
+    letter-spacing: 0.16em;
+    text-indent: 0.16em;
+    text-wrap: balance;
+  }
+  .back-sub { margin-top: 13px; font-size: 12.5px; line-height: 1.95; }
+  .back-memory { margin-top: 11px; font-size: 10.5px; line-height: 1.85; }
+  .premise-field { max-width: 250px; margin-top: 16px; gap: 5px; }
+  .premise-field span { font-size: 9.5px; }
+  .premise-field input {
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .back-actions { gap: 9px; max-width: 230px; margin-top: 24px; }
+  .gold { min-height: 44px; font-size: 15px; }
+  .ghost-light { min-height: 38px; font-size: 13.5px; }
+  .link-light { font-size: 11.5px; }
+  .back-foot { margin-top: 20px; font-size: 9px; }
+
+  /* 结局 */
+  .result-card .card-head h1 { font-size: 24px; line-height: 1.18; }
+  .ending-card .card-head h1 { font-size: 33px; }
+  .ending-text { font-size: 14.5px; line-height: 1.78; }
+  .ending-comment { margin-top: 7px; font-size: 11px; line-height: 1.65; }
+  .open-epilogue { padding: 8px 9px; font-size: 10.5px; line-height: 1.72; }
+  .open-title { font-size: 8px; }
+  .open-tags { font-size: 8.5px; }
+  .premise-line { font-size: 10.5px; }
+  .ending-run { font-size: 9.5px; }
+  .lastline { margin-top: 10px; }
+  .lastline label { font-size: 8.5px; }
+  .lastline input { padding: 6px 8px; font-size: 11.5px; }
+  .lastline .secondary { min-height: 30px; font-size: 10px; }
+  .lastline-show { font-size: 10.5px; }
+  .ending-actions .primary, .ending-actions .secondary { min-height: 44px; font-size: 14px; }
+
+  /* 图鉴与锁路 */
+  .modal { padding: 22px; border-radius: 14px; }
+  .modal-head h2 { font-size: 30px; }
+  .modal-sub { font-size: 10.5px; }
+  .group-title { font-size: 15px; }
+  .gallery { gap: 8px; }
+  .gallery-card { padding: 11px 13px; border-radius: 9px; }
+  .gallery-index { font-size: 8.5px; }
+  .gallery-title { font-size: 16px; }
+  .locked-title { font-size: 13px; letter-spacing: 0.08em; color: var(--muted); }
+  .gallery-sub { font-size: 11px; }
+  .gallery-hint { font-size: 10px; }
+  .gallery-text { font-size: 13px; line-height: 1.75; }
+  .gallery-comment { font-size: 10px; }
+  .locked-card { padding: 9px 11px; }
+  .locked-label { font-size: 14px; }
+  .locked-reason { font-size: 10px; }
+  .modal-foot { font-size: 9.5px; }
+  .close { font-size: 26px; }
+
+  /* 卡外工具 */
+  .tools { gap: 6px 14px; font-size: 11.5px; }
+  .tools button { min-height: 32px; padding: 6px 8px; font-size: 11.5px; }
+  .persona { font-size: 11.5px; }
+  .persona select { padding: 4px 6px; font-size: 11.5px; }
+  .note { font-size: 8.5px; }
+
+  @media (max-width: 420px) {
+    .card { min-height: 600px; }
+    .card-grid { padding: 17px 16px 14px; gap: 6px 8px; }
+    .card-head h1 { font-size: 25px; }
+    .result-card .card-head h1 { font-size: 22px; }
+    .narration { font-size: 14.5px; line-height: 1.72; }
+    .question-text { font-size: 16px; }
+    .choice { min-height: 30px; font-size: 14px; }
+    .card-actions.many .choice { min-height: 28px; font-size: 13.4px; }
+    .stat-top b { font-size: 8.5px; }
+    .stat-top i { font-size: 13px; }
+    .back-title { font-size: 44px; }
+    .back-inner { padding: 26px 22px; }
+  }
+
+  @media (min-width: 900px) {
+    .table { gap: 18px; }
+    .card { width: min(86vw, 480px); }
+    .card-grid { padding: 24px 22px 19px; gap: 8px 12px; }
+    .card-head h1 { font-size: 30px; }
+    .card-meta { font-size: 11.5px; }
+    .narration { font-size: 16px; line-height: 1.78; }
+    .question-text { font-size: 18px; }
+    .choice { min-height: 34px; font-size: 15px; }
+    .card-actions.many .choice { min-height: 32px; font-size: 14.5px; }
+    .stat-top b { font-size: 9.5px; }
+    .stat-top i { font-size: 15px; }
+    .result-card .card-head h1 { font-size: 26px; }
+    .ending-text { font-size: 15.5px; }
+    .back-title { font-size: 54px; }
+    .back-sub { font-size: 13.5px; }
+    .back-memory { font-size: 11.5px; }
+  }
+
+  @media (max-width: 360px) {
+    .card-grid { padding: 15px 14px 12px; }
+    .card-meta { font-size: 10px; }
+    .narration { font-size: 14px; }
+    .choice { font-size: 13.6px; }
+    .card-actions.many .choice { font-size: 13px; }
+  }
+
 </style>
 </head>
 <body>
