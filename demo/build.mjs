@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
-async function emit(entry, templateName, outputName) {
+async function emit(entry, templateName, outputName, title) {
   const bundled = await build({
     entryPoints: [join(here, entry)],
     bundle: true,
@@ -30,7 +30,8 @@ async function emit(entry, templateName, outputName) {
   })
 
   const js = bundled.outputFiles[0].text.replace(/<\/script>/gi, '<\\/script>')
-  const template = await readFile(join(here, templateName), 'utf8')
+  let template = await readFile(join(here, templateName), 'utf8')
+  if (title) template = template.replace(/<title>[^<]*<\/title>/, `<title>${title}</title>`)
   if (!template.includes('/*__BUNDLE__*/')) {
     throw new Error(`${templateName} 里找不到 /*__BUNDLE__*/ 占位符`)
   }
@@ -45,3 +46,4 @@ async function emit(entry, templateName, outputName) {
 await emit('app.js', 'template.html', 'sanguo.html')
 await emit('card.js', 'card.template.html', 'card.html')
 await emit('life-app.js', 'life.template.html', 'life.html')
+await emit('instance-app.js', 'life.template.html', 'instances.html', '如果 · 穿梭人生副本')

@@ -131,7 +131,7 @@ function shell(inner, extra = '') {
     <main class="table">
       <section class="card ${extra}">${inner}</section>
       ${tools()}
-      <p class="note">竖版单卡 · 1985—2026 · 六十种答案 · 离线</p>
+      <p class="note">竖版单卡 · 1985—2026 · 七十种答案 · 离线</p>
     </main>`
 }
 
@@ -228,7 +228,7 @@ function renderStart() {
       <div class="back-seal" aria-hidden="true">生</div>
       <p class="back-kicker">1985 · 广东阳江 · 2026</p>
       <h1 class="back-title">如果</h1>
-      <p class="back-sub">人生之书<br>六次选择 · 三次拷问 · 六十种答案</p>
+      <p class="back-sub">人生之书<br>六次选择 · 三次拷问 · 七十种答案</p>
       <p class="back-memory">台风、录像厅、咸水歌。<br>1997 香港回归，2003 年你十八岁。</p>
       <label class="premise-field">
         <span>如果当年……</span>
@@ -577,7 +577,8 @@ function showGallery() {
   const seen = seenSet()
   const costIndex = new Map(lifeData.costs.map((cost, index) => [cost.id, index]))
   const matrix = lifeData.endings.filter((item) => item.kind !== 'special')
-  const special = lifeData.endings.filter((item) => item.kind === 'special')
+  const special = lifeData.endings.filter((item) => item.kind === 'special' && !item.id.startsWith('rough'))
+  const rough = lifeData.endings.filter((item) => item.kind === 'special' && item.id.startsWith('rough'))
   const groups = lifeData.themes.map((theme) => ({
     theme,
     rows: matrix
@@ -592,7 +593,7 @@ function showGallery() {
         <div>
           <p class="eyebrow">结局图鉴</p>
           <h2>${seen.size} / ${lifeData.endings.length}</h2>
-          <p class="modal-sub">五个主题 × 六个代价位，外加三十种特殊人生。锁着的格子，只给一句提示。</p>
+          <p class="modal-sub">五个主题 × 六个代价位，外加四十种特殊人生（含十种潦草人生）。锁着的格子，只给一句提示。</p>
         </div>
         <button class="close" data-close aria-label="关闭">×</button>
       </div>
@@ -600,6 +601,8 @@ function showGallery() {
         <p class="group-title">${esc(theme.label)}</p>
         ${galleryRows(rows, seen, (item) => `${theme.label} · ${costLabel(item.cost)}`)}
       `).join('')}
+      <p class="group-title">潦草人生</p>
+      ${galleryRows(rough, seen, () => '潦草')}
       <p class="group-title">另一种答案</p>
       ${galleryRows(special, seen, () => '特别')}
       <p class="modal-foot">图鉴存在这台设备的 localStorage 里。换一台设备不会同步。</p>

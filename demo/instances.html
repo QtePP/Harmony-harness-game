@@ -1,0 +1,1546 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>如果 · 穿梭人生副本</title>
+<style>
+  :root {
+    --paper: #f7efe0;
+    --paper-2: #efe2cc;
+    --ink: #211b15;
+    --ink-2: #4d4438;
+    --muted: #736553;
+    --line: rgba(77, 68, 56, 0.18);
+    --red: #982d24;
+    --red-2: #7b1f1a;
+    --gold: #a37a3f;
+    --gold-2: #d9b77e;
+    --green: #2f6b4f;
+    --serif: "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", "SimSun", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    background: #17130f;
+    background-image:
+      radial-gradient(circle at 50% -10%, rgba(178, 138, 78, 0.16), transparent 46%),
+      radial-gradient(circle at 50% 110%, rgba(152, 45, 36, 0.13), transparent 48%),
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 3px),
+      linear-gradient(160deg, #1d1813, #0e0b08);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, select:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--gold-2);
+    outline-offset: 3px;
+  }
+
+  #app { min-height: 100vh; }
+
+  .table {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+  }
+
+  /* ---------- 卡体 ---------- */
+  .card {
+    position: relative;
+    width: min(92vw, 420px);
+    aspect-ratio: 4 / 6;
+    overflow: hidden;
+    border-radius: 15px;
+    background:
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.55), transparent 38%),
+      linear-gradient(160deg, #fcf8ee, var(--paper-2));
+    color: var(--ink);
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(178, 138, 78, 0.5),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    animation: cardIn 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgba(152, 45, 36, 0.2);
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(77, 68, 56, 0.022) 0 1px, transparent 1px 4px),
+      radial-gradient(circle at 85% 90%, rgba(178, 138, 78, 0.1), transparent 32%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .card-grid {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 6px 8px;
+    height: 100%;
+    padding: 18px 17px 15px;
+  }
+
+  .card-head { grid-column: 1 / 4; grid-row: 1; min-width: 0; }
+  .card-seal {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+    align-self: start;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: var(--red);
+    color: #fbeee0;
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1;
+    box-shadow: inset 0 0 0 2px rgba(255, 245, 230, 0.15), 0 4px 10px rgba(152, 45, 36, 0.25);
+  }
+
+  .act {
+    margin: 0 0 3px;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    color: var(--red);
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .progress { color: var(--muted); letter-spacing: 0.04em; }
+
+  .card-head h1 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 24px;
+    line-height: 1.15;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-meta {
+    grid-column: 1 / 5;
+    grid-row: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    align-items: baseline;
+    font-size: 9px;
+    line-height: 1.35;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    min-width: 0;
+  }
+  .card-meta span + span::before {
+    content: "·";
+    margin-right: 8px;
+    color: rgba(130, 116, 99, 0.5);
+  }
+
+  /* ---------- 数值 ---------- */
+  .card-stats {
+    grid-column: 1 / 5;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .card-stats.life { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .chip {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 3px;
+    padding: 3px 4px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(255, 253, 247, 0.58);
+    font-size: 9px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .chip b {
+    font-weight: 500;
+    font-size: 7px;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+  .chip.warn { border-color: rgba(178, 138, 78, 0.48); color: #765728; }
+  .chip.danger { border-color: rgba(152, 45, 36, 0.45); color: var(--red); }
+
+  /* ---------- 叙述 ---------- */
+  .card-story {
+    grid-column: 1 / 5;
+    grid-row: 4 / 6;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+    padding-right: 2px;
+    scrollbar-width: none;
+  }
+  .card-story::after {
+    content: "生";
+    position: absolute;
+    right: -4px;
+    bottom: -14px;
+    font-family: var(--serif);
+    font-size: 92px;
+    line-height: 1;
+    color: rgba(152, 45, 36, 0.045);
+    pointer-events: none;
+    user-select: none;
+  }
+  .card-story::-webkit-scrollbar { display: none; }
+
+  .narration {
+    margin: 0 0 7px;
+    font-family: var(--serif);
+    font-size: 13.5px;
+    line-height: 1.72;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+
+  .timeskip {
+    margin: 0 0 5px;
+    font-family: var(--serif);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+  }
+
+  .deltas { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 7px; }
+  .delta {
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .delta.up { color: var(--green); background: rgba(47, 107, 79, 0.08); }
+  .delta.down { color: var(--red); background: rgba(152, 45, 36, 0.07); }
+
+  .history {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    font-size: 9px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+  .history summary { cursor: pointer; letter-spacing: 0.1em; color: var(--gold); }
+  .history p { margin: 5px 0 0; font-family: var(--serif); }
+
+  .hint {
+    margin: 2px 0 0;
+    font-size: 8.5px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .muted { color: var(--muted); }
+
+  /* ---------- 动作 ---------- */
+  .card-actions {
+    grid-column: 1 / 5;
+    grid-row: 6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+
+  .choice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 29px;
+    padding: 4px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(255, 253, 247, 0.72);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 12.5px;
+    line-height: 1.3;
+    text-align: left;
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .choice:hover { border-color: rgba(152, 45, 36, 0.42); background: #fffdf8; }
+  .choice .arrow { color: var(--red); font-family: var(--serif); font-size: 15px; line-height: 1; opacity: 0.55; }
+  .choice-text { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+  .desire {
+    flex: 0 0 auto;
+    padding: 0 4px;
+    border: 1px solid rgba(178, 138, 78, 0.4);
+    border-radius: 3px;
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 7.5px;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+  }
+  .flag {
+    flex: 0 0 auto;
+    margin-left: 3px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 7.5px;
+    line-height: 1.5;
+    letter-spacing: 0.03em;
+  }
+  .choice.compact { min-height: 25px; padding: 3px 8px; font-size: 11.5px; }
+  .card-actions.many .choice { min-height: 22px; padding: 2px 7px; font-size: 11px; }
+  .card-actions.many { gap: 3px; }
+
+  .primary, .secondary {
+    width: 100%;
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    transition: background 0.12s ease, transform 0.12s ease;
+  }
+  .primary { border: 0; background: var(--red); color: #fff8ee; }
+  .primary:hover { background: #b03a30; }
+  .primary:active, .secondary:active { transform: scale(0.985); }
+  .secondary { border: 1px solid var(--line); background: rgba(255, 253, 247, 0.6); color: var(--ink-2); }
+
+  .check-line {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+  }
+  .check-hint { margin: 0 0 4px; font-size: 8.5px; line-height: 1.5; color: var(--muted); }
+
+  .ending-actions { flex-direction: row; }
+  .ending-actions .primary, .ending-actions .secondary { flex: 1; }
+
+  /* ---------- 卡背 ---------- */
+  .card.back {
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255, 228, 190, 0.09), transparent 42%),
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 7px),
+      linear-gradient(160deg, #7d211a, #54130f);
+    color: #f7ead2;
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(217, 183, 126, 0.62),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .card.back::before { border-color: rgba(217, 183, 126, 0.38); }
+  .card.back::after {
+    background-image:
+      radial-gradient(circle at 50% 50%, transparent 48%, rgba(0, 0, 0, 0.16) 100%),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 5px);
+  }
+
+  .back-inner {
+    position: relative;
+    z-index: 3;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 26px 24px;
+  }
+
+  .back-seal {
+    width: 70px;
+    height: 70px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--gold-2);
+    border-radius: 7px;
+    color: var(--gold-2);
+    font-family: var(--serif);
+    font-size: 40px;
+    line-height: 1;
+    box-shadow: inset 0 0 0 4px rgba(217, 183, 126, 0.07);
+    animation: stamp 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .back-kicker {
+    margin: 20px 0 8px;
+    font-size: 8.5px;
+    letter-spacing: 0.28em;
+    color: #d9b98d;
+    text-transform: uppercase;
+  }
+
+  .back-title {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+    color: #f9ecd6;
+  }
+
+  .back-sub {
+    margin: 12px 0 0;
+    font-family: var(--serif);
+    font-size: 10.5px;
+    line-height: 1.9;
+    letter-spacing: 0.05em;
+    color: #d9b98d;
+  }
+
+  .back-memory {
+    margin: 10px 0 0;
+    font-family: var(--serif);
+    font-size: 9px;
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+    color: #bfa477;
+  }
+
+  .premise-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 240px;
+    margin-top: 14px;
+    text-align: left;
+  }
+  .premise-field span {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: #c9a878;
+  }
+  .premise-field input {
+    width: 100%;
+    padding: 7px 9px;
+    border: 1px solid rgba(217, 183, 126, 0.35);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.18);
+    color: #f3e3c9;
+    font-family: var(--serif);
+    font-size: 11px;
+  }
+  .premise-field input::placeholder { color: #8f7758; }
+  .premise-field input:focus { outline: 2px solid rgba(217, 183, 126, 0.55); outline-offset: 1px; }
+
+  .back-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    width: 100%;
+    max-width: 210px;
+    margin-top: 26px;
+  }
+
+  .gold {
+    width: 100%;
+    min-height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--gold-2);
+    color: #3b2117;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+  }
+  .gold:hover { background: #e6c993; }
+
+  .ghost-light {
+    width: 100%;
+    min-height: 32px;
+    border: 1px solid rgba(217, 183, 126, 0.45);
+    border-radius: 999px;
+    background: transparent;
+    color: #f3e3c9;
+    font-size: 12px;
+  }
+  .ghost-light:hover { background: rgba(217, 183, 126, 0.1); }
+
+  .link-light {
+    border: 0;
+    background: transparent;
+    color: #c9a878;
+    font-size: 10.5px;
+    letter-spacing: 0.05em;
+    padding: 4px;
+  }
+  .link-light:hover { color: #e6c993; }
+
+  .back-foot {
+    margin: 22px 0 0;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    color: #b08d64;
+  }
+
+  /* ---------- 结局卡 ---------- */
+  .card.ending-card {
+    box-shadow:
+      0 28px 70px rgba(0, 0, 0, 0.62),
+      0 0 0 1px rgba(178, 138, 78, 0.75),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  }
+  .ending-card .card-head h1 { font-size: 30px; }
+  .ending-text { font-size: 12.8px; line-height: 1.75; }
+  .ending-comment {
+    margin: 6px 0 0;
+    font-family: var(--serif);
+    font-size: 10px;
+    line-height: 1.65;
+    color: var(--gold);
+  }
+  .ending-run {
+    margin: 7px 0 0;
+    font-size: 8.5px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .all-done { margin: 5px 0 0; font-size: 8.5px; letter-spacing: 0.14em; color: var(--gold); }
+
+  /* ---------- 卡外工具 ---------- */
+  .tools {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    color: #bfa987;
+    font-size: 10px;
+  }
+  .tools button {
+    border: 0;
+    background: transparent;
+    color: #d7c3a1;
+    font-size: 10px;
+    padding: 4px 5px;
+    border-radius: 4px;
+  }
+  .tools button:hover { color: #f2dfbf; background: rgba(217, 183, 126, 0.08); }
+  .persona { display: inline-flex; align-items: center; gap: 4px; color: #9d8a6f; }
+  .persona select {
+    border: 1px solid rgba(217, 183, 126, 0.32);
+    border-radius: 4px;
+    background: #241c14;
+    color: #e2cfaf;
+    font-size: 10px;
+    padding: 3px 4px;
+  }
+  .note {
+    margin: 0;
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    color: #7c6a53;
+  }
+
+  /* ---------- 图鉴 ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(8, 6, 4, 0.72);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    animation: fade 0.18s ease both;
+  }
+  .modal {
+    width: min(100%, 680px);
+    max-height: min(86vh, 860px);
+    overflow: auto;
+    padding: 20px;
+    border: 1px solid rgba(178, 138, 78, 0.4);
+    border-radius: 12px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    animation: cardIn 0.25s ease both;
+  }
+  .modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    margin: 0 0 5px;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+  .modal-head h2 { margin: 0; font-family: var(--serif); font-size: 26px; font-variant-numeric: tabular-nums; }
+  .close { border: 0; background: transparent; color: var(--muted); font-size: 23px; line-height: 1; padding: 3px 8px; border-radius: 6px; }
+  .close:hover { background: rgba(77, 68, 56, 0.07); }
+  .gallery { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+  .gallery-card {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255, 253, 247, 0.55);
+  }
+  .gallery-card.locked { opacity: 0.62; }
+  .gallery-card summary {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    cursor: pointer;
+    list-style: none;
+  }
+  .gallery-card summary::-webkit-details-marker { display: none; }
+  .gallery-card.open summary::after {
+    content: "▾";
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 10px;
+    transition: transform 0.12s ease;
+  }
+  .gallery-card.open[open] summary::after { transform: rotate(180deg); }
+  .gallery-index { font-size: 8px; color: var(--muted); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .gallery-title { font-family: var(--serif); font-size: 15px; letter-spacing: 0.05em; color: var(--ink); flex: 0 0 auto; }
+  .gallery-sub { font-family: var(--serif); font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gallery-hint { margin: 2px 0 0; font-size: 9px; color: var(--muted); }
+  .gallery-text { margin: 10px 0 0; font-family: var(--serif); font-size: 12px; line-height: 1.8; color: var(--ink-2); }
+  .gallery-comment { margin: 6px 0 0; font-size: 9px; color: var(--gold); }
+  .modal-foot { margin: 14px 0 0; font-size: 8.5px; color: var(--muted); line-height: 1.6; }
+
+  /* ---------- 年代 / 锁 / 复利 ---------- */
+  .era {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+    margin: 0 0 6px;
+    font-size: 7.5px;
+    line-height: 1.4;
+  }
+  .era-source {
+    color: var(--red);
+    letter-spacing: 0.08em;
+  }
+  .era-item {
+    padding: 1px 4px;
+    border: 1px solid rgba(178, 138, 78, 0.32);
+    border-radius: 3px;
+    background: rgba(178, 138, 78, 0.06);
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .premise-meta { color: var(--red); }
+  .premise-line {
+    margin: 6px 0 0;
+    font-family: var(--serif);
+    font-size: 9px;
+    line-height: 1.6;
+    color: var(--red);
+  }
+
+  .locked-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 7px 0 0;
+    padding: 5px 7px;
+    border: 1px dashed rgba(178, 138, 78, 0.42);
+    border-radius: 5px;
+    background: rgba(178, 138, 78, 0.05);
+    color: var(--gold);
+    font-family: var(--serif);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+  .locked-link span { font-size: 13px; line-height: 1; }
+  .locked-link:hover { background: rgba(178, 138, 78, 0.1); }
+
+  .locked-card {
+    margin-top: 9px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(255, 253, 247, 0.55);
+  }
+  .locked-label {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 13px;
+    color: var(--ink-2);
+    text-decoration: line-through;
+    text-decoration-color: rgba(77, 68, 56, 0.35);
+  }
+  .locked-reason {
+    margin: 3px 0 0;
+    font-size: 9px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .memory-note {
+    margin: 0 0 7px;
+    padding: 6px 7px;
+    border-left: 2px solid rgba(178, 138, 78, 0.4);
+    background: rgba(255, 253, 247, 0.4);
+    font-family: var(--serif);
+    font-size: 8.5px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .memory-note p { margin: 0; }
+
+  .trace {
+    margin-top: 7px;
+    padding-top: 5px;
+    border-top: 1px dashed rgba(77, 68, 56, 0.18);
+    font-size: 8px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+  .trace-title {
+    margin: 0 0 2px;
+    font-family: var(--sans);
+    font-size: 7px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+  .trace p {
+    margin: 1px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--serif);
+  }
+  .trace p span {
+    margin-right: 5px;
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 7px;
+  }
+
+  .journey {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1px;
+    margin-top: auto;
+    padding-top: 7px;
+    border-top: 1px solid var(--line);
+  }
+  .journey-step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 6.5px;
+    line-height: 1;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .journey-step i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(77, 68, 56, 0.22);
+  }
+  .journey-step.done i { background: var(--gold); }
+  .journey-step.done b { color: var(--gold); }
+  .journey-step.now i {
+    width: 6px;
+    height: 6px;
+    background: var(--red);
+    box-shadow: 0 0 0 2px rgba(152, 45, 36, 0.12);
+  }
+  .journey-step.now b { color: var(--red); }
+  .journey-step b { font-weight: 400; }
+
+  .compound {
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+
+  .echo {
+    margin: 6px 0 0;
+    padding-left: 7px;
+    border-left: 2px solid rgba(178, 138, 78, 0.55);
+    font-family: var(--serif);
+    font-size: 9px;
+    line-height: 1.65;
+    color: var(--ink-2);
+  }
+  .echo span {
+    display: block;
+    font-family: var(--sans);
+    font-size: 7px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+
+  .decision {
+    margin: 7px 0 0;
+    padding: 5px 7px;
+    border-left: 2px solid rgba(47, 107, 79, 0.55);
+    background: rgba(47, 107, 79, 0.06);
+    font-size: 8.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .decision b {
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--sans);
+    font-size: 7px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--green);
+  }
+
+  /* ---------- 拷问卡 ---------- */
+  .card.question-card {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.6), transparent 42%),
+      linear-gradient(160deg, #fbf6ea, #eadcc4);
+  }
+  .question-text {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+  .question-actions .choice {
+    border-color: rgba(152, 45, 36, 0.24);
+    background: rgba(255, 252, 244, 0.8);
+  }
+
+  /* ---------- 开放式尾声 ---------- */
+  .open-epilogue {
+    margin-top: 8px;
+    padding: 7px 8px;
+    border: 1px dashed rgba(178, 138, 78, 0.45);
+    border-radius: 4px;
+    background: rgba(255, 253, 247, 0.5);
+    font-family: var(--serif);
+    font-size: 9px;
+    line-height: 1.7;
+    color: var(--ink-2);
+  }
+  .open-epilogue p { margin: 0; }
+  .open-title {
+    margin-bottom: 3px !important;
+    font-family: var(--sans);
+    font-size: 7px;
+    letter-spacing: 0.14em;
+    color: var(--red);
+  }
+  .open-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 7px;
+    margin-top: 5px;
+    font-family: var(--sans);
+    font-size: 7.5px;
+    color: var(--muted);
+  }
+  .open-tags span + span::before {
+    content: "·";
+    margin-right: 7px;
+    color: rgba(130, 116, 99, 0.5);
+  }
+
+  .lastline {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    margin-top: 9px;
+  }
+  .lastline label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    font-size: 7.5px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .lastline input {
+    width: 100%;
+    min-width: 0;
+    padding: 4px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(255, 253, 247, 0.7);
+    font-family: var(--serif);
+    font-size: 10px;
+    color: var(--ink);
+  }
+  .lastline .secondary {
+    width: auto;
+    flex: 0 0 auto;
+    min-height: 26px;
+    padding: 4px 9px;
+    font-size: 9px;
+  }
+  .lastline-show {
+    margin: 5px 0 0;
+    font-family: var(--serif);
+    font-size: 9px;
+    line-height: 1.6;
+    color: var(--red);
+  }
+
+  .modal-sub {
+    margin: 3px 0 0;
+    font-size: 9px;
+    line-height: 1.55;
+    color: var(--muted);
+  }
+  .group-title {
+    margin: 16px 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: var(--red);
+  }
+
+  /* ---------- 动效 ---------- */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.988); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes stamp {
+    from { opacity: 0; transform: scale(1.3) rotate(-4deg); }
+    to { opacity: 1; transform: scale(1) rotate(0); }
+  }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  @media (max-width: 380px) {
+    .card { width: min(94vw, 360px); }
+    .card-grid { padding: 15px 14px 13px; gap: 5px 7px; }
+    .card-head h1 { font-size: 22px; }
+    .narration { font-size: 12.2px; line-height: 1.66; }
+    .choice { font-size: 11.6px; }
+    .card-actions.many .choice { min-height: 21px; font-size: 10.7px; }
+    .back-title { font-size: 34px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  /* ================================================================
+     v3 · 可读性重做
+     目标：手机上一眼能读，卡面仍然是一张 4:6 的纸。
+     做法：六格仪表盘、页脚时间线、选项 13.4–14.5px、正文 15px。
+     ================================================================ */
+
+  .table {
+    gap: 14px;
+    padding: max(20px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .card {
+    width: min(92vw, 430px);
+    border-radius: 18px;
+    box-shadow:
+      0 34px 90px rgba(0, 0, 0, 0.66),
+      0 2px 0 rgba(255, 255, 255, 0.18) inset,
+      0 0 0 1px rgba(178, 138, 78, 0.52);
+  }
+  .card::before {
+    inset: 8px;
+    border-radius: 12px;
+    border-color: rgba(152, 45, 36, 0.22);
+  }
+
+  .card-grid {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+    gap: 7px 10px;
+    padding: 20px 19px 16px;
+  }
+
+  .card-head h1 {
+    font-size: 27px;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .act { font-size: 10px; letter-spacing: 0.13em; }
+  .card-seal {
+    width: 34px;
+    height: 34px;
+    font-size: 19px;
+    border-radius: 5px;
+  }
+
+  .card-meta {
+    grid-column: 1 / 5;
+    grid-row: 2;
+    gap: 4px 12px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+  .card-meta span + span::before { margin-right: 10px; }
+  .premise-meta {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 六格仪表盘：比两行胶囊更像一块 HUD，也省一行高度 */
+  .card-stats.life {
+    grid-column: 1 / 5;
+    grid-row: 3;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+  .stat-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-top b {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+  }
+  .stat-top i {
+    font-style: normal;
+    font-size: 13.5px;
+    line-height: 1.05;
+    color: var(--ink-2);
+  }
+  .stat-bar {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(77, 68, 56, 0.13);
+    overflow: hidden;
+  }
+  .stat-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgba(178, 138, 78, 0.62), var(--gold));
+    transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .stat.danger .stat-top i { color: var(--red); }
+  .stat.danger .stat-bar span { background: linear-gradient(90deg, rgba(152, 45, 36, 0.55), var(--red)); }
+
+  .card-story {
+    grid-column: 1 / 5;
+    grid-row: 4;
+    padding-right: 3px;
+  }
+  .narration {
+    margin-bottom: 7px;
+    font-size: 15px;
+    line-height: 1.76;
+    letter-spacing: 0.01em;
+  }
+  .question-text { font-size: 17px; line-height: 1.82; }
+  .question-card .card-story::after { content: "问"; }
+  .result-card .card-story::after { content: "择"; }
+  .hint { font-size: 10.5px; line-height: 1.6; }
+
+  .era { gap: 4px; margin-bottom: 7px; font-size: 9.5px; }
+  .era-source { font-size: 9.5px; letter-spacing: 0.06em; }
+  .era-item { padding: 1.5px 5px; font-size: 9px; border-radius: 4px; }
+
+  .trace-line {
+    margin: 6px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--serif);
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .trace-line span {
+    margin-right: 5px;
+    font-family: var(--sans);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+
+  /* 页脚：时间线 + 锁住的路，放在选项上面，不再和正文抢高度 */
+  .card-footline {
+    grid-column: 1 / 5;
+    grid-row: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 19px;
+    padding-top: 5px;
+    border-top: 1px solid rgba(77, 68, 56, 0.16);
+  }
+  .journey {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    gap: 1px;
+    align-items: center;
+  }
+  .journey-step { gap: 2px; font-size: 8px; }
+  .journey-step i { width: 3px; height: 3px; }
+  .journey-step.now i { width: 5px; height: 5px; }
+
+  .locked-link {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    width: auto;
+    margin: 0;
+    min-height: 24px;
+    padding: 2px 8px 2px 6px;
+    border: 1px solid rgba(178, 138, 78, 0.4);
+    border-radius: 999px;
+    background: rgba(178, 138, 78, 0.07);
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 9.5px;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+  }
+  .locked-link b {
+    font-weight: 500;
+    font-size: 8px;
+    color: var(--red);
+  }
+  .locked-link:hover { background: rgba(178, 138, 78, 0.14); }
+
+  /* 选项：14.5px，31px 高；8 个也放得下 */
+  .card-actions {
+    grid-column: 1 / 5;
+    grid-row: 6;
+    gap: 5px;
+  }
+  .choice {
+    min-height: 31px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border-color: rgba(77, 68, 56, 0.2);
+    font-size: 14.5px;
+    line-height: 1.28;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.55) inset;
+    transition-property: transform, border-color, background-color, box-shadow;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out;
+  }
+  .choice:hover {
+    border-color: rgba(152, 45, 36, 0.45);
+    background: #fffdf8;
+    box-shadow: 0 3px 10px rgba(77, 68, 56, 0.08);
+    transform: translateY(-1px);
+  }
+  .choice:active { transform: scale(0.992); }
+  .choice-text { gap: 6px; }
+  .choice .arrow { font-size: 17px; }
+  .desire {
+    padding: 0 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    line-height: 1.6;
+  }
+  .flag { font-size: 9px; }
+  .card-actions.many .choice {
+    min-height: 29px;
+    padding: 3px 9px;
+    font-size: 13.8px;
+  }
+  .card-actions.many { gap: 4px; }
+
+  .primary, .secondary { font-size: 14px; }
+  .primary { min-height: 44px; }
+  .secondary { min-height: 38px; }
+
+  /* 卡背 */
+  .back-inner { padding: 30px 26px; }
+  .back-seal { width: 76px; height: 76px; font-size: 44px; border-radius: 8px; }
+  .back-kicker {
+    margin: 18px 0 8px;
+    font-size: 9.5px;
+    letter-spacing: 0.26em;
+  }
+  .back-title {
+    font-size: 48px;
+    letter-spacing: 0.16em;
+    text-indent: 0.16em;
+    text-wrap: balance;
+  }
+  .back-sub { margin-top: 13px; font-size: 12.5px; line-height: 1.95; }
+  .back-memory { margin-top: 11px; font-size: 10.5px; line-height: 1.85; }
+  .premise-field { max-width: 250px; margin-top: 16px; gap: 5px; }
+  .premise-field span { font-size: 9.5px; }
+  .premise-field input {
+    padding: 9px 11px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .back-actions { gap: 9px; max-width: 230px; margin-top: 24px; }
+  .gold { min-height: 44px; font-size: 15px; }
+  .ghost-light { min-height: 38px; font-size: 13.5px; }
+  .link-light { font-size: 11.5px; }
+  .back-foot { margin-top: 20px; font-size: 9px; }
+
+  /* 结局 */
+  .result-card .card-head h1 { font-size: 24px; line-height: 1.18; }
+  .ending-card .card-head h1 { font-size: 33px; }
+  .ending-text { font-size: 14.5px; line-height: 1.78; }
+  .ending-comment { margin-top: 7px; font-size: 11px; line-height: 1.65; }
+  .open-epilogue { padding: 8px 9px; font-size: 10.5px; line-height: 1.72; }
+  .open-title { font-size: 8px; }
+  .open-tags { font-size: 8.5px; }
+  .premise-line { font-size: 10.5px; }
+  .ending-run { font-size: 9.5px; }
+  .lastline { margin-top: 10px; }
+  .lastline label { font-size: 8.5px; }
+  .lastline input { padding: 6px 8px; font-size: 11.5px; }
+  .lastline .secondary { min-height: 30px; font-size: 10px; }
+  .lastline-show { font-size: 10.5px; }
+  .ending-actions .primary, .ending-actions .secondary { min-height: 44px; font-size: 14px; }
+
+  /* 图鉴与锁路 */
+  .modal { padding: 22px; border-radius: 14px; }
+  .modal-head h2 { font-size: 30px; }
+  .modal-sub { font-size: 10.5px; }
+  .group-title { font-size: 15px; }
+  .gallery { gap: 8px; }
+  .gallery-card { padding: 11px 13px; border-radius: 9px; }
+  .gallery-index { font-size: 8.5px; }
+  .gallery-title { font-size: 16px; }
+  .locked-title { font-size: 13px; letter-spacing: 0.08em; color: var(--muted); }
+  .gallery-sub { font-size: 11px; }
+  .gallery-hint { font-size: 10px; }
+  .gallery-text { font-size: 13px; line-height: 1.75; }
+  .gallery-comment { font-size: 10px; }
+  .locked-card { padding: 9px 11px; }
+  .locked-label { font-size: 14px; }
+  .locked-reason { font-size: 10px; }
+  .modal-foot { font-size: 9.5px; }
+  .close { font-size: 26px; }
+
+  /* 卡外工具 */
+  .tools { gap: 6px 14px; font-size: 11.5px; }
+  .tools button { min-height: 32px; padding: 6px 8px; font-size: 11.5px; }
+  .persona { font-size: 11.5px; }
+  .persona select { padding: 4px 6px; font-size: 11.5px; }
+  .note { font-size: 8.5px; }
+
+  @media (max-width: 420px) {
+    .card { min-height: 600px; }
+    .card-grid { padding: 17px 16px 14px; gap: 6px 8px; }
+    .card-head h1 { font-size: 25px; }
+    .result-card .card-head h1 { font-size: 22px; }
+    .narration { font-size: 14.5px; line-height: 1.72; }
+    .question-text { font-size: 16px; }
+    .choice { min-height: 30px; font-size: 14px; }
+    .card-actions.many .choice { min-height: 28px; font-size: 13.4px; }
+    .stat-top b { font-size: 8.5px; }
+    .stat-top i { font-size: 13px; }
+    .back-title { font-size: 44px; }
+    .back-inner { padding: 26px 22px; }
+  }
+
+  @media (min-width: 900px) {
+    .table { gap: 18px; }
+    .card { width: min(86vw, 480px); }
+    .card-grid { padding: 24px 22px 19px; gap: 8px 12px; }
+    .card-head h1 { font-size: 30px; }
+    .card-meta { font-size: 11.5px; }
+    .narration { font-size: 16px; line-height: 1.78; }
+    .question-text { font-size: 18px; }
+    .choice { min-height: 34px; font-size: 15px; }
+    .card-actions.many .choice { min-height: 32px; font-size: 14.5px; }
+    .stat-top b { font-size: 9.5px; }
+    .stat-top i { font-size: 15px; }
+    .result-card .card-head h1 { font-size: 26px; }
+    .ending-text { font-size: 15.5px; }
+    .back-title { font-size: 54px; }
+    .back-sub { font-size: 13.5px; }
+    .back-memory { font-size: 11.5px; }
+  }
+
+  @media (max-width: 360px) {
+    .card-grid { padding: 15px 14px 12px; }
+    .card-meta { font-size: 10px; }
+    .narration { font-size: 14px; }
+    .choice { font-size: 13.6px; }
+    .card-actions.many .choice { font-size: 13px; }
+  }
+
+
+  /* ---------- 穿梭人生 · 副本库 ---------- */
+  .hub-card .hub-inner {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 26px 24px 20px;
+    color: #f7ead2;
+  }
+  .hub-card .back-seal {
+    width: 58px;
+    height: 58px;
+    font-size: 32px;
+    border-radius: 6px;
+  }
+  .hub-card .back-kicker { margin-top: 13px; }
+  .hub-card .back-title { font-size: 43px; }
+  .hub-card .back-sub { margin-top: 7px; font-size: 10.5px; }
+
+  .hub-list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 13px;
+    padding-right: 2px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(217, 183, 126, 0.35) transparent;
+  }
+  .hub-list::-webkit-scrollbar { width: 4px; }
+  .hub-list::-webkit-scrollbar-thumb { background: rgba(217, 183, 126, 0.35); border-radius: 2px; }
+
+  .instance-item {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 7px 24px 7px 10px;
+    border: 1px solid rgba(217, 183, 126, 0.28);
+    border-radius: 7px;
+    background: rgba(0, 0, 0, 0.14);
+    color: #f3e3c9;
+    text-align: left;
+    transition-property: background-color, border-color, transform;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out;
+  }
+  .instance-item b {
+    display: block;
+    font-family: var(--serif);
+    font-size: 13.5px;
+    line-height: 1.3;
+    letter-spacing: 0.04em;
+  }
+  .instance-item small {
+    display: block;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--serif);
+    font-size: 8.5px;
+    color: #b08d64;
+  }
+  .instance-item > span {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold-2);
+    font-family: var(--serif);
+    font-size: 15px;
+    line-height: 1;
+    opacity: 0.65;
+  }
+  .instance-item:hover {
+    border-color: rgba(217, 183, 126, 0.55);
+    background: rgba(217, 183, 126, 0.1);
+    transform: translateY(-1px);
+  }
+  .instance-item:active { transform: scale(0.994); }
+
+  .hub-foot {
+    margin: 9px 0 0;
+    font-size: 8px;
+    line-height: 1.55;
+    color: #b08d64;
+  }
+  .hub-foot a {
+    margin-left: 4px;
+    color: #d9b98f;
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(217, 183, 126, 0.45);
+  }
+  .hub-foot a:hover { color: #f3e3c9; }
+
+  .instance-premise {
+    margin: 0 0 7px;
+    padding: 5px 7px;
+    border-left: 2px solid rgba(178, 138, 78, 0.45);
+    background: rgba(255, 253, 247, 0.45);
+    font-family: var(--serif);
+    font-size: 10px;
+    line-height: 1.65;
+    color: var(--ink-2);
+  }
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>(()=>{var S={schema:1,title:"\u7A7F\u68AD\u4EBA\u751F \xB7 \u526F\u672C",source:{name:"\u7A7F\u68AD\u4EBA\u751FUp",mid:"603912861",url:"https://space.bilibili.com/603912861/upload/video",videos:47},instances:[{id:"salary3000",title:"\u6708\u85AA\u4E09\u5343",subtitle:"\u91CD\u590D\u540C\u4E00\u5929\u7684\u725B\u9A6C\u4EBA\u751F",premise:"\u4E1C\u839E\uFF0C\u7535\u5B50\u5382\uFF0C\u6708\u85AA\u4E09\u5343\u3002\u4F60 24 \u5C81\uFF0C\u5DF2\u7ECF\u5728\u8FD9\u91CC\u5E72\u4E86\u4E24\u5E74\u3002",start:{year:2021,age:24,stats:{money:30,health:65,love:45,freedom:30,parents:45,regret:25},tags:{city:"\u4E1C\u839E",job:"\u666E\u5DE5",partner:"",school:""}},chapters:[{id:"p1",year:2021,age:24,title:"\u65E9\u516B",narration:"\u65E9\u4E0A\u4E03\u70B9\u4E94\u5341\uFF0C\u5382\u95E8\u53E3\u7684\u961F\u4F0D\u62D0\u4E86\u4E00\u4E2A\u5F2F\u3002\u73ED\u957F\u8BF4\u4E0B\u4E2A\u6708\u8BA2\u5355\u591A\uFF0C\u52A0\u73ED\u80FD\u591A\u62FF\u516B\u767E\u5757\u3002",options:[{id:"overtime",label:"\u7559\u4E0B\u6765\u52A0\u73ED",desire:"money",canon:!1,effects:{money:12,health:-10,love:-2,freedom:-6,parents:2,regret:2},flags:{overtime:!0},note:"\u4F60\u7559\u4E86\u4E0B\u6765\u3002\u52A0\u73ED\u8D39\u662F\u771F\u7684\uFF0C\u56F0\u4E5F\u662F\u771F\u7684\u3002"},{id:"learn",label:"\u62A5\u4E00\u4E2A\u591C\u6821",desire:"self",canon:!1,effects:{money:-6,health:-2,love:0,freedom:6,parents:-2,regret:-4},flags:{learn:!0},note:"\u4F60\u62A5\u4E86\u591C\u6821\u3002\u767D\u5929\u62E7\u87BA\u4E1D\uFF0C\u665A\u4E0A\u5B66\u5236\u56FE\u3002"},{id:"gig",label:"\u8F9E\u804C\uFF0C\u53BB\u9001\u5916\u5356",desire:"freedom",canon:!1,effects:{money:-2,health:-4,love:0,freedom:10,parents:-4,regret:2},flags:{gig:!0},note:"\u4F60\u8F9E\u4E86\u804C\u53BB\u9001\u5916\u5356\u3002\u65F6\u95F4\u81EA\u7531\u4E86\uFF0C\u6536\u5165\u4E0D\u7A33\u5B9A\u3002"}]},{id:"p2",year:2022,age:25,title:"\u4E00\u5E74\u540E",narration:"\u4E00\u5E74\u8FC7\u53BB\uFF0C\u4F60\u8FD8\u5728\u4E1C\u839E\u3002\u6709\u4EBA\u5347\u4E86\u7EC4\u957F\uFF0C\u6709\u4EBA\u56DE\u4E86\u8001\u5BB6\uFF0C\u6709\u4EBA\u53BB\u4E86\u6DF1\u5733\u3002",options:[{id:"save",label:"\u628A\u94B1\u5B58\u4E0B\u6765",desire:"money",canon:!1,effects:{money:8,health:0,love:0,freedom:-4,parents:0,regret:2},flags:{save:!0},note:"\u4F60\u5F00\u59CB\u8BB0\u8D26\u3002\u6BCF\u4E2A\u6708\u53D1\u5DE5\u8D44\uFF0C\u5148\u8F6C\u4E94\u767E\u5230\u53E6\u4E00\u5F20\u5361\u3002"},{id:"spend",label:"\u5BF9\u81EA\u5DF1\u597D\u4E00\u70B9",desire:"self",canon:!1,effects:{money:-8,health:4,love:2,freedom:0,parents:0,regret:-2},flags:{spend:!0},note:"\u4F60\u4E70\u4E86\u53CC\u597D\u978B\uFF0C\u5403\u4E86\u987F\u706B\u9505\u3002\u90A3\u665A\u4F60\u89C9\u5F97\u65E5\u5B50\u4E5F\u6CA1\u90A3\u4E48\u5DEE\u3002"},{id:"home",label:"\u56DE\u8001\u5BB6\u8003\u7F16",desire:"parents",canon:!1,effects:{money:-6,health:0,love:0,freedom:-6,parents:12,regret:2},flags:{home:!0},note:"\u4F60\u56DE\u4E86\u8001\u5BB6\uFF0C\u5F00\u59CB\u770B\u4E66\u8003\u7F16\u3002\u5988\u5988\u6BCF\u5929\u7ED9\u4F60\u716E\u6C64\u3002"}]},{id:"p3",year:2030,age:33,title:"\u4E09\u5341\u5C81",narration:"\u4E09\u5341\u5C81\uFF0C\u4F60\u7AD9\u5728\u5382\u95E8\u53E3\uFF0C\u5FFD\u7136\u60F3\u4E0D\u8D77\u81EA\u5DF1\u662F\u600E\u4E48\u8D70\u5230\u8FD9\u91CC\u7684\u3002",options:[{id:"stay",label:"\u7EE7\u7EED\u5728\u4E1C\u839E",desire:"money",canon:!1,effects:{money:10,health:-8,love:0,freedom:-4,parents:0,regret:4},flags:{stay:!0},note:"\u4F60\u7559\u4E86\u4E0B\u6765\uFF0C\u6210\u4E86\u7EBF\u957F\u3002\u5DE5\u8D44\u6DA8\u4E86\uFF0C\u8170\u4E5F\u5F00\u59CB\u75BC\u3002"},{id:"skill",label:"\u53BB\u5B66\u4E00\u95E8\u624B\u827A",desire:"self",canon:!1,effects:{money:-4,health:2,love:0,freedom:8,parents:0,regret:-4},flags:{skill:!0},note:"\u4F60\u8F9E\u4E86\u5DE5\uFF0C\u53BB\u5B66\u6570\u63A7\u3002\u540C\u5B66\u6BD4\u4F60\u5C0F\u5341\u5C81\uFF0C\u4F60\u5B66\u5F97\u5F88\u6162\uFF0C\u4F46\u6CA1\u6709\u505C\u3002"},{id:"shop",label:"\u56DE\u53BF\u57CE\u5F00\u5C0F\u5E97",desire:"parents",canon:!1,effects:{money:-6,health:0,love:0,freedom:2,parents:10,regret:-2},flags:{shop:!0},note:"\u4F60\u56DE\u53BF\u57CE\u5F00\u4E86\u4E00\u5BB6\u5C0F\u5E97\u3002\u8D5A\u5F97\u4E0D\u591A\uFF0C\u4F46\u6BCF\u5929\u80FD\u56DE\u5BB6\u5403\u996D\u3002"}]}],endings:[{id:"salary-craft",kind:"special",title:"\u624B\u827A\u4EBA",subtitle:"\u4F60\u7EC8\u4E8E\u6709\u4E86\u4E00\u95E8\u522B\u4EBA\u62FF\u4E0D\u8D70\u7684\u624B\u827A",text:"\u4F60\u6210\u4E86\u5382\u91CC\u6700\u4F1A\u8C03\u673A\u7684\u4EBA\u3002\u5DE5\u8D44\u4E0D\u7B97\u9AD8\uFF0C\u4F46\u4F60\u4E0D\u6015\u88AB\u6362\u6389\u3002\u4F60\u60F3\u8D77\u591C\u6821\u7684\u7B2C\u4E00\u5802\u8BFE\uFF0C\u8001\u5E08\u8BF4\u7684\u90A3\u53E5\u8BDD\uFF1A\u624B\u4E0A\u6709\u6D3B\uFF0C\u5FC3\u91CC\u4E0D\u614C\u3002",comment:"\u4F60\u6CA1\u6709\u79BB\u5F00\u5DE5\u5382\uFF0C\u4F46\u4F60\u4E0D\u518D\u53EA\u662F\u6D41\u6C34\u7EBF\u4E0A\u7684\u4E00\u9897\u87BA\u4E1D\u3002",hint:"\u4F60\u7EC8\u4E8E\u6709\u4E86\u4E00\u95E8\u522B\u4EBA\u62FF\u4E0D\u8D70\u7684\u624B\u827A",when:{flags:["skill"]}},{id:"salary-trapped",kind:"special",title:"\u505C\u5728\u6D41\u6C34\u7EBF",subtitle:"\u4F60\u628A\u81EA\u5DF1\u7AD9\u6210\u4E86\u4E00\u9053\u5DE5\u5E8F",text:"\u4F60\u5728\u5382\u91CC\u5E72\u5230\u56DB\u5341\u5C81\u3002\u5DE5\u8D44\u4ECE\u4E09\u5343\u6DA8\u5230\u516D\u5343\uFF0C\u623F\u79DF\u4ECE\u4E09\u767E\u6DA8\u5230\u4E00\u5343\u3002\u4F60\u8FD8\u5728\u6D41\u6C34\u7EBF\u4E0A\uFF0C\u52A8\u4F5C\u6BD4\u5E74\u8F7B\u65F6\u66F4\u5FEB\uFF0C\u8BDD\u6BD4\u5E74\u8F7B\u65F6\u66F4\u5C11\u3002",comment:"\u4F60\u6CA1\u6709\u8F93\uFF0C\u53EA\u662F\u6CA1\u6709\u8D70\u3002",hint:"\u4F60\u628A\u81EA\u5DF1\u7AD9\u6210\u4E86\u4E00\u9053\u5DE5\u5E8F",when:{flags:["stay"]}},{id:"salary-town",kind:"special",title:"\u53BF\u57CE\u5C0F\u5E97",subtitle:"\u4F60\u56DE\u53BF\u57CE\uFF0C\u5F00\u4E86\u4E00\u5BB6\u81EA\u5DF1\u7684\u5E97",text:"\u4F60\u56DE\u4E86\u53BF\u57CE\uFF0C\u5F00\u4E86\u4E00\u5BB6\u5C0F\u5E97\u3002\u95E8\u53E3\u6709\u4E00\u68F5\u6995\u6811\uFF0C\u590F\u5929\u6709\u4EBA\u5728\u6811\u4E0B\u6253\u724C\u3002\u4F60\u5076\u5C14\u60F3\u8D77\u4E1C\u839E\u7684\u6D41\u6C34\u7EBF\uFF0C\u89C9\u5F97\u50CF\u4E0A\u8F88\u5B50\u7684\u4E8B\u3002",comment:"\u4F60\u8D70\u4E86\u5F88\u8FDC\uFF0C\u6700\u540E\u56DE\u5230\u4E00\u4E2A\u80FD\u5750\u4E0B\u6765\u7684\u5730\u65B9\u3002",hint:"\u4F60\u56DE\u53BF\u57CE\uFF0C\u5F00\u4E86\u4E00\u5BB6\u81EA\u5DF1\u7684\u5E97",when:{flags:["shop"],max:{money:60}}}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"marry-love",title:"\u5AC1\u7ED9\u7231\u60C5",subtitle:"\u5A5A\u793C\u4E0A\u4ED6\u8BF4\uFF0C\u4F1A\u4E00\u8F88\u5B50\u5BF9\u4F60\u597D",premise:"\u5E7F\u5DDE\uFF0C2020 \u5E74\u3002\u4F60 26 \u5C81\uFF0C\u5AC1\u7ED9\u4E86\u4E00\u4E2A\u4F60\u5F88\u559C\u6B22\u7684\u4EBA\u3002",start:{year:2020,age:26,stats:{money:45,health:60,love:70,freedom:50,parents:50,regret:20},tags:{city:"\u5E7F\u5DDE",job:"\u767D\u9886",partner:"\u963F\u8BDA",school:""}},chapters:[{id:"p1",year:2020,age:26,title:"\u5A5A\u793C",narration:"\u5A5A\u793C\u4E0D\u5927\uFF0C\u4ED6\u559D\u591A\u4E86\uFF0C\u62C9\u7740\u4F60\u7684\u624B\u8BF4\uFF1A\u6211\u4F1A\u4E00\u8F88\u5B50\u5BF9\u4F60\u597D\u3002\u4F60\u4FE1\u4E86\u3002",options:[{id:"trust",label:"\u76F8\u4FE1\u4ED6",desire:"love",canon:!1,effects:{money:-6,health:0,love:10,freedom:-2,parents:0,regret:-2},flags:{trust:!0},note:"\u4F60\u628A\u5DE5\u8D44\u5361\u4EA4\u7ED9\u4E86\u4ED6\uFF0C\u4E5F\u628A\u4EE5\u540E\u4EA4\u7ED9\u4E86\u4ED6\u3002"},{id:"contract",label:"\u5A5A\u524D\u628A\u8D26\u7B97\u6E05",desire:"money",canon:!1,effects:{money:6,health:0,love:-4,freedom:4,parents:0,regret:2},flags:{contract:!0},note:"\u4F60\u4EEC\u7B7E\u4E86\u5A5A\u524D\u534F\u8BAE\u3002\u4ED6\u8BF4\u4F60\u592A\u73B0\u5B9E\uFF0C\u4F60\u8BF4\u8FD9\u6837\u5BF9\u4E24\u4E2A\u4EBA\u90FD\u597D\u3002"},{id:"delay",label:"\u5148\u4E0D\u7ED3\u5A5A",desire:"freedom",canon:!1,effects:{money:0,health:0,love:-8,freedom:8,parents:-6,regret:4},flags:{delay:!0},note:"\u4F60\u8BF4\u518D\u7B49\u7B49\u3002\u4ED6\u6CA1\u6709\u7B49\uFF0C\u534A\u5E74\u540E\u5A36\u4E86\u522B\u4EBA\u3002"}]},{id:"p2",year:2023,age:29,title:"\u5A5A\u540E\u7B2C\u4E09\u5E74",narration:"\u5A5A\u540E\u7B2C\u4E09\u5E74\uFF0C\u4F60\u4EEC\u5F00\u59CB\u4E3A\u94B1\u3001\u4E3A\u5BB6\u52A1\u3001\u4E3A\u8FC7\u5E74\u56DE\u8C01\u5BB6\u5435\u67B6\u3002",options:[{id:"endure",label:"\u5FCD\u4E00\u5FCD",desire:"parents",canon:!1,effects:{money:0,health:-6,love:-6,freedom:-6,parents:0,regret:6},flags:{endure:!0},note:"\u4F60\u5FCD\u4E86\u4E0B\u6765\u3002\u5988\u5988\u8BF4\u8FC7\uFF0C\u5A5A\u59FB\u5C31\u662F\u5FCD\u3002"},{id:"talk",label:"\u5750\u4E0B\u6765\u8C08",desire:"love",canon:!1,effects:{money:0,health:2,love:6,freedom:2,parents:0,regret:-2},flags:{talk:!0},note:"\u4F60\u4EEC\u8C08\u4E86\u4E00\u6574\u591C\u3002\u4ED6\u7B2C\u4E00\u6B21\u8BF4\uFF1A\u6211\u4E5F\u4E0D\u77E5\u9053\u600E\u4E48\u53D8\u6210\u8FD9\u6837\u3002"},{id:"leave",label:"\u79BB\u5A5A",desire:"freedom",canon:!1,effects:{money:0,health:0,love:-12,freedom:10,parents:-4,regret:6},flags:{leave:!0},note:"\u4F60\u79BB\u4E86\u5A5A\u3002\u623F\u5B50\u5F52\u4ED6\uFF0C\u4F60\u642C\u8FDB\u4E00\u95F4\u5C0F\u516C\u5BD3\u3002"}]},{id:"p3",year:2030,age:36,title:"\u4E09\u5341\u4E94\u5C81",narration:"\u4E09\u5341\u4E94\u5C81\uFF0C\u4F60\u91CD\u65B0\u4E00\u4E2A\u4EBA\u751F\u6D3B\u3002\u6709\u4EBA\u7ED9\u4F60\u4ECB\u7ECD\u5BF9\u8C61\uFF0C\u4E5F\u6709\u4EBA\u8BF4\u4F60\u53EF\u60DC\u4E86\u3002",options:[{id:"rebuild",label:"\u91CD\u65B0\u5F00\u59CB",desire:"love",canon:!1,effects:{money:-4,health:0,love:10,freedom:6,parents:0,regret:-4},flags:{rebuild:!0},note:"\u4F60\u5F00\u59CB\u7EA6\u4F1A\u3002\u4E0D\u662F\u4E3A\u4E86\u7ED3\u5A5A\uFF0C\u662F\u4E3A\u4E86\u77E5\u9053\u81EA\u5DF1\u8FD8\u613F\u4E0D\u613F\u610F\u3002"},{id:"stay",label:"\u5C31\u8FD9\u6837\u8FC7",desire:"parents",canon:!1,effects:{money:6,health:0,love:-2,freedom:-4,parents:0,regret:2},flags:{stay:!0},note:"\u4F60\u548C\u53E6\u4E00\u4E2A\u5408\u9002\u7684\u4EBA\u642D\u4F19\u8FC7\u65E5\u5B50\u3002\u4E0D\u5435\uFF0C\u4E5F\u4E0D\u600E\u4E48\u8BF4\u8BDD\u3002"},{id:"alone",label:"\u4E00\u4E2A\u4EBA",desire:"freedom",canon:!1,effects:{money:0,health:0,love:-6,freedom:10,parents:-6,regret:2},flags:{alone:!0},note:"\u4F60\u51B3\u5B9A\u4E00\u4E2A\u4EBA\u3002\u5988\u5988\u54ED\u4E86\u4E24\u6B21\uFF0C\u540E\u6765\u4E0D\u518D\u63D0\u3002"}]}],endings:[{id:"love-true",kind:"special",title:"\u88AB\u7231\u7684\u4EBA",subtitle:"\u4F60\u6CA1\u6709\u5AC1\u7ED9\u5B8C\u7F8E\uFF0C\u4F46\u4F60\u5AC1\u7ED9\u4E86\u613F\u610F\u6539\u7684\u4EBA",text:"\u4F60\u4EEC\u7684\u5A5A\u59FB\u6CA1\u6709\u53D8\u6210\u7AE5\u8BDD\u3002\u4ED6\u8FD8\u662F\u4F1A\u5FD8\u8BB0\u7EAA\u5FF5\u65E5\uFF0C\u4F60\u8FD8\u662F\u4F1A\u751F\u6C14\u3002\u4F46\u6BCF\u6B21\u5435\u5B8C\uFF0C\u4ED6\u90FD\u613F\u610F\u5750\u4E0B\u6765\u3002\u4E09\u5341\u4E94\u5C81\u90A3\u5E74\uFF0C\u4F60\u53D1\u73B0\u7231\u60C5\u4E0D\u662F\u4E00\u8F88\u5B50\u4E0D\u5435\u67B6\uFF0C\u662F\u5435\u5B8C\u8FD8\u60F3\u4E00\u8D77\u5403\u996D\u3002",comment:"\u88AB\u7231\u662F\u4E00\u79CD\u6210\u5C31\uFF0C\u53EA\u662F\u5B83\u4E0D\u53D1\u5E74\u7EC8\u5956\u3002",hint:"\u4F60\u6CA1\u6709\u5AC1\u7ED9\u5B8C\u7F8E\uFF0C\u4F46\u4F60\u5AC1\u7ED9\u4E86\u613F\u610F\u6539\u7684\u4EBA",when:{flags:["trust","talk"]}},{id:"love-quiet",kind:"special",title:"\u5B89\u9759\u7684\u5BB6",subtitle:"\u4F60\u4EEC\u6CA1\u6709\u5206\u5F00\uFF0C\u53EA\u662F\u628A\u7231\u8FC7\u6210\u4E86\u5236\u5EA6",text:"\u4F60\u4EEC\u8FD8\u5728\u4E00\u8D77\u3002\u623F\u8D37\u3001\u5B69\u5B50\u3001\u8001\u4EBA\uFF0C\u628A\u65E5\u5B50\u586B\u5F97\u5F88\u6EE1\u3002\u4F60\u4EEC\u5F88\u5C11\u5435\u67B6\uFF0C\u4E5F\u5F88\u5C11\u8BF4\u7231\u3002\u4E09\u5341\u4E94\u5C81\u751F\u65E5\uFF0C\u4ED6\u7ED9\u4F60\u8F6C\u4E86\u4E94\u5343\u5757\uFF0C\u8BF4\uFF1A\u559C\u6B22\u4EC0\u4E48\u81EA\u5DF1\u4E70\u3002",comment:"\u6709\u4E9B\u5A5A\u59FB\u6CA1\u6709\u7ED3\u675F\uFF0C\u53EA\u662F\u5B89\u9759\u4E86\u4E0B\u6765\u3002",hint:"\u4F60\u4EEC\u6CA1\u6709\u5206\u5F00\uFF0C\u53EA\u662F\u628A\u7231\u8FC7\u6210\u4E86\u5236\u5EA6",when:{flags:["endure"]}},{id:"love-alone",kind:"special",title:"\u4E00\u4E2A\u4EBA\u7684\u623F\u95F4",subtitle:"\u4F60\u628A\u751F\u6D3B\u8FC7\u6210\u4E86\u81EA\u5DF1\u7684",text:"\u4F60\u79BB\u4E86\u5A5A\uFF0C\u4E00\u4E2A\u4EBA\u4F4F\u3002\u623F\u5B50\u4E0D\u5927\uFF0C\u6536\u62FE\u5F97\u5F88\u5E72\u51C0\u3002\u4F60\u517B\u4E86\u4E00\u53EA\u732B\uFF0C\u5B66\u4F1A\u4E86\u4E00\u4E2A\u4EBA\u5403\u706B\u9505\u3002\u4E09\u5341\u4E94\u5C81\u90A3\u5E74\uFF0C\u4F60\u7B2C\u4E00\u6B21\u89C9\u5F97\uFF0C\u4E00\u4E2A\u4EBA\u4E5F\u53EF\u4EE5\u662F\u4E00\u4E2A\u5BB6\u3002",comment:"\u4F60\u6CA1\u6709\u8F93\u7ED9\u5A5A\u59FB\uFF0C\u4F60\u53EA\u662F\u628A\u81EA\u5DF1\u62FF\u4E86\u56DE\u6765\u3002",hint:"\u4F60\u628A\u751F\u6D3B\u8FC7\u6210\u4E86\u81EA\u5DF1\u7684",when:{flags:["leave"]}},{id:"love-fallback",kind:"special",title:"\u5A5A\u59FB",subtitle:"\u4F60\u8FD8\u5728\u5B66\u600E\u4E48\u548C\u53E6\u4E00\u4E2A\u4EBA\u8FC7",text:"\u4F60\u6CA1\u6709\u79BB\u5A5A\uFF0C\u4E5F\u6CA1\u6709\u628A\u65E5\u5B50\u8FC7\u6210\u8BD7\u3002\u4F60\u4EEC\u8FD8\u5728\u78E8\u5408\uFF0C\u8FD8\u5728\u4E3A\u5C0F\u4E8B\u751F\u6C14\uFF0C\u4E5F\u8FD8\u5728\u67D0\u4E9B\u665A\u4E0A\u4E00\u8D77\u770B\u7535\u89C6\u3002\u4F60\u4E0D\u77E5\u9053\u8FD9\u7B97\u4E0D\u7B97\u5E78\u798F\uFF0C\u4F46\u4F60\u6CA1\u6709\u8D70\u3002",comment:"\u5A5A\u59FB\u4E0D\u662F\u7B54\u6848\uFF0C\u662F\u4E00\u9053\u6BCF\u5929\u90FD\u8981\u91CD\u505A\u7684\u9898\u3002",hint:"\u4F60\u8FD8\u5728\u5B66\u600E\u4E48\u548C\u53E6\u4E00\u4E2A\u4EBA\u8FC7"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"misdiagnosis",title:"\u4E00\u6B21\u8BEF\u8BCA",subtitle:"\u5B66\u533B\u5341\u4E00\u5E74\uFF0C\u4E00\u884C\u5B57\u6BC1\u6389\u4E00\u4E2A\u4E0B\u5348",premise:"\u7701\u57CE\uFF0C2019 \u5E74\u3002\u4F60 29 \u5C81\uFF0C\u7B2C\u4E00\u6B21\u72EC\u7ACB\u51FA\u95E8\u8BCA\u3002",start:{year:2019,age:29,stats:{money:50,health:70,love:50,freedom:40,parents:50,regret:20},tags:{city:"\u7701\u57CE",job:"\u533B\u751F",partner:"",school:"\u533B\u5B66"}},chapters:[{id:"p1",year:2019,age:29,title:"\u7B2C\u5341\u4E00\u5E74",narration:"\u5B66\u533B\u5341\u4E00\u5E74\uFF0C\u4F60\u7EC8\u4E8E\u72EC\u7ACB\u51FA\u95E8\u8BCA\u3002\u4E0B\u5348\u56DB\u70B9\uFF0C\u4F60\u53D1\u73B0\u81EA\u5DF1\u628A\u4E00\u4F4D\u75C5\u4EBA\u7684\u62A5\u544A\u770B\u9519\u4E86\u4E00\u884C\u3002",options:[{id:"report",label:"\u7ACB\u523B\u4E0A\u62A5",desire:"self",canon:!1,effects:{money:-4,health:-2,love:0,freedom:-2,parents:0,regret:-2},flags:{report:!0},note:"\u4F60\u7ACB\u523B\u627E\u5230\u4E3B\u4EFB\uFF0C\u628A\u60C5\u51B5\u8BF4\u4E86\u3002\u4E3B\u4EFB\u770B\u4E86\u4F60\u5F88\u4E45\uFF0C\u8BF4\uFF1A\u8FD8\u597D\u4F60\u8BF4\u4E86\u3002"},{id:"hide",label:"\u5148\u7792\u4E0B\u6765",desire:"money",canon:!1,effects:{money:2,health:-4,love:0,freedom:2,parents:0,regret:8},flags:{hide:!0},note:"\u4F60\u6CA1\u6709\u8BF4\u3002\u90A3\u5929\u665A\u4E0A\uFF0C\u4F60\u4E00\u76F4\u76EF\u7740\u624B\u673A\u3002"},{id:"ask",label:"\u627E\u4E3B\u4EFB\u590D\u6838",desire:"self",canon:!1,effects:{money:-2,health:0,love:0,freedom:-4,parents:0,regret:2},flags:{ask:!0},note:"\u4F60\u8BF7\u4E3B\u4EFB\u590D\u6838\u3002\u62A5\u544A\u786E\u5B9E\u6709\u95EE\u9898\uFF0C\u4F46\u8FD8\u6CA1\u6709\u9020\u6210\u540E\u679C\u3002"}]},{id:"p2",year:2020,age:30,title:"\u7ED3\u679C",narration:"\u75C5\u4EBA\u590D\u67E5\u540E\u6CA1\u6709\u5927\u788D\uFF0C\u4F46\u4E8B\u60C5\u8FD8\u662F\u4F20\u5F00\u4E86\u3002\u79D1\u5BA4\u91CC\u6709\u4EBA\u66FF\u4F60\u8BF4\u8BDD\uFF0C\u4E5F\u6709\u4EBA\u4E0D\u8BF4\u8BDD\u3002",options:[{id:"apologize",label:"\u53BB\u9053\u6B49",desire:"love",canon:!1,effects:{money:-6,health:0,love:4,freedom:0,parents:0,regret:-4},flags:{apologize:!0},note:"\u4F60\u53BB\u4E86\u75C5\u4EBA\u5BB6\u91CC\uFF0C\u5E26\u4E86\u4E00\u7BEE\u6C34\u679C\u3002\u75C5\u4EBA\u8BF4\uFF1A\u533B\u751F\u4E5F\u662F\u4EBA\u3002"},{id:"lawyer",label:"\u8D70\u6CD5\u5F8B\u7A0B\u5E8F",desire:"money",canon:!1,effects:{money:-10,health:-6,love:0,freedom:-4,parents:0,regret:4},flags:{lawyer:!0},note:"\u4F60\u8BF7\u4E86\u5F8B\u5E08\u3002\u5B98\u53F8\u6253\u4E86\u4E24\u5E74\uFF0C\u4F60\u8D62\u4E86\uFF0C\u4E5F\u7D2F\u4E86\u3002"},{id:"transfer",label:"\u7533\u8BF7\u8C03\u5C97",desire:"self",canon:!1,effects:{money:-2,health:2,love:0,freedom:-4,parents:0,regret:2},flags:{transfer:!0},note:"\u4F60\u7533\u8BF7\u53BB\u4E86\u8F85\u52A9\u79D1\u5BA4\u3002\u4E0D\u7528\u51FA\u95E8\u8BCA\uFF0C\u4E5F\u4E0D\u7528\u518D\u503C\u591C\u73ED\u3002"}]},{id:"p3",year:2030,age:40,title:"\u56DB\u5341\u5C81",narration:"\u56DB\u5341\u5C81\uFF0C\u4F60\u8FD8\u5728\u533B\u9662\u3002\u5076\u5C14\u6709\u5E74\u8F7B\u533B\u751F\u95EE\u4F60\uFF1A\u5F53\u5E74\u90A3\u4EF6\u4E8B\uFF0C\u4F60\u540E\u6094\u5417\uFF1F",options:[{id:"stay",label:"\u7EE7\u7EED\u5F53\u533B\u751F",desire:"parents",canon:!1,effects:{money:8,health:-6,love:0,freedom:0,parents:2,regret:2},flags:{stay:!0},note:"\u4F60\u7559\u5728\u4E86\u4E34\u5E8A\u3002\u4F60\u6BD4\u4EE5\u524D\u66F4\u6162\uFF0C\u4E5F\u66F4\u5C0F\u5FC3\u3002"},{id:"teach",label:"\u53BB\u533B\u5B66\u9662\u6559\u4E66",desire:"self",canon:!1,effects:{money:-4,health:4,love:0,freedom:6,parents:0,regret:-4},flags:{teach:!0},note:"\u4F60\u53BB\u4E86\u533B\u5B66\u9662\u3002\u7B2C\u4E00\u5802\u8BFE\uFF0C\u4F60\u8BB2\u7684\u4E0D\u662F\u75C5\u7406\uFF0C\u662F\u90A3\u4E00\u884C\u5B57\u3002"},{id:"quit",label:"\u79BB\u5F00\u533B\u9662",desire:"freedom",canon:!1,effects:{money:-8,health:4,love:0,freedom:8,parents:0,regret:2},flags:{quit:!0},note:"\u4F60\u79BB\u5F00\u4E86\u533B\u9662\uFF0C\u53BB\u4E86\u4E00\u5BB6\u5065\u5EB7\u7BA1\u7406\u516C\u53F8\u3002\u767D\u5927\u8902\u6302\u5728\u8863\u67DC\u91CC\uFF0C\u4F60\u6CA1\u6709\u6254\u3002"}]}],endings:[{id:"doctor-redeemed",kind:"special",title:"\u7B2C\u5341\u4E00\u5E74",subtitle:"\u4F60\u7528\u4E86\u5F88\u591A\u5E74\uFF0C\u624D\u914D\u5F97\u4E0A\u90A3\u4EF6\u767D\u5927\u8902",text:"\u4F60\u7559\u5728\u4E86\u4E34\u5E8A\u3002\u4F60\u4E0D\u518D\u8FFD\u6C42\u5FEB\uFF0C\u4E5F\u4E0D\u518D\u5BB3\u6015\u627F\u8BA4\u81EA\u5DF1\u4F1A\u9519\u3002\u56DB\u5341\u5C81\u90A3\u5E74\uFF0C\u4F60\u5E26\u6559\u7684\u7B2C\u4E00\u5C4A\u5B66\u751F\u6BD5\u4E1A\uFF0C\u6709\u4EBA\u5BF9\u4F60\u8BF4\uFF1A\u8001\u5E08\uFF0C\u4F60\u8BA9\u6211\u6562\u5F53\u533B\u751F\u3002",comment:"\u4F60\u6CA1\u6709\u6210\u4E3A\u540D\u533B\uFF0C\u4F46\u4F60\u6210\u4E86\u4E00\u4E2A\u8BDA\u5B9E\u7684\u533B\u751F\u3002",hint:"\u4F60\u7528\u4E86\u5F88\u591A\u5E74\uFF0C\u624D\u914D\u5F97\u4E0A\u90A3\u4EF6\u767D\u5927\u8902",when:{flags:["report","apologize"]}},{id:"doctor-shadow",kind:"special",title:"\u90A3\u4E00\u884C\u5B57",subtitle:"\u4F60\u8D62\u4E86\u5B98\u53F8\uFF0C\u4F46\u6CA1\u6709\u8D62\u8FC7\u81EA\u5DF1",text:"\u4F60\u8FD8\u5728\u533B\u9662\uFF0C\u53EA\u662F\u4E0D\u518D\u51FA\u95E8\u8BCA\u3002\u90A3\u4EF6\u4E8B\u6CA1\u6709\u4EBA\u518D\u63D0\uFF0C\u4F46\u4F60\u6BCF\u5929\u90FD\u4F1A\u60F3\u8D77\u3002\u4F60\u5F00\u59CB\u5199\u75C5\u5386\u5199\u5F97\u7279\u522B\u6162\uFF0C\u50CF\u5728\u8865\u4E00\u4E2A\u6C38\u8FDC\u8865\u4E0D\u4E0A\u7684\u6D1E\u3002",comment:"\u6709\u4E9B\u9519\u53EF\u4EE5\u6539\uFF0C\u6709\u4E9B\u4E0B\u5348\u56DE\u4E0D\u6765\u3002",hint:"\u4F60\u8D62\u4E86\u5B98\u53F8\uFF0C\u4F46\u6CA1\u6709\u8D62\u8FC7\u81EA\u5DF1",when:{flags:["hide"]}},{id:"doctor-leave",kind:"special",title:"\u767D\u5927\u8902",subtitle:"\u4F60\u6CA1\u6709\u79BB\u5F00\u533B\u5B66\uFF0C\u53EA\u662F\u6362\u4E86\u4E00\u79CD\u7A7F\u6CD5",text:"\u4F60\u53BB\u4E86\u533B\u5B66\u9662\u6559\u4E66\u3002\u4F60\u544A\u8BC9\u5B66\u751F\uFF1A\u533B\u751F\u4E0D\u662F\u795E\uFF0C\u533B\u751F\u662F\u4F1A\u72AF\u9519\u7684\u4EBA\uFF0C\u6240\u4EE5\u8981\u591A\u770B\u4E00\u773C\u3002\u53F0\u4E0B\u6709\u4EBA\u70B9\u5934\uFF0C\u4F60\u5FFD\u7136\u89C9\u5F97\uFF0C\u90A3\u4E00\u884C\u5B57\u7EC8\u4E8E\u6709\u4E86\u4E00\u70B9\u7528\u3002",comment:"\u4F60\u653E\u4E0B\u4E86\u624B\u672F\u5200\uFF0C\u4F46\u6CA1\u6709\u653E\u4E0B\u90A3\u4EF6\u767D\u5927\u8902\u3002",hint:"\u4F60\u6CA1\u6709\u79BB\u5F00\u533B\u5B66\uFF0C\u53EA\u662F\u6362\u4E86\u4E00\u79CD\u7A7F\u6CD5",when:{flags:["teach"]}},{id:"doctor-fallback",kind:"special",title:"\u8BEF\u8BCA",subtitle:"\u4F60\u8FD8\u5728\u5B66\u7740\u548C\u9519\u8BEF\u4E00\u8D77\u751F\u6D3B",text:"\u4F60\u6CA1\u6709\u79BB\u5F00\u533B\u9662\uFF0C\u4E5F\u6CA1\u6709\u6210\u4E3A\u82F1\u96C4\u3002\u4F60\u53EA\u662F\u6BD4\u4EE5\u524D\u66F4\u5C0F\u5FC3\uFF0C\u66F4\u613F\u610F\u8BF4\u201C\u6211\u4E0D\u786E\u5B9A\u201D\u3002\u56DB\u5341\u5C81\u90A3\u5E74\uFF0C\u4F60\u7EC8\u4E8E\u6562\u627F\u8BA4\uFF1A\u6709\u4E9B\u4E8B\uFF0C\u4E00\u8F88\u5B50\u90FD\u5B66\u4E0D\u5B8C\u3002",comment:"\u4F60\u6CA1\u6709\u88AB\u90A3\u4EF6\u4E8B\u6BC1\u6389\uFF0C\u4E5F\u6CA1\u6709\u88AB\u5B83\u653E\u8FC7\u3002",hint:"\u4F60\u8FD8\u5728\u5B66\u7740\u548C\u9519\u8BEF\u4E00\u8D77\u751F\u6D3B"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"village",title:"\u5B88\u6751\u4EBA",subtitle:"\u6751\u91CC\u53EA\u5269\u8001\u4EBA\uFF0C\u4F60\u7559\u4E0B\u4E86",premise:"\u6E58\u897F\u5C71\u6751\uFF0C2018 \u5E74\u3002\u4F60 33 \u5C81\uFF0C\u662F\u6751\u91CC\u5C11\u6570\u6CA1\u51FA\u53BB\u6253\u5DE5\u7684\u5E74\u8F7B\u4EBA\u3002",start:{year:2018,age:33,stats:{money:25,health:60,love:45,freedom:35,parents:60,regret:20},tags:{city:"\u6E58\u897F",job:"\u5B88\u6751\u4EBA",partner:"",school:""}},chapters:[{id:"p1",year:2018,age:33,title:"\u6751\u91CC\u53EA\u5269\u8001\u4EBA",narration:"\u6751\u91CC\u53EA\u5269\u8001\u4EBA\u3002\u4F60\u5E2E\u4EBA\u4FEE\u5C4B\u3001\u770B\u5C71\u3001\u9001\u836F\uFF0C\u8C01\u5BB6\u6709\u4E8B\u90FD\u53EB\u4F60\u3002",options:[{id:"stay",label:"\u7559\u5728\u6751\u91CC",desire:"parents",canon:!1,effects:{money:-2,health:0,love:0,freedom:-4,parents:8,regret:-2},flags:{stay:!0},note:"\u4F60\u7559\u4E86\u4E0B\u6765\u3002\u6751\u91CC\u4EBA\u53EB\u4F60\u201C\u540E\u751F\u201D\uFF0C\u5176\u5B9E\u4F60\u4E5F\u4E09\u5341\u591A\u4E86\u3002"},{id:"go",label:"\u53BB\u57CE\u91CC\u6253\u5DE5",desire:"money",canon:!1,effects:{money:6,health:0,love:0,freedom:8,parents:-8,regret:4},flags:{go:!0},note:"\u4F60\u53BB\u4E86\u57CE\u91CC\u3002\u5DE5\u5730\u4E0A\u6CA1\u4EBA\u95EE\u4F60\u53EB\u4EC0\u4E48\uFF0C\u53EA\u95EE\u4F60\u4E00\u5929\u80FD\u5E72\u591A\u5C11\u3002"},{id:"build",label:"\u628A\u8001\u5C4B\u6539\u6210\u6C11\u5BBF",desire:"self",canon:!1,effects:{money:-10,health:0,love:0,freedom:6,parents:4,regret:-2},flags:{build:!0},note:"\u4F60\u628A\u8001\u5C4B\u6539\u6210\u4E86\u6C11\u5BBF\u3002\u7B2C\u4E00\u6279\u5BA2\u4EBA\u662F\u6765\u770B\u5C71\u7684\u3002"}]},{id:"p2",year:2019,age:34,title:"\u4E00\u573A\u5927\u96E8",narration:"\u4E00\u573A\u5927\u96E8\uFF0C\u5C71\u8DEF\u584C\u4E86\u3002\u6751\u91CC\u65AD\u4E86\u4E09\u5929\u7535\uFF0C\u8001\u4EBA\u5F00\u59CB\u614C\u3002",options:[{id:"help",label:"\u5E26\u4EBA\u4FEE\u8DEF",desire:"parents",canon:!1,effects:{money:0,health:-6,love:4,freedom:0,parents:6,regret:-2},flags:{help:!0},note:"\u4F60\u5E26\u7740\u51E0\u4E2A\u8001\u4EBA\u53BB\u4FEE\u8DEF\u3002\u96E8\u505C\u4E86\uFF0C\u8DEF\u4E5F\u901A\u4E86\u3002"},{id:"wait",label:"\u7B49\u4E0A\u9762\u6765\u4FEE",desire:"parents",canon:!1,effects:{money:0,health:2,love:0,freedom:0,parents:-2,regret:2},flags:{wait:!0},note:"\u4F60\u7B49\u4E86\u4E09\u5929\u3002\u8DEF\u4FEE\u597D\u4E86\uFF0C\u4F46\u6751\u91CC\u4EBA\u770B\u4F60\u7684\u773C\u795E\u53D8\u4E86\u3002"},{id:"leave",label:"\u8D81\u8FD9\u6B21\u79BB\u5F00",desire:"freedom",canon:!1,effects:{money:4,health:0,love:0,freedom:8,parents:-8,regret:6},flags:{leave:!0},note:"\u4F60\u642D\u4E0A\u6551\u63F4\u8F66\u8D70\u4E86\u3002\u8F66\u5F00\u51FA\u5C71\u53E3\u65F6\uFF0C\u4F60\u6CA1\u6709\u56DE\u5934\u3002"}]},{id:"p3",year:2035,age:50,title:"\u4E94\u5341\u5C81",narration:"\u4E94\u5341\u5C81\uFF0C\u6751\u91CC\u66F4\u7A7A\u4E86\u3002\u4F60\u7AD9\u5728\u6751\u53E3\uFF0C\u4E0D\u77E5\u9053\u81EA\u5DF1\u5728\u5B88\u4EC0\u4E48\u3002",options:[{id:"keep",label:"\u7EE7\u7EED\u5B88\u6751",desire:"parents",canon:!1,effects:{money:-2,health:-4,love:0,freedom:0,parents:8,regret:-2},flags:{keep:!0},note:"\u4F60\u7559\u4E86\u4E0B\u6765\u3002\u6BCF\u5929\u5DE1\u5C71\u3001\u9001\u836F\u3001\u66FF\u4EBA\u5199\u7533\u8BF7\u3002"},{id:"move",label:"\u642C\u53BB\u53BF\u57CE",desire:"money",canon:!1,effects:{money:4,health:0,love:0,freedom:4,parents:-4,regret:2},flags:{move:!0},note:"\u4F60\u642C\u53BB\u4E86\u53BF\u57CE\u3002\u6751\u91CC\u7684\u4E8B\uFF0C\u4F60\u8FD8\u4F1A\u63A5\u7535\u8BDD\uFF0C\u4F46\u4E0D\u518D\u8DD1\u56DE\u53BB\u3002"},{id:"record",label:"\u628A\u6751\u5B50\u62CD\u4E0B\u6765",desire:"self",canon:!1,effects:{money:-4,health:0,love:0,freedom:6,parents:2,regret:-4},flags:{record:!0},note:"\u4F60\u5F00\u59CB\u62CD\u6751\u5B50\u3002\u8001\u4EBA\u3001\u8001\u5C4B\u3001\u8001\u6811\uFF0C\u4E00\u6761\u4E00\u6761\u53D1\u5230\u7F51\u4E0A\u3002"}]}],endings:[{id:"village-keeper",kind:"special",title:"\u5B88\u6751\u4EBA",subtitle:"\u4F60\u5B88\u7684\u4E0D\u662F\u6751\uFF0C\u662F\u4E00\u7FA4\u4EBA\u7684\u665A\u5E74",text:"\u4F60\u7559\u4E86\u4E0B\u6765\u3002\u8C01\u5BB6\u8001\u4EBA\u75C5\u4E86\uFF0C\u4F60\u9A91\u8F66\u53BB\u9001\u836F\uFF1B\u8C01\u5BB6\u5C4B\u9876\u6F0F\u4E86\uFF0C\u4F60\u722C\u4E0A\u53BB\u8865\u3002\u4F60\u6CA1\u6709\u5B69\u5B50\uFF0C\u4F46\u6751\u91CC\u5F88\u591A\u5B69\u5B50\u53EB\u4F60\u53D4\u3002\u4F60\u6B7B\u7684\u65F6\u5019\uFF0C\u5168\u6751\u4EBA\u6765\u9001\u4F60\u3002",comment:"\u4F60\u6CA1\u6709\u8D70\u51FA\u5927\u5C71\uFF0C\u4F46\u4F60\u8BA9\u4E00\u4E9B\u4EBA\u4E0D\u7528\u79BB\u5F00\u3002",hint:"\u4F60\u5B88\u7684\u4E0D\u662F\u6751\uFF0C\u662F\u4E00\u7FA4\u4EBA\u7684\u665A\u5E74",when:{flags:["stay","help"]}},{id:"village-empty",kind:"special",title:"\u7A7A\u6751",subtitle:"\u4F60\u8D70\u4E86\uFF0C\u6751\u5B50\u4E5F\u8D70\u4E86",text:"\u4F60\u53BB\u4E86\u57CE\u91CC\uFF0C\u540E\u6765\u642C\u53BB\u4E86\u53BF\u57CE\u3002\u518D\u56DE\u53BB\u65F6\uFF0C\u6751\u5B50\u5DF2\u7ECF\u7A7A\u4E86\u3002\u8001\u5C4B\u584C\u4E86\u4E00\u534A\uFF0C\u6751\u53E3\u7684\u8DEF\u957F\u6EE1\u8349\u3002\u4F60\u7AD9\u5728\u90A3\u91CC\uFF0C\u50CF\u4E00\u4E2A\u8D70\u9519\u95E8\u7684\u5BA2\u4EBA\u3002",comment:"\u4F60\u79BB\u5F00\u7684\u65F6\u5019\uFF0C\u6751\u5B50\u8FD8\u6CA1\u6709\u7A7A\u3002",hint:"\u4F60\u8D70\u4E86\uFF0C\u6751\u5B50\u4E5F\u8D70\u4E86",when:{flags:["go"]}},{id:"village-record",kind:"special",title:"\u628A\u6751\u5B50\u7559\u4E0B\u6765",subtitle:"\u4F60\u6CA1\u6709\u7559\u4F4F\u4EBA\uFF0C\u4F46\u4F60\u7559\u4F4F\u4E86\u4ED6\u4EEC\u7684\u6837\u5B50",text:"\u4F60\u62CD\u4E86\u4E09\u5E74\uFF0C\u526A\u6210\u4E00\u90E8\u7EAA\u5F55\u7247\u3002\u7247\u5B50\u6CA1\u6709\u706B\uFF0C\u4F46\u53BF\u91CC\u7684\u6863\u6848\u9986\u6536\u4E86\u4E00\u4EFD\u3002\u6709\u4EBA\u5BF9\u4F60\u8BF4\uFF1A\u8C22\u8C22\u4F60\uFF0C\u8981\u4E0D\u7136\u6211\u4EEC\u90FD\u5FD8\u4E86\u8FD9\u91CC\u3002",comment:"\u4F60\u5B88\u4E0D\u4F4F\u4E00\u4E2A\u6751\uFF0C\u4F46\u4F60\u66FF\u5B83\u7559\u4E0B\u4E86\u4E00\u4EFD\u8BC1\u8BCD\u3002",hint:"\u4F60\u6CA1\u6709\u7559\u4F4F\u4EBA\uFF0C\u4F46\u4F60\u7559\u4F4F\u4E86\u4ED6\u4EEC\u7684\u6837\u5B50",when:{flags:["record"]}},{id:"village-fallback",kind:"special",title:"\u6751\u5B50",subtitle:"\u4F60\u8FD8\u5728\uFF0C\u6751\u5B50\u5C31\u8FD8\u5728",text:"\u4F60\u6CA1\u6709\u79BB\u5F00\uFF0C\u4E5F\u6CA1\u6709\u505A\u6210\u4EC0\u4E48\u5927\u4E8B\u3002\u4F60\u53EA\u662F\u6BCF\u5929\u5F00\u95E8\u3001\u626B\u9662\u5B50\u3001\u7ED9\u8DEF\u8FC7\u7684\u8001\u4EBA\u5012\u676F\u6C34\u3002\u4E94\u5341\u5C81\u90A3\u5E74\uFF0C\u4F60\u5FFD\u7136\u89C9\u5F97\uFF0C\u8FD9\u6837\u4E5F\u7B97\u4E00\u79CD\u6D3B\u6CD5\u3002",comment:"\u6751\u5B50\u4E0D\u662F\u5730\u65B9\uFF0C\u662F\u8FD8\u613F\u610F\u7559\u4E0B\u7684\u4EBA\u3002",hint:"\u4F60\u8FD8\u5728\uFF0C\u6751\u5B50\u5C31\u8FD8\u5728"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"top-donor",title:"\u699C\u4E00\u5927\u54E5",subtitle:"\u4F60\u5728\u76F4\u64AD\u95F4\u91CC\uFF0C\u7B2C\u4E00\u6B21\u88AB\u5FF5\u5230\u540D\u5B57",premise:"\u5E7F\u5DDE\uFF0C2022 \u5E74\u3002\u4F60 30 \u5C81\uFF0C\u4F4F\u5728\u57CE\u4E2D\u6751\uFF0C\u6708\u85AA\u4E03\u5343\u3002",start:{year:2022,age:30,stats:{money:40,health:55,love:25,freedom:45,parents:35,regret:30},tags:{city:"\u5E7F\u5DDE",job:"\u6253\u5DE5\u4EBA",partner:"",school:""}},chapters:[{id:"p1",year:2022,age:30,title:"\u76F4\u64AD\u95F4",narration:"\u4F60\u7ED9\u4E00\u4E2A\u4E3B\u64AD\u5237\u4E86\u7B2C\u4E00\u4E2A\u706B\u7BAD\u3002\u5979\u5FF5\u4E86\u4F60\u7684\u540D\u5B57\uFF0C\u8BF4\uFF1A\u8C22\u8C22\u54E5\u54E5\u3002",options:[{id:"tip",label:"\u518D\u5237\u4E00\u4E2A",desire:"love",canon:!1,effects:{money:-10,health:0,love:6,freedom:2,parents:0,regret:2},flags:{tip:!0},note:"\u4F60\u53C8\u5237\u4E86\u4E00\u4E2A\u3002\u5979\u7B11\u4E86\uFF0C\u76F4\u64AD\u95F4\u7684\u4EBA\u5F00\u59CB\u53EB\u4F60\u5927\u54E5\u3002"},{id:"stop",label:"\u5173\u6389\u76F4\u64AD",desire:"self",canon:!1,effects:{money:2,health:2,love:-2,freedom:0,parents:0,regret:-2},flags:{stop:!0},note:"\u4F60\u5173\u6389\u4E86\u76F4\u64AD\u3002\u90A3\u665A\u4F60\u7761\u5F97\u5F88\u597D\u3002"},{id:"meet",label:"\u7EA6\u5979\u89C1\u9762",desire:"love",canon:!1,effects:{money:-4,health:0,love:8,freedom:0,parents:0,regret:4},flags:{meet:!0},note:"\u4F60\u7EA6\u5979\u89C1\u9762\u3002\u5979\u8BF4\uFF1A\u54E5\u54E5\uFF0C\u5148\u5237\u4E2A\u5609\u5E74\u534E\u5427\u3002"}]},{id:"p2",year:2023,age:31,title:"\u8D26\u5355",narration:"\u4FE1\u7528\u5361\u8D26\u5355\u6765\u4E86\u3002\u4F60\u624D\u53D1\u73B0\uFF0C\u8FD9\u4E2A\u6708\u5237\u4E86\u4E24\u4E07\u3002",options:[{id:"borrow",label:"\u501F\u7F51\u8D37",desire:"money",canon:!1,effects:{money:-12,health:-6,love:0,freedom:0,parents:0,regret:8},flags:{borrow:!0},note:"\u4F60\u501F\u4E86\u7F51\u8D37\u3002\u8D26\u5355\u6EDA\u4E86\u8D77\u6765\uFF0C\u4F60\u5F00\u59CB\u62C6\u4E1C\u5899\u8865\u897F\u5899\u3002"},{id:"confess",label:"\u8DDF\u5BB6\u91CC\u8BF4",desire:"parents",canon:!1,effects:{money:-4,health:0,love:-2,freedom:0,parents:4,regret:-4},flags:{confess:!0},note:"\u4F60\u8DDF\u5988\u5988\u8BF4\u4E86\u3002\u5979\u9A82\u4E86\u4F60\u4E00\u987F\uFF0C\u7136\u540E\u7ED9\u4F60\u8F6C\u4E86\u4E94\u5343\u3002"},{id:"quit",label:"\u628A App \u5220\u4E86",desire:"self",canon:!1,effects:{money:4,health:4,love:0,freedom:4,parents:0,regret:-4},flags:{quit:!0},note:"\u4F60\u5220\u4E86 App\u3002\u624B\u75D2\u7684\u65F6\u5019\uFF0C\u4F60\u5C31\u53BB\u8DD1\u6B65\u3002"}]},{id:"p3",year:2028,age:36,title:"\u4E09\u5341\u4E94\u5C81",narration:"\u4E09\u5341\u4E94\u5C81\uFF0C\u4F60\u8FD8\u5728\u8FD8\u503A\u3002\u4E3B\u64AD\u5DF2\u7ECF\u6362\u4E86\u51E0\u4E2A\u5E73\u53F0\u3002",options:[{id:"live",label:"\u7EE7\u7EED\u505A\u699C\u4E00",desire:"money",canon:!1,effects:{money:-8,health:-6,love:4,freedom:0,parents:0,regret:6},flags:{live:!0},note:"\u4F60\u53C8\u56DE\u53BB\u4E86\u3002\u5979\u8FD8\u5728\u53EB\u4F60\u54E5\u54E5\uFF0C\u53EA\u662F\u58F0\u97F3\u6CA1\u6709\u4EE5\u524D\u70ED\u60C5\u3002"},{id:"repay",label:"\u6162\u6162\u8FD8\u503A",desire:"parents",canon:!1,effects:{money:6,health:2,love:0,freedom:0,parents:4,regret:-2},flags:{repay:!0},note:"\u4F60\u5F00\u59CB\u8FD8\u503A\u3002\u6BCF\u4E2A\u6708\u8FD8\u4E00\u70B9\uFF0C\u50CF\u5728\u7ED9\u81EA\u5DF1\u8D4E\u8EAB\u3002"},{id:"new",label:"\u91CD\u65B0\u5F00\u59CB",desire:"self",canon:!1,effects:{money:-2,health:0,love:2,freedom:8,parents:0,regret:-4},flags:{new:!0},note:"\u4F60\u6362\u4E86\u57CE\u5E02\uFF0C\u6362\u4E86\u5DE5\u4F5C\uFF0C\u4E5F\u6362\u4E86\u624B\u673A\u53F7\u3002"}]}],endings:[{id:"donor-ruin",kind:"special",title:"\u699C\u4E00\u5927\u54E5",subtitle:"\u4F60\u4E70\u5230\u4E86\u88AB\u53EB\u540D\u5B57\u7684\u611F\u89C9\uFF0C\u6CA1\u4E70\u5230\u88AB\u8BB0\u4F4F",text:"\u4F60\u6210\u4E86\u76F4\u64AD\u95F4\u91CC\u6700\u6709\u540D\u7684\u5927\u54E5\u3002\u4E3B\u64AD\u6362\u4E86\u4E00\u4E2A\u53C8\u4E00\u4E2A\uFF0C\u4F60\u5237\u7684\u94B1\u8D8A\u6765\u8D8A\u591A\u3002\u4E09\u5341\u4E94\u5C81\u90A3\u5E74\uFF0C\u4F60\u6B20\u4E86\u4E09\u5341\u4E07\uFF0C\u4F4F\u5728\u66F4\u5C0F\u7684\u51FA\u79DF\u5C4B\u91CC\u3002",comment:"\u4F60\u4E70\u7684\u4E0D\u662F\u7231\u60C5\uFF0C\u662F\u4E00\u53E5\u201C\u8C22\u8C22\u54E5\u54E5\u201D\u3002",hint:"\u4F60\u4E70\u5230\u4E86\u88AB\u53EB\u540D\u5B57\u7684\u611F\u89C9\uFF0C\u6CA1\u4E70\u5230\u88AB\u8BB0\u4F4F",when:{flags:["tip"]}},{id:"donor-awake",kind:"special",title:"\u5173\u6389\u76F4\u64AD",subtitle:"\u4F60\u7EC8\u4E8E\u628A\u624B\u673A\u653E\u4E0B\u4E86",text:"\u4F60\u5220\u4E86 App\uFF0C\u5F00\u59CB\u8DD1\u6B65\u3001\u5B58\u94B1\u3001\u8FD8\u503A\u3002\u4E09\u5341\u4E94\u5C81\u90A3\u5E74\uFF0C\u4F60\u628A\u6700\u540E\u4E00\u7B14\u7F51\u8D37\u8FD8\u6E05\uFF0C\u7ED9\u81EA\u5DF1\u4E70\u4E86\u4E00\u53CC\u8DD1\u978B\u3002",comment:"\u4F60\u6CA1\u6709\u5F53\u6210\u5927\u54E5\uFF0C\u4F46\u4F60\u628A\u81EA\u5DF1\u8D4E\u4E86\u56DE\u6765\u3002",hint:"\u4F60\u7EC8\u4E8E\u628A\u624B\u673A\u653E\u4E0B\u4E86",when:{flags:["quit"]}},{id:"donor-restart",kind:"special",title:"\u91CD\u65B0\u5F00\u59CB",subtitle:"\u4F60\u6362\u4E86\u4E00\u4E2A\u57CE\u5E02\uFF0C\u4E5F\u6362\u4E86\u4E00\u4E2A\u81EA\u5DF1",text:"\u4F60\u56DE\u4E86\u8001\u5BB6\uFF0C\u627E\u4E86\u4E00\u4EFD\u666E\u901A\u5DE5\u4F5C\u3002\u6CA1\u6709\u4EBA\u53EB\u4F60\u5927\u54E5\uFF0C\u4E5F\u6CA1\u6709\u4EBA\u7ED9\u4F60\u5237\u793C\u7269\u3002\u4F60\u5F00\u59CB\u89C9\u5F97\uFF0C\u5B89\u9759\u4E5F\u662F\u4E00\u79CD\u5F85\u9047\u3002",comment:"\u4F60\u4E0D\u518D\u9700\u8981\u51E0\u4E07\u4EBA\u770B\u7740\u4F60\uFF0C\u624D\u89C9\u5F97\u81EA\u5DF1\u5B58\u5728\u3002",hint:"\u4F60\u6362\u4E86\u4E00\u4E2A\u57CE\u5E02\uFF0C\u4E5F\u6362\u4E86\u4E00\u4E2A\u81EA\u5DF1",when:{flags:["new"]}},{id:"donor-fallback",kind:"special",title:"\u6253\u8D4F",subtitle:"\u4F60\u8FD8\u5728\u76F4\u64AD\u95F4\u91CC\uFF0C\u627E\u4E00\u70B9\u88AB\u770B\u89C1\u7684\u611F\u89C9",text:"\u4F60\u6CA1\u6709\u5237\u5230\u503E\u5BB6\u8361\u4EA7\uFF0C\u4E5F\u6CA1\u6709\u5F7B\u5E95\u6212\u6389\u3002\u4F60\u5076\u5C14\u8FDB\u53BB\u770B\u770B\uFF0C\u5076\u5C14\u5237\u4E00\u70B9\u3002\u4F60\u77E5\u9053\u8FD9\u6837\u4E0D\u5BF9\uFF0C\u4F46\u90A3\u4E2A\u540D\u5B57\u88AB\u5FF5\u51FA\u6765\u7684\u65F6\u5019\uFF0C\u4F60\u8FD8\u662F\u4F1A\u7B11\u3002",comment:"\u6709\u4E9B\u4EBA\u82B1\u94B1\u4E70\u5FEB\u4E50\uFF0C\u4F60\u82B1\u94B1\u4E70\u88AB\u770B\u89C1\u3002",hint:"\u4F60\u8FD8\u5728\u76F4\u64AD\u95F4\u91CC\uFF0C\u627E\u4E00\u70B9\u88AB\u770B\u89C1\u7684\u611F\u89C9"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"single-mom",title:"\u5355\u8EAB\u5988\u5988",subtitle:"\u9A8C\u5B55\u68D2\u4E0A\u4E24\u6761\u6760\uFF0C\u4ED6\u6D88\u5931\u4E86",premise:"\u53BF\u57CE\uFF0C2017 \u5E74\u3002\u4F60 28 \u5C81\uFF0C\u521A\u5206\u624B\uFF0C\u53D1\u73B0\u81EA\u5DF1\u6000\u5B55\u4E86\u3002",start:{year:2017,age:28,stats:{money:30,health:55,love:40,freedom:30,parents:50,regret:30},tags:{city:"\u53BF\u57CE",job:"\u6587\u5458",partner:"",school:""}},chapters:[{id:"p1",year:2017,age:28,title:"\u9A8C\u5B55\u68D2",narration:"\u9A8C\u5B55\u68D2\u4E0A\u4E24\u6761\u6760\u3002\u4F60\u7ED9\u4ED6\u6253\u7535\u8BDD\uFF0C\u5173\u673A\u3002",options:[{id:"keep",label:"\u751F\u4E0B\u6765",desire:"love",canon:!1,effects:{money:-8,health:-6,love:0,freedom:0,parents:6,regret:-4},flags:{keep:!0},note:"\u4F60\u51B3\u5B9A\u751F\u4E0B\u6765\u3002\u5988\u5988\u9A82\u4E86\u4F60\u4E09\u5929\uFF0C\u7136\u540E\u5F00\u59CB\u7ED9\u4F60\u7096\u6C64\u3002"},{id:"abort",label:"\u4E0D\u8981\u8FD9\u4E2A\u5B69\u5B50",desire:"self",canon:!1,effects:{money:0,health:2,love:-4,freedom:6,parents:0,regret:6},flags:{abort:!0},note:"\u4F60\u53BB\u4E86\u533B\u9662\u3002\u51FA\u6765\u7684\u65F6\u5019\uFF0C\u5929\u5F88\u84DD\uFF0C\u4F60\u54ED\u4E86\u4E00\u8DEF\u3002"},{id:"tell",label:"\u5148\u544A\u8BC9\u7236\u6BCD",desire:"parents",canon:!1,effects:{money:-2,health:0,love:0,freedom:0,parents:4,regret:-2},flags:{tell:!0},note:"\u4F60\u544A\u8BC9\u4E86\u7236\u6BCD\u3002\u7238\u7238\u62BD\u4E86\u4E00\u665A\u4E0A\u70DF\uFF0C\u7B2C\u4E8C\u5929\u8BF4\uFF1A\u751F\uFF0C\u6211\u4EEC\u5E2E\u4F60\u5E26\u3002"}]},{id:"p2",year:2020,age:31,title:"\u5B69\u5B50\u4E09\u5C81",narration:"\u5B69\u5B50\u4E09\u5C81\uFF0C\u4F60\u4E00\u8FB9\u4E0A\u73ED\u4E00\u8FB9\u5E26\u4ED6\u3002\u5E7C\u513F\u56ED\u56DB\u70B9\u653E\u5B66\uFF0C\u4F60\u516D\u70B9\u624D\u4E0B\u73ED\u3002",options:[{id:"work",label:"\u62FC\u547D\u5DE5\u4F5C",desire:"money",canon:!1,effects:{money:8,health:-8,love:-4,freedom:0,parents:0,regret:2},flags:{work:!0},note:"\u4F60\u62FC\u547D\u5DE5\u4F5C\uFF0C\u5347\u4E86\u4E3B\u7BA1\u3002\u5B69\u5B50\u5B66\u4F1A\u4E86\u81EA\u5DF1\u70ED\u996D\u3002"},{id:"care",label:"\u591A\u966A\u5B69\u5B50",desire:"love",canon:!1,effects:{money:-6,health:2,love:8,freedom:0,parents:0,regret:-2},flags:{care:!0},note:"\u4F60\u6362\u4E86\u4E00\u4EFD\u94B1\u5C11\u4F46\u4E0D\u52A0\u73ED\u7684\u5DE5\u4F5C\u3002\u6BCF\u5929\u56DB\u70B9\u53BB\u63A5\u4ED6\u3002"},{id:"remarry",label:"\u627E\u4E2A\u4EBA\u4E00\u8D77\u8FC7",desire:"love",canon:!1,effects:{money:2,health:0,love:6,freedom:-4,parents:0,regret:2},flags:{remarry:!0},note:"\u4F60\u5F00\u59CB\u76F8\u4EB2\u3002\u6709\u4EBA\u4ECB\u610F\u5B69\u5B50\uFF0C\u6709\u4EBA\u4E0D\u4ECB\u610F\u3002"}]},{id:"p3",year:2026,age:37,title:"\u5B69\u5B50\u4E0A\u5B66",narration:"\u5B69\u5B50\u4E0A\u5C0F\u5B66\u3002\u5BB6\u957F\u7FA4\u91CC\uFF0C\u522B\u4EBA\u7684\u5B69\u5B50\u90FD\u6709\u7238\u7238\u3002",options:[{id:"school",label:"\u9001\u53BB\u597D\u5B66\u6821",desire:"parents",canon:!1,effects:{money:-10,health:0,love:0,freedom:0,parents:4,regret:2},flags:{school:!0},note:"\u4F60\u628A\u4ED6\u9001\u8FDB\u4E86\u6700\u597D\u7684\u5C0F\u5B66\u3002\u5B66\u8D39\u5F88\u8D35\uFF0C\u4F60\u63A5\u4E86\u7B2C\u4E8C\u4EFD\u5DE5\u4F5C\u3002"},{id:"ordinary",label:"\u5C31\u8FD1\u4E0A\u5B66",desire:"love",canon:!1,effects:{money:2,health:0,love:4,freedom:0,parents:0,regret:-2},flags:{ordinary:!0},note:"\u4F60\u8BA9\u4ED6\u5C31\u8FD1\u4E0A\u5B66\u3002\u6BCF\u5929\u63A5\u9001\uFF0C\u8DEF\u4E0A\u542C\u4ED6\u8BB2\u5B66\u6821\u7684\u4E8B\u3002"},{id:"move",label:"\u642C\u53BB\u5927\u57CE\u5E02",desire:"freedom",canon:!1,effects:{money:-6,health:0,love:0,freedom:6,parents:-4,regret:2},flags:{move:!0},note:"\u4F60\u5E26\u7740\u4ED6\u53BB\u4E86\u5E7F\u5DDE\u3002\u623F\u5B50\u66F4\u5C0F\uFF0C\u673A\u4F1A\u66F4\u591A\u3002"}]}],endings:[{id:"mom-alone",kind:"special",title:"\u4E00\u4E2A\u4EBA\u5E26\u5927",subtitle:"\u4F60\u6CA1\u6709\u7ED9\u4ED6\u4E00\u4E2A\u5B8C\u6574\u7684\u5BB6\uFF0C\u4F46\u4F60\u7ED9\u4E86\u4ED6\u5B8C\u6574\u7684\u7231",text:"\u4F60\u4E00\u4E2A\u4EBA\u628A\u4ED6\u5E26\u5927\u3002\u4ED6\u8003\u4E0A\u5927\u5B66\u90A3\u5E74\uFF0C\u62B1\u7740\u4F60\u8BF4\uFF1A\u5988\uFF0C\u4F60\u8F9B\u82E6\u4E86\u3002\u4F60\u7B11\u7740\u8BF4\uFF1A\u4E0D\u8F9B\u82E6\u3002\u8F6C\u8EAB\u8FDB\u53A8\u623F\uFF0C\u54ED\u4E86\u5F88\u4E45\u3002",comment:"\u4F60\u6CA1\u6709\u7B49\u5230\u90A3\u4E2A\u4EBA\uFF0C\u4F46\u4F60\u7B49\u5230\u4E86\u5B69\u5B50\u957F\u5927\u3002",hint:"\u4F60\u6CA1\u6709\u7ED9\u4ED6\u4E00\u4E2A\u5B8C\u6574\u7684\u5BB6\uFF0C\u4F46\u4F60\u7ED9\u4E86\u4ED6\u5B8C\u6574\u7684\u7231",when:{flags:["keep"]}},{id:"mom-love",kind:"special",title:"\u4E24\u4E2A\u4EBA\u7684\u5BB6",subtitle:"\u4F60\u91CD\u65B0\u5B66\u4F1A\u4E86\u88AB\u4EBA\u5206\u62C5",text:"\u4F60\u9047\u5230\u4E86\u4E00\u4E2A\u4E0D\u4ECB\u610F\u5B69\u5B50\u7684\u4EBA\u3002\u4F60\u4EEC\u6CA1\u6709\u529E\u5A5A\u793C\uFF0C\u53EA\u662F\u642C\u5230\u4E86\u4E00\u8D77\u3002\u5B69\u5B50\u7B2C\u4E00\u6B21\u53EB\u4ED6\u53D4\u53D4\u7684\u65F6\u5019\uFF0C\u4F60\u770B\u89C1\u4ED6\u773C\u775B\u7EA2\u4E86\u3002",comment:"\u4F60\u53D7\u8FC7\u4E00\u6B21\u4F24\uFF0C\u4F46\u6CA1\u6709\u5173\u4E0A\u95E8\u3002",hint:"\u4F60\u91CD\u65B0\u5B66\u4F1A\u4E86\u88AB\u4EBA\u5206\u62C5",when:{flags:["care"]}},{id:"mom-free",kind:"special",title:"\u53E6\u4E00\u79CD\u5982\u679C",subtitle:"\u4F60\u6CA1\u6709\u6210\u4E3A\u6BCD\u4EB2\uFF0C\u4F46\u4F60\u6210\u4E3A\u4E86\u81EA\u5DF1",text:"\u4F60\u53BB\u4E86\u53E6\u4E00\u4E2A\u57CE\u5E02\uFF0C\u8BFB\u4E86\u4E66\uFF0C\u6362\u4E86\u5DE5\u4F5C\u3002\u4F60\u5076\u5C14\u4F1A\u60F3\u8D77\u90A3\u4E2A\u6CA1\u7559\u4E0B\u7684\u5B69\u5B50\uFF0C\u4F46\u4F60\u4E0D\u540E\u6094\u3002\u4F60\u5BF9\u81EA\u5DF1\u8BF4\uFF1A\u6211\u5148\u628A\u81EA\u5DF1\u6D3B\u597D\u3002",comment:"\u6709\u4E9B\u5982\u679C\u5F88\u75BC\uFF0C\u4F46\u4E5F\u662F\u4F60\u9009\u7684\u3002",hint:"\u4F60\u6CA1\u6709\u6210\u4E3A\u6BCD\u4EB2\uFF0C\u4F46\u4F60\u6210\u4E3A\u4E86\u81EA\u5DF1",when:{flags:["abort"]}},{id:"mom-fallback",kind:"special",title:"\u5355\u8EAB\u5988\u5988",subtitle:"\u4F60\u8FD8\u5728\u5B66\u600E\u4E48\u4E00\u4E2A\u4EBA\u625B",text:"\u4F60\u8FD8\u5728\u5E26\u5B69\u5B50\uFF0C\u8FD8\u5728\u4E0A\u73ED\uFF0C\u8FD8\u5728\u4E3A\u94B1\u53D1\u6101\u3002\u5B69\u5B50\u5F88\u61C2\u4E8B\uFF0C\u61C2\u4E8B\u5F97\u8BA9\u4F60\u5FC3\u75BC\u3002\u4F60\u4E0D\u77E5\u9053\u4EE5\u540E\u4F1A\u600E\u6837\uFF0C\u4F46\u6BCF\u5929\u65E9\u4E0A\u8FD8\u662F\u4F1A\u8D77\u6765\u505A\u65E9\u996D\u3002",comment:"\u4F60\u6CA1\u6709\u7B49\u5230\u8C01\u6765\u6551\u4F60\uFF0C\u4F60\u5B66\u4F1A\u4E86\u81EA\u5DF1\u6551\u81EA\u5DF1\u3002",hint:"\u4F60\u8FD8\u5728\u5B66\u600E\u4E48\u4E00\u4E2A\u4EBA\u625B"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"delivery",title:"\u6BD5\u4E1A\u9001\u5916\u5356",subtitle:"\u5BB6\u91CC\u4F9B\u4F60\u8BFB\u5B8C\u5927\u5B66\uFF0C\u4F60\u5F00\u59CB\u9001\u5916\u5356",premise:"\u5E7F\u5DDE\uFF0C2023 \u5E74\u3002\u4F60 23 \u5C81\uFF0C\u672C\u79D1\u6BD5\u4E1A\uFF0C\u6295\u4E86\u4E00\u767E\u4EFD\u7B80\u5386\u3002",start:{year:2023,age:23,stats:{money:25,health:65,love:45,freedom:50,parents:55,regret:25},tags:{city:"\u5E7F\u5DDE",job:"\u5F85\u4E1A",partner:"",school:"\u672C\u79D1"}},chapters:[{id:"p1",year:2023,age:23,title:"\u6BD5\u4E1A",narration:"\u62DB\u8058\u4F1A\u8DD1\u4E86\u4E00\u4E2A\u6708\uFF0C\u53EA\u6709\u5916\u5356\u7AD9\u7ED9\u4F60\u56DE\u4E86\u6D88\u606F\u3002",options:[{id:"ride",label:"\u53BB\u9001\u5916\u5356",desire:"money",canon:!1,effects:{money:6,health:-4,love:0,freedom:4,parents:-6,regret:2},flags:{ride:!0},note:"\u4F60\u5F00\u59CB\u9001\u5916\u5356\u3002\u7B2C\u4E00\u5929\u8DD1\u4E86\u5341\u4E8C\u4E2A\u5C0F\u65F6\uFF0C\u8D5A\u4E86\u4E8C\u767E\u4E09\u3002"},{id:"exam",label:"\u7EE7\u7EED\u8003\u7814",desire:"self",canon:!1,effects:{money:-8,health:-2,love:0,freedom:2,parents:-2,regret:-2},flags:{exam:!0},note:"\u4F60\u51B3\u5B9A\u518D\u8003\u4E00\u5E74\u3002\u56FE\u4E66\u9986\u7684\u5EA7\u4F4D\uFF0C\u6BD4\u4F60\u60F3\u8C61\u4E2D\u96BE\u62A2\u3002"},{id:"county",label:"\u56DE\u53BF\u57CE",desire:"parents",canon:!1,effects:{money:-4,health:0,love:0,freedom:-4,parents:8,regret:2},flags:{county:!0},note:"\u4F60\u56DE\u4E86\u53BF\u57CE\u3002\u7238\u5988\u5F88\u9AD8\u5174\uFF0C\u4F60\u5374\u6709\u70B9\u62AC\u4E0D\u8D77\u5934\u3002"}]},{id:"p2",year:2024,age:24,title:"\u7B2C\u4E8C\u5E74",narration:"\u540C\u5B66\u7FA4\u6709\u4EBA\u4E0A\u5CB8\uFF0C\u6709\u4EBA\u51FA\u56FD\uFF0C\u6709\u4EBA\u548C\u4F60\u4E00\u6837\u5728\u8DD1\u5355\u3002",options:[{id:"save",label:"\u6512\u94B1",desire:"money",canon:!1,effects:{money:8,health:0,love:0,freedom:-4,parents:0,regret:2},flags:{save:!0},note:"\u4F60\u5F00\u59CB\u6512\u94B1\u3002\u6BCF\u4E2A\u6708\u53D1\u5DE5\u8D44\uFF0C\u5148\u5B58\u4E00\u534A\u3002"},{id:"study",label:"\u8FB9\u9001\u8FB9\u5B66",desire:"self",canon:!1,effects:{money:-2,health:-4,love:0,freedom:6,parents:0,regret:-2},flags:{study:!0},note:"\u4F60\u4E70\u4E86\u7F51\u8BFE\uFF0C\u7B49\u5355\u7684\u65F6\u5019\u770B\u3002\u6709\u4EBA\u7B11\u4F60\uFF0C\u4F60\u6CA1\u7406\u3002"},{id:"accept",label:"\u5C31\u8FD9\u6837\u5427",desire:"parents",canon:!1,effects:{money:2,health:2,love:0,freedom:-4,parents:0,regret:4},flags:{accept:!0},note:"\u4F60\u4E0D\u518D\u60F3\u4EE5\u540E\u3002\u6BCF\u5929\u8DD1\u591F\u5355\uFF0C\u56DE\u5BB6\u7761\u89C9\u3002"}]},{id:"p3",year:2030,age:30,title:"\u4E09\u5341\u5C81",narration:"\u4E09\u5341\u5C81\uFF0C\u4F60\u8FD8\u5728\u5E7F\u5DDE\u3002\u7535\u52A8\u8F66\u6362\u4E86\u4E09\u8F86\uFF0C\u623F\u79DF\u6DA8\u4E86\u4E24\u6B21\u3002",options:[{id:"shop",label:"\u5F00\u4E2A\u5C0F\u5E97",desire:"self",canon:!1,effects:{money:-10,health:0,love:0,freedom:6,parents:4,regret:-2},flags:{shop:!0},note:"\u4F60\u76D8\u4E0B\u4E00\u95F4\u5C0F\u5E97\uFF0C\u5356\u65E9\u9910\u3002\u6BCF\u5929\u56DB\u70B9\u8D77\u5E8A\uFF0C\u4F46\u4E0D\u7528\u518D\u7B49\u5355\u3002"},{id:"city",label:"\u7559\u5728\u5927\u57CE\u5E02",desire:"money",canon:!1,effects:{money:6,health:-6,love:0,freedom:2,parents:0,regret:2},flags:{city:!0},note:"\u4F60\u7559\u5728\u4E86\u5E7F\u5DDE\uFF0C\u8FDB\u4E86\u5916\u5356\u7AD9\u505A\u8C03\u5EA6\u3002\u4E0D\u7528\u518D\u8DD1\u5355\uFF0C\u4F46\u8981\u7BA1\u4E00\u767E\u4E2A\u9A91\u624B\u3002"},{id:"home",label:"\u56DE\u8001\u5BB6",desire:"parents",canon:!1,effects:{money:-4,health:0,love:0,freedom:-2,parents:8,regret:2},flags:{home:!0},note:"\u4F60\u56DE\u4E86\u8001\u5BB6\uFF0C\u5728\u9547\u4E0A\u5F00\u4E86\u4E00\u5BB6\u5FEB\u9012\u9A7F\u7AD9\u3002"}]}],endings:[{id:"delivery-own",kind:"special",title:"\u81EA\u5DF1\u7684\u5E97",subtitle:"\u4F60\u7EC8\u4E8E\u4E0D\u7528\u518D\u7B49\u522B\u4EBA\u7ED9\u4F60\u6D3E\u5355",text:"\u4F60\u5F00\u4E86\u65E9\u9910\u5E97\u3002\u7B2C\u4E00\u5929\u5356\u4E86\u4E09\u5341\u4E03\u5757\uFF0C\u7B2C\u4E8C\u5929\u5356\u4E86\u516B\u5341\u3002\u534A\u5E74\u540E\uFF0C\u4F60\u8BF7\u4E86\u4E00\u4E2A\u4EBA\u3002\u4F60\u4E0D\u518D\u60F3\u201C\u5927\u5B66\u662F\u4E0D\u662F\u767D\u8BFB\u4E86\u201D\uFF0C\u4F60\u53EA\u60F3\u660E\u5929\u5C11\u9192\u4E00\u6B21\u3002",comment:"\u4F60\u6CA1\u6709\u4E0A\u5CB8\uFF0C\u4F46\u4F60\u7ED9\u81EA\u5DF1\u9020\u4E86\u4E00\u8258\u5C0F\u8239\u3002",hint:"\u4F60\u7EC8\u4E8E\u4E0D\u7528\u518D\u7B49\u522B\u4EBA\u7ED9\u4F60\u6D3E\u5355",when:{flags:["shop"]}},{id:"delivery-rider",kind:"special",title:"\u9A91\u624B",subtitle:"\u4F60\u8DD1\u904D\u5E7F\u5DDE\uFF0C\u4E5F\u8DD1\u5B8C\u4E86\u81EA\u5DF1\u7684\u4E8C\u5341\u5C81",text:"\u4F60\u8DD1\u4E86\u4E03\u5E74\u5916\u5356\u3002\u4F60\u8BA4\u8BC6\u6BCF\u4E00\u6761\u8FD1\u8DEF\uFF0C\u4E5F\u8BA4\u8BC6\u6BCF\u4E00\u4E2A\u4FDD\u5B89\u7684\u813E\u6C14\u3002\u4E09\u5341\u5C81\u90A3\u5E74\uFF0C\u4F60\u6210\u4E86\u7AD9\u91CC\u7684\u8C03\u5EA6\uFF0C\u4E0D\u7528\u518D\u6DCB\u96E8\u3002",comment:"\u4F60\u6CA1\u6709\u6210\u4E3A\u522B\u4EBA\u773C\u91CC\u7684\u6210\u529F\uFF0C\u4F46\u4F60\u517B\u6D3B\u4E86\u81EA\u5DF1\u3002",hint:"\u4F60\u8DD1\u904D\u5E7F\u5DDE\uFF0C\u4E5F\u8DD1\u5B8C\u4E86\u81EA\u5DF1\u7684\u4E8C\u5341\u5C81",when:{flags:["ride"]}},{id:"delivery-home",kind:"special",title:"\u53BF\u57CE",subtitle:"\u4F60\u56DE\u4E86\u53BF\u57CE\uFF0C\u628A\u65E5\u5B50\u8FC7\u6162\u4E86",text:"\u4F60\u56DE\u4E86\u53BF\u57CE\uFF0C\u5F00\u4E86\u5FEB\u9012\u9A7F\u7AD9\u3002\u6536\u5165\u4E0D\u9AD8\uFF0C\u4F46\u6BCF\u5929\u80FD\u56DE\u5BB6\u5403\u996D\u3002\u5988\u5988\u4E0D\u518D\u95EE\u4F60\u5DE5\u4F5C\uFF0C\u53EA\u95EE\u4F60\u997F\u4E0D\u997F\u3002",comment:"\u4F60\u79BB\u5F00\u8FC7\u5927\u57CE\u5E02\uFF0C\u4E5F\u79BB\u5F00\u8FC7\u90A3\u79CD\u7126\u8651\u3002",hint:"\u4F60\u56DE\u4E86\u53BF\u57CE\uFF0C\u628A\u65E5\u5B50\u8FC7\u6162\u4E86",when:{flags:["home"]}},{id:"delivery-fallback",kind:"special",title:"\u6BD5\u4E1A",subtitle:"\u4F60\u8FD8\u5728\u627E\u81EA\u5DF1\u7684\u4F4D\u7F6E",text:"\u4F60\u6362\u8FC7\u51E0\u4EFD\u5DE5\u4F5C\uFF0C\u9001\u8FC7\u5916\u5356\uFF0C\u4E5F\u8FDB\u8FC7\u5382\u3002\u4F60\u8FD8\u6CA1\u6709\u627E\u5230\u60F3\u505A\u7684\u4E8B\uFF0C\u4F46\u4F60\u5DF2\u7ECF\u4E0D\u518D\u5BB3\u6015\u6362\u3002",comment:"\u6BD5\u4E1A\u4E0D\u662F\u7EC8\u70B9\uFF0C\u662F\u4E00\u5F20\u8FD8\u6CA1\u6709\u586B\u5B8C\u7684\u8868\u3002",hint:"\u4F60\u8FD8\u5728\u627E\u81EA\u5DF1\u7684\u4F4D\u7F6E"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"bully",title:"\u591A\u5E74\u4EE5\u540E",subtitle:"\u9762\u8BD5\u5B98\uFF0C\u662F\u5F53\u5E74\u9738\u51CC\u4F60\u7684\u4EBA",premise:"\u5E7F\u5DDE\uFF0C2019 \u5E74\u3002\u4F60 30 \u5C81\uFF0C\u53BB\u4E00\u5BB6\u516C\u53F8\u9762\u8BD5\u3002",start:{year:2019,age:30,stats:{money:50,health:60,love:40,freedom:45,parents:45,regret:30},tags:{city:"\u5E7F\u5DDE",job:"\u767D\u9886",partner:"",school:""}},chapters:[{id:"p1",year:2019,age:30,title:"\u9762\u8BD5",narration:"\u63A8\u5F00\u95E8\uFF0C\u4F60\u6123\u4F4F\u4E86\u3002\u9762\u8BD5\u5B98\u662F\u9AD8\u4E2D\u65F6\u5E26\u5934\u5B64\u7ACB\u4F60\u7684\u90A3\u4E2A\u4EBA\u3002",options:[{id:"apologize",label:"\u5F53\u9762\u9053\u6B49",desire:"love",canon:!1,effects:{money:-2,health:0,love:4,freedom:0,parents:0,regret:-6},flags:{apologize:!0},note:"\u4F60\u5148\u5F00\u53E3\uFF1A\u5F53\u5E74\u7684\u4E8B\uFF0C\u5BF9\u4E0D\u8D77\u3002\u4ED6\u6123\u4E86\u4E00\u4E0B\uFF0C\u8BF4\uFF1A\u8BE5\u9053\u6B49\u7684\u662F\u6211\u3002"},{id:"pretend",label:"\u88C5\u4F5C\u4E0D\u8BA4\u8BC6",desire:"money",canon:!1,effects:{money:2,health:-2,love:0,freedom:0,parents:0,regret:6},flags:{pretend:!0},note:"\u4F60\u88C5\u4F5C\u4E0D\u8BA4\u8BC6\u3002\u9762\u8BD5\u5F88\u987A\u5229\uFF0C\u4F60\u5374\u88AB\u81EA\u5DF1\u6076\u5FC3\u5230\u4E86\u3002"},{id:"leave",label:"\u653E\u5F03\u8FD9\u4EFD\u5DE5\u4F5C",desire:"freedom",canon:!1,effects:{money:-6,health:0,love:0,freedom:4,parents:0,regret:-2},flags:{leave:!0},note:"\u4F60\u7AD9\u8D77\u6765\u8D70\u4E86\u3002\u8D70\u51FA\u5199\u5B57\u697C\uFF0C\u4F60\u7B2C\u4E00\u6B21\u89C9\u5F97\u547C\u5438\u662F\u987A\u7684\u3002"}]},{id:"p2",year:2020,age:31,title:"\u5165\u804C\u540E",narration:"\u4F60\u8FD8\u662F\u5165\u804C\u4E86\u3002\u4ED6\u6210\u4E86\u4F60\u7684\u76F4\u5C5E\u4E0A\u7EA7\u3002",options:[{id:"endure",label:"\u5FCD\u7740",desire:"parents",canon:!1,effects:{money:0,health:-6,love:-4,freedom:0,parents:0,regret:6},flags:{endure:!0},note:"\u4F60\u5FCD\u7740\u3002\u4ED6\u5076\u5C14\u63D0\u8D77\u9AD8\u4E2D\uFF0C\u7B11\u7740\u8BF4\u90A3\u65F6\u5019\u4E0D\u61C2\u4E8B\u3002"},{id:"fight",label:"\u6B63\u9762\u51B2\u7A81",desire:"freedom",canon:!1,effects:{money:-4,health:-4,love:0,freedom:4,parents:0,regret:-2},flags:{fight:!0},note:"\u4F60\u5728\u4F1A\u4E0A\u9876\u4E86\u4ED6\u3002\u5168\u7EC4\u5B89\u9759\u4E86\u4E09\u79D2\uFF0C\u6709\u4EBA\u5077\u5077\u7ED9\u4F60\u7AD6\u5927\u62C7\u6307\u3002"},{id:"talk",label:"\u627E\u673A\u4F1A\u8C08\u5F00",desire:"love",canon:!1,effects:{money:0,health:2,love:6,freedom:0,parents:0,regret:-4},flags:{talk:!0},note:"\u4F60\u7EA6\u4ED6\u5403\u996D\u3002\u4ED6\u8BF4\uFF1A\u6211\u4E00\u76F4\u60F3\u8DDF\u4F60\u8BF4\u5BF9\u4E0D\u8D77\u3002"}]},{id:"p3",year:2024,age:35,title:"\u4E09\u5341\u4E94\u5C81",narration:"\u4E09\u5341\u4E94\u5C81\uFF0C\u4F60\u5DF2\u7ECF\u4E0D\u5728\u90A3\u5BB6\u516C\u53F8\u3002\u540C\u5B66\u7FA4\u91CC\u6709\u4EBA\u63D0\u8D77\u5F53\u5E74\u3002",options:[{id:"forgive",label:"\u539F\u8C05",desire:"love",canon:!1,effects:{money:0,health:0,love:8,freedom:2,parents:0,regret:-6},flags:{forgive:!0},note:"\u4F60\u56DE\u4E86\u53E5\uFF1A\u90FD\u8FC7\u53BB\u4E86\u3002\u53D1\u5B8C\uFF0C\u4F60\u628A\u7FA4\u514D\u6253\u6270\u4E86\u3002"},{id:"revenge",label:"\u62A5\u590D",desire:"self",canon:!1,effects:{money:-6,health:-6,love:-8,freedom:0,parents:0,regret:8},flags:{revenge:!0},note:"\u4F60\u628A\u5F53\u5E74\u7684\u4E8B\u5199\u4E86\u51FA\u6765\uFF0C\u53D1\u5728\u7F51\u4E0A\u3002\u5F88\u591A\u4EBA\u8F6C\u53D1\uFF0C\u4E5F\u6709\u4EBA\u9A82\u4F60\u3002"},{id:"move",label:"\u6362\u4E00\u5BB6\u516C\u53F8",desire:"money",canon:!1,effects:{money:4,health:0,love:0,freedom:6,parents:0,regret:-2},flags:{move:!0},note:"\u4F60\u6362\u4E86\u57CE\u5E02\uFF0C\u6362\u4E86\u884C\u4E1A\u3002\u6CA1\u6709\u4EBA\u77E5\u9053\u4F60\u7684\u9AD8\u4E2D\u3002"}]}],endings:[{id:"bully-forgiven",kind:"special",title:"\u591A\u5E74\u4EE5\u540E",subtitle:"\u4F60\u6CA1\u6709\u7B49\u5230\u9053\u6B49\uFF0C\u4F46\u4F60\u7B49\u5230\u4E86\u653E\u4E0B",text:"\u4F60\u548C\u4ED6\u6CA1\u6709\u518D\u8054\u7CFB\u3002\u4E09\u5341\u4E94\u5C81\u90A3\u5E74\uFF0C\u4F60\u5728\u4E00\u573A\u884C\u4E1A\u4F1A\u4E0A\u8FDC\u8FDC\u770B\u89C1\u4ED6\uFF0C\u4ED6\u8001\u4E86\u5F88\u591A\u3002\u4F60\u6CA1\u6709\u8FC7\u53BB\uFF0C\u4E5F\u6CA1\u6709\u8EB2\u3002\u4F60\u5FFD\u7136\u53D1\u73B0\uFF0C\u81EA\u5DF1\u5DF2\u7ECF\u4E0D\u9700\u8981\u4ED6\u9053\u6B49\u4E86\u3002",comment:"\u6709\u4E9B\u4F24\u53E3\u7ED3\u4E86\u75A4\uFF0C\u4E0D\u75BC\u4E86\uFF0C\u4F46\u8FD8\u5728\u3002",hint:"\u4F60\u6CA1\u6709\u7B49\u5230\u9053\u6B49\uFF0C\u4F46\u4F60\u7B49\u5230\u4E86\u653E\u4E0B",when:{flags:["forgive"]}},{id:"bully-scar",kind:"special",title:"\u90A3\u4E00\u5DF4\u638C",subtitle:"\u4F60\u8D62\u4E86\uFF0C\u4F46\u6CA1\u6709\u8D62\u56DE\u90A3\u4E09\u5E74",text:"\u4F60\u628A\u5F53\u5E74\u7684\u4E8B\u5199\u4E86\u51FA\u6765\uFF0C\u5F88\u591A\u4EBA\u652F\u6301\u4F60\uFF0C\u4E5F\u6709\u4EBA\u8BF4\u662F\u4F60\u592A\u654F\u611F\u3002\u4F60\u770B\u7740\u8BC4\u8BBA\uFF0C\u5FFD\u7136\u89C9\u5F97\u7D2F\u3002\u4F60\u5173\u6389\u624B\u673A\uFF0C\u53D1\u73B0\u81EA\u5DF1\u8FD8\u662F\u90A3\u4E2A\u5728\u8D70\u5ECA\u91CC\u88AB\u5835\u4F4F\u7684\u4EBA\u3002",comment:"\u62A5\u590D\u4E0D\u80FD\u8BA9\u65F6\u95F4\u5012\u56DE\u53BB\u3002",hint:"\u4F60\u8D62\u4E86\uFF0C\u4F46\u6CA1\u6709\u8D62\u56DE\u90A3\u4E09\u5E74",when:{flags:["revenge"]}},{id:"bully-away",kind:"special",title:"\u4E0D\u56DE\u5934",subtitle:"\u4F60\u8D70\u4E86\u5F88\u8FDC\uFF0C\u8FDC\u5230\u4ED6\u4EEC\u627E\u4E0D\u5230\u4F60",text:"\u4F60\u6362\u4E86\u57CE\u5E02\uFF0C\u6362\u4E86\u540D\u5B57\uFF0C\u5F00\u59CB\u4E86\u65B0\u7684\u751F\u6D3B\u3002\u5076\u5C14\u6709\u4EBA\u95EE\u8D77\u9AD8\u4E2D\uFF0C\u4F60\u53EA\u8BF4\uFF1A\u4E0D\u8BB0\u5F97\u4E86\u3002\u4F60\u6CA1\u6709\u539F\u8C05\u8C01\uFF0C\u4E5F\u6CA1\u6709\u62A5\u590D\u8C01\u3002\u4F60\u53EA\u662F\u8D70\u5F00\u4E86\u3002",comment:"\u6709\u4E9B\u544A\u522B\uFF0C\u4E0D\u9700\u8981\u8BF4\u51FA\u53E3\u3002",hint:"\u4F60\u8D70\u4E86\u5F88\u8FDC\uFF0C\u8FDC\u5230\u4ED6\u4EEC\u627E\u4E0D\u5230\u4F60",when:{flags:["move"]}}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"scam",title:"\u9AD8\u85AA\u62DB\u8058",subtitle:"\u6708\u85AA\u4E24\u4E07\uFF0C\u5305\u673A\u7968\uFF0C\u53BB\u4E1C\u5357\u4E9A",premise:"\u5C0F\u57CE\uFF0C2021 \u5E74\u3002\u4F60 24 \u5C81\uFF0C\u5F85\u4E1A\u5728\u5BB6\uFF0C\u5237\u5230\u4E00\u6761\u62DB\u8058\u4FE1\u606F\u3002",start:{year:2021,age:24,stats:{money:20,health:65,love:40,freedom:40,parents:55,regret:20},tags:{city:"\u5C0F\u57CE",job:"\u5F85\u4E1A",partner:"",school:""}},chapters:[{id:"p1",year:2021,age:24,title:"\u62DB\u8058\u4FE1\u606F",narration:"\u6708\u85AA\u4E24\u4E07\uFF0C\u5305\u673A\u7968\uFF0C\u53BB\u4E1C\u5357\u4E9A\u505A\u5BA2\u670D\u3002\u5BF9\u65B9\u8BF4\uFF1A\u540D\u989D\u6709\u9650\uFF0C\u4ECA\u5929\u5B9A\u3002",options:[{id:"go",label:"\u53BB\u8BD5\u4E00\u8BD5",desire:"money",canon:!1,effects:{money:4,health:-4,love:0,freedom:4,parents:-6,regret:6},flags:{go:!0},note:"\u4F60\u53BB\u4E86\u3002\u843D\u5730\u4EE5\u540E\uFF0C\u62A4\u7167\u88AB\u4EBA\u6536\u8D70\u3002"},{id:"check",label:"\u5148\u67E5\u516C\u53F8",desire:"self",canon:!1,effects:{money:-2,health:2,love:0,freedom:2,parents:0,regret:-2},flags:{check:!0},note:"\u4F60\u67E5\u4E86\u516C\u53F8\uFF0C\u53D1\u73B0\u5730\u5740\u662F\u5047\u7684\u3002\u4F60\u628A\u5BF9\u65B9\u62C9\u9ED1\u4E86\u3002"},{id:"refuse",label:"\u4E0D\u53BB",desire:"parents",canon:!1,effects:{money:0,health:0,love:0,freedom:0,parents:4,regret:0},flags:{refuse:!0},note:"\u4F60\u6CA1\u6709\u53BB\u3002\u4E00\u4E2A\u6708\u540E\uFF0C\u540C\u4E61\u6709\u4EBA\u53BB\u4E86\uFF0C\u518D\u4E5F\u6CA1\u6709\u6D88\u606F\u3002"}]},{id:"p2",year:2022,age:25,title:"\u5230\u8FBE",narration:"\u56ED\u533A\u5728\u8FB9\u5883\uFF0C\u95E8\u53E3\u6709\u4EBA\u62FF\u67AA\u3002\u4F60\u88AB\u5206\u5230\u4E00\u53F0\u7535\u8111\u524D\uFF0C\u8BA9\u4F60\u52A0\u4EBA\u3002",options:[{id:"escape",label:"\u60F3\u529E\u6CD5\u8DD1",desire:"freedom",canon:!1,effects:{money:-6,health:-8,love:0,freedom:8,parents:0,regret:-2},flags:{escape:!0},note:"\u4F60\u8D81\u505C\u7535\u7FFB\u5899\u8DD1\u4E86\u3002\u8DD1\u4E86\u4E00\u591C\uFF0C\u978B\u4E22\u4E86\u4E00\u53EA\u3002"},{id:"obey",label:"\u5148\u542C\u8BDD",desire:"money",canon:!1,effects:{money:6,health:-6,love:0,freedom:-8,parents:0,regret:8},flags:{obey:!0},note:"\u4F60\u7167\u7740\u8BDD\u672F\u52A0\u4EBA\u3002\u7B2C\u4E00\u4E2A\u6708\uFF0C\u4F60\u9A97\u5230\u4E86\u4E00\u4E2A\u9000\u4F11\u8001\u5E08\u3002"},{id:"call",label:"\u5077\u5077\u62A5\u8B66",desire:"self",canon:!1,effects:{money:0,health:-4,love:0,freedom:4,parents:0,regret:-2},flags:{call:!0},note:"\u4F60\u628A\u5B9A\u4F4D\u53D1\u7ED9\u4E86\u56FD\u5185\u7684\u670B\u53CB\u3002\u4E09\u5929\u540E\uFF0C\u56ED\u533A\u88AB\u67E5\u3002"}]},{id:"p3",year:2025,age:28,title:"\u56DE\u5BB6",narration:"\u4F60\u56DE\u6765\u4E86\u3002\u6709\u4EBA\u95EE\u4F60\u8FD9\u4E24\u5E74\u53BB\u54EA\u4E86\uFF0C\u4F60\u8BF4\uFF1A\u5728\u5916\u9762\u6253\u5DE5\u3002",options:[{id:"home",label:"\u56DE\u5BB6",desire:"parents",canon:!1,effects:{money:-4,health:0,love:0,freedom:0,parents:8,regret:-2},flags:{home:!0},note:"\u4F60\u56DE\u4E86\u5BB6\u3002\u5988\u5988\u505A\u4E86\u4F60\u6700\u7231\u5403\u7684\u83DC\uFF0C\u6CA1\u6709\u95EE\u592A\u591A\u3002"},{id:"help",label:"\u53BB\u529D\u522B\u4EBA\u522B\u53BB",desire:"love",canon:!1,effects:{money:0,health:0,love:6,freedom:4,parents:0,regret:-4},flags:{help:!0},note:"\u4F60\u5F00\u59CB\u5728\u7F51\u4E0A\u8BB2\u81EA\u5DF1\u7684\u7ECF\u5386\u3002\u6709\u4EBA\u9A82\u4F60\u6D3B\u8BE5\uFF0C\u4E5F\u6709\u4EBA\u79C1\u4FE1\u8BF4\u8C22\u8C22\u3002"},{id:"hide",label:"\u4E0D\u544A\u8BC9\u4EFB\u4F55\u4EBA",desire:"self",canon:!1,effects:{money:0,health:0,love:-4,freedom:0,parents:0,regret:6},flags:{hide:!0},note:"\u4F60\u628A\u8FD9\u6BB5\u7ECF\u5386\u57CB\u4E86\u8D77\u6765\u3002\u665A\u4E0A\u4F60\u8FD8\u662F\u4F1A\u68A6\u89C1\u90A3\u4E2A\u56ED\u533A\u3002"}]}],endings:[{id:"scam-escape",kind:"special",title:"\u56DE\u6765\u4E86",subtitle:"\u4F60\u9003\u51FA\u6765\u4E86\uFF0C\u4F46\u6709\u4E9B\u4E1C\u897F\u7559\u5728\u4E86\u90A3\u91CC",text:"\u4F60\u56DE\u6765\u4E86\uFF0C\u6362\u4E86\u624B\u673A\u53F7\uFF0C\u6362\u4E86\u57CE\u5E02\u3002\u4F60\u4E0D\u518D\u76F8\u4FE1\u201C\u9AD8\u85AA\u8F7B\u677E\u201D\u7684\u5DE5\u4F5C\u3002\u6709\u4EBA\u95EE\u4F60\u8FD9\u4E24\u5E74\u5E72\u4EC0\u4E48\uFF0C\u4F60\u8BF4\uFF1A\u4E0A\u4E86\u4E00\u8BFE\u3002",comment:"\u4F60\u4ED8\u4E86\u5F88\u8D35\u7684\u5B66\u8D39\uFF0C\u4E70\u56DE\u4E86\u4E00\u6761\u547D\u3002",hint:"\u4F60\u9003\u51FA\u6765\u4E86\uFF0C\u4F46\u6709\u4E9B\u4E1C\u897F\u7559\u5728\u4E86\u90A3\u91CC",when:{flags:["check"]}},{id:"scam-trapped",kind:"special",title:"\u56ED\u533A",subtitle:"\u4F60\u6CA1\u6709\u56DE\u6765\uFF0C\u6216\u8005\u56DE\u6765\u65F6\u5DF2\u7ECF\u4E0D\u662F\u539F\u6765\u7684\u4F60",text:"\u4F60\u5728\u56ED\u533A\u5F85\u4E86\u4E24\u5E74\u3002\u4F60\u9A97\u8FC7\u522B\u4EBA\uFF0C\u4E5F\u88AB\u522B\u4EBA\u9A97\u3002\u4F60\u56DE\u6765\u7684\u65F6\u5019\uFF0C\u5988\u5988\u5DEE\u70B9\u6CA1\u8BA4\u51FA\u4F60\u3002",comment:"\u6709\u4E9B\u5730\u65B9\uFF0C\u8FDB\u53BB\u5BB9\u6613\uFF0C\u51FA\u6765\u8981\u8131\u4E00\u5C42\u76AE\u3002",hint:"\u4F60\u6CA1\u6709\u56DE\u6765\uFF0C\u6216\u8005\u56DE\u6765\u65F6\u5DF2\u7ECF\u4E0D\u662F\u539F\u6765\u7684\u4F60",when:{flags:["go"]}},{id:"scam-warn",kind:"special",title:"\u529D\u4F4F\u4E00\u4E2A\u4EBA",subtitle:"\u4F60\u6CA1\u6709\u53BB\uFF0C\u4F46\u4F60\u6551\u4E86\u4E00\u4E2A\u4EBA",text:"\u4F60\u628A\u7ECF\u5386\u53D1\u5728\u7F51\u4E0A\u3002\u4E00\u4E2A\u51C6\u5907\u53BB\u7684\u4EBA\u770B\u5230\u540E\u9000\u4E86\u7968\u3002\u4ED6\u7ED9\u4F60\u53D1\u6D88\u606F\uFF1A\u54E5\uFF0C\u8C22\u8C22\u4F60\u3002\u4F60\u770B\u7740\u90A3\u4E09\u4E2A\u5B57\uFF0C\u54ED\u4E86\u3002",comment:"\u4F60\u6CA1\u6709\u6210\u4E3A\u82F1\u96C4\uFF0C\u4F46\u4F60\u62E6\u4F4F\u4E86\u4E00\u4E2A\u4EBA\u3002",hint:"\u4F60\u6CA1\u6709\u53BB\uFF0C\u4F46\u4F60\u6551\u4E86\u4E00\u4E2A\u4EBA",when:{flags:["help"]}},{id:"scam-fallback",kind:"special",title:"\u9AD8\u85AA",subtitle:"\u4F60\u8FD8\u5728\u627E\u5DE5\u4F5C\uFF0C\u4E5F\u8FD8\u5728\u5B66\u7740\u5206\u8FA8",text:"\u4F60\u6CA1\u6709\u53BB\uFF0C\u4E5F\u6CA1\u6709\u53D1\u8D22\u3002\u4F60\u6362\u4E86\u51E0\u4EFD\u5DE5\u4F5C\uFF0C\u6162\u6162\u660E\u767D\uFF1A\u592A\u597D\u7684\u4E8B\uFF0C\u901A\u5E38\u8F6E\u4E0D\u5230\u4F60\u3002",comment:"\u4F60\u6CA1\u6709\u88AB\u9A97\uFF0C\u4F46\u4E5F\u8FD8\u5728\u751F\u6D3B\u91CC\u627E\u8DEF\u3002",hint:"\u4F60\u8FD8\u5728\u627E\u5DE5\u4F5C\uFF0C\u4E5F\u8FD8\u5728\u5B66\u7740\u5206\u8FA8"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"},{id:"rich-kid",title:"\u5BCC\u4E8C\u4EE3",subtitle:"\u4E16\u754C\u676F\u90A3\u665A\uFF0C\u4F60\u628A\u5BB6\u91CC\u7684\u94B1\u62BC\u4E86\u4E0A\u53BB",premise:"\u5E7F\u5DDE\uFF0C2022 \u5E74\u3002\u4F60 27 \u5C81\uFF0C\u7236\u4EB2\u5F00\u5DE5\u5382\uFF0C\u4F60\u4ECE\u6CA1\u4E3A\u94B1\u53D1\u8FC7\u6101\u3002",start:{year:2022,age:27,stats:{money:80,health:60,love:40,freedom:60,parents:55,regret:20},tags:{city:"\u5E7F\u5DDE",job:"\u5BCC\u4E8C\u4EE3",partner:"",school:""}},chapters:[{id:"p1",year:2022,age:27,title:"\u4E16\u754C\u676F",narration:"\u4E16\u754C\u676F\u51B3\u8D5B\u524D\uFF0C\u670B\u53CB\u8BF4\uFF1A\u8FD9\u628A\u7A33\u4E86\u3002\u4F60\u628A\u5BB6\u91CC\u7684\u94B1\u62BC\u4E86\u4E0A\u53BB\u3002",options:[{id:"bet",label:"\u5168\u62BC",desire:"money",canon:!1,effects:{money:-20,health:-4,love:0,freedom:4,parents:0,regret:6},flags:{bet:!0},note:"\u4F60\u5168\u62BC\u4E86\u3002\u6BD4\u8D5B\u7ED3\u675F\uFF0C\u4F60\u5728\u9633\u53F0\u5750\u5230\u5929\u4EAE\u3002"},{id:"stop",label:"\u6536\u624B",desire:"self",canon:!1,effects:{money:2,health:2,love:0,freedom:0,parents:2,regret:-2},flags:{stop:!0},note:"\u4F60\u6536\u624B\u4E86\u3002\u670B\u53CB\u7B11\u4F60\u80C6\u5C0F\uFF0C\u4F60\u6CA1\u8BF4\u8BDD\u3002"},{id:"ask",label:"\u95EE\u7236\u4EB2",desire:"parents",canon:!1,effects:{money:-4,health:0,love:0,freedom:0,parents:4,regret:-2},flags:{ask:!0},note:"\u4F60\u95EE\u4E86\u7236\u4EB2\u3002\u4ED6\u8BF4\uFF1A\u94B1\u53EF\u4EE5\u518D\u8D5A\uFF0C\u4EBA\u522B\u5E9F\u4E86\u3002"}]},{id:"p2",year:2023,age:28,title:"\u5BB6\u91CC",narration:"\u7236\u4EB2\u7684\u516C\u53F8\u8D44\u91D1\u94FE\u65AD\u4E86\u3002\u94F6\u884C\u7684\u4EBA\u4E0A\u95E8\uFF0C\u5BB6\u91CC\u7684\u8F66\u88AB\u5F00\u8D70\u3002",options:[{id:"sell",label:"\u5356\u623F\u5356\u8F66",desire:"parents",canon:!1,effects:{money:8,health:0,love:0,freedom:-6,parents:4,regret:2},flags:{sell:!0},note:"\u4F60\u5356\u4E86\u623F\u548C\u8F66\uFF0C\u586B\u4E86\u4E00\u90E8\u5206\u7A9F\u7ABF\u3002"},{id:"hide",label:"\u7792\u7740",desire:"self",canon:!1,effects:{money:2,health:0,love:-4,freedom:0,parents:0,regret:6},flags:{hide:!0},note:"\u4F60\u7792\u7740\u6240\u6709\u4EBA\uFF0C\u7EE7\u7EED\u88C5\u4F5C\u6CA1\u4E8B\u3002"},{id:"work",label:"\u53BB\u6253\u5DE5",desire:"money",canon:!1,effects:{money:4,health:-4,love:0,freedom:0,parents:2,regret:-2},flags:{work:!0},note:"\u4F60\u53BB\u627E\u4E86\u4E00\u4EFD\u5DE5\u4F5C\u3002\u7B2C\u4E00\u6B21\u6253\u5361\uFF0C\u4F60\u8FDF\u5230\u4E86\u3002"}]},{id:"p3",year:2025,age:30,title:"\u4E09\u5341\u5C81",narration:"\u4E09\u5341\u5C81\uFF0C\u4F60\u5DF2\u7ECF\u4E0D\u662F\u5BCC\u4E8C\u4EE3\u4E86\u3002",options:[{id:"rebuild",label:"\u91CD\u65B0\u521B\u4E1A",desire:"self",canon:!1,effects:{money:-8,health:-4,love:0,freedom:8,parents:0,regret:-2},flags:{rebuild:!0},note:"\u4F60\u5F00\u59CB\u505A\u5C0F\u751F\u610F\u3002\u542F\u52A8\u8D44\u91D1\u662F\u670B\u53CB\u51D1\u7684\uFF0C\u4F60\u4E0D\u6562\u518D\u8D4C\u3002"},{id:"ordinary",label:"\u505A\u4E2A\u666E\u901A\u4EBA",desire:"parents",canon:!1,effects:{money:4,health:4,love:0,freedom:0,parents:4,regret:-2},flags:{ordinary:!0},note:"\u4F60\u627E\u4E86\u4E00\u4EFD\u7A33\u5B9A\u5DE5\u4F5C\uFF0C\u6309\u65F6\u4E0A\u73ED\uFF0C\u6309\u65F6\u4E0B\u73ED\u3002"},{id:"leave",label:"\u79BB\u5F00\u8FD9\u5EA7\u57CE\u5E02",desire:"freedom",canon:!1,effects:{money:-2,health:0,love:0,freedom:8,parents:-4,regret:2},flags:{leave:!0},note:"\u4F60\u53BB\u4E86\u53E6\u4E00\u5EA7\u57CE\u5E02\u3002\u6CA1\u6709\u4EBA\u77E5\u9053\u4F60\u5BB6\u4EE5\u524D\u6709\u94B1\u3002"}]}],endings:[{id:"rich-fall",kind:"special",title:"\u4E00\u591C",subtitle:"\u4F60\u8F93\u6389\u7684\u4E0D\u53EA\u662F\u94B1",text:"\u4F60\u8F93\u4E86\u90A3\u7B14\u94B1\uFF0C\u4E5F\u8F93\u6389\u4E86\u7236\u4EB2\u7684\u4FE1\u4EFB\u3002\u5BB6\u91CC\u7834\u4EA7\u540E\uFF0C\u4F60\u53BB\u4E86\u5916\u5730\u3002\u6709\u4EBA\u5728\u9152\u684C\u4E0A\u63D0\u8D77\u4F60\uFF0C\u8BF4\uFF1A\u90A3\u5C0F\u5B50\u4EE5\u524D\u53EF\u98CE\u5149\u4E86\u3002\u4F60\u542C\u89C1\u4E86\uFF0C\u6CA1\u6709\u56DE\u5934\u3002",comment:"\u6709\u4E9B\u94B1\u6765\u5F97\u592A\u5BB9\u6613\uFF0C\u8D70\u7684\u65F6\u5019\u4E5F\u5F88\u5FEB\u3002",hint:"\u4F60\u8F93\u6389\u7684\u4E0D\u53EA\u662F\u94B1",when:{flags:["bet"]}},{id:"rich-rebuild",kind:"special",title:"\u91CD\u65B0\u5F00\u59CB",subtitle:"\u4F60\u4ECE\u96F6\u5F00\u59CB\uFF0C\u8FD9\u6B21\u6CA1\u6709\u9000\u8DEF",text:"\u4F60\u5356\u4E86\u623F\u548C\u8F66\uFF0C\u53C8\u4ECE\u5C0F\u751F\u610F\u505A\u8D77\u3002\u4F60\u4E0D\u518D\u8D4C\uFF0C\u4E5F\u4E0D\u518D\u88C5\u3002\u4E09\u5341\u5C81\u90A3\u5E74\uFF0C\u4F60\u7B2C\u4E00\u6B21\u81EA\u5DF1\u4EA4\u623F\u79DF\u3002",comment:"\u4F60\u5931\u53BB\u4E86\u4E00\u4E2A\u5BCC\u4E8C\u4EE3\u7684\u8EAB\u4EFD\uFF0C\u627E\u56DE\u4E86\u4E00\u4E2A\u4EBA\u3002",hint:"\u4F60\u4ECE\u96F6\u5F00\u59CB\uFF0C\u8FD9\u6B21\u6CA1\u6709\u9000\u8DEF",when:{flags:["sell"]}},{id:"rich-ordinary",kind:"special",title:"\u666E\u901A\u4EBA",subtitle:"\u4F60\u7EC8\u4E8E\u8FC7\u4E0A\u4E86\u9700\u8981\u7B97\u8D26\u7684\u751F\u6D3B",text:"\u4F60\u627E\u4E86\u4E00\u4EFD\u666E\u901A\u5DE5\u4F5C\u3002\u5DE5\u8D44\u4E0D\u9AD8\uFF0C\u4F46\u6BCF\u4E2A\u6708\u80FD\u5B58\u4E00\u70B9\u3002\u4F60\u5F00\u59CB\u7406\u89E3\u7236\u4EB2\u5F53\u5E74\u4E3A\u4EC0\u4E48\u603B\u8BF4\uFF1A\u94B1\u4E0D\u597D\u8D5A\u3002",comment:"\u4F60\u6CA1\u6709\u7FFB\u8EAB\uFF0C\u4F46\u4F60\u5B66\u4F1A\u4E86\u8FC7\u65E5\u5B50\u3002",hint:"\u4F60\u7EC8\u4E8E\u8FC7\u4E0A\u4E86\u9700\u8981\u7B97\u8D26\u7684\u751F\u6D3B",when:{flags:["ordinary"]}},{id:"rich-fallback",kind:"special",title:"\u5BCC\u4E8C\u4EE3",subtitle:"\u4F60\u8FD8\u5728\u5B66\u7740\u600E\u4E48\u9760\u81EA\u5DF1",text:"\u5BB6\u91CC\u7684\u60C5\u51B5\u65F6\u597D\u65F6\u574F\u3002\u4F60\u627E\u8FC7\u51E0\u4EFD\u5DE5\u4F5C\uFF0C\u90FD\u6CA1\u6709\u505A\u957F\u3002\u4F60\u8FD8\u5728\u5B66\u600E\u4E48\u4E0D\u9760\u7236\u4EB2\u7684\u540D\u5B57\u751F\u6D3B\u3002",comment:"\u6709\u4E9B\u4EBA\u8981\u82B1\u5F88\u4E45\uFF0C\u624D\u5B66\u4F1A\u81EA\u5DF1\u8D70\u8DEF\u3002",hint:"\u4F60\u8FD8\u5728\u5B66\u7740\u600E\u4E48\u9760\u81EA\u5DF1"}],source:"\u7075\u611F\u6765\u81EA B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \u7684\u89C6\u9891\u6807\u9898\uFF1B\u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B"}]};var ge=["money","health","love","freedom","parents","regret"];var ue={money:"\u94B1",health:"\u5065\u5EB7",love:"\u88AB\u7231",freedom:"\u81EA\u7531",parents:"\u88AB\u671F\u5F85",self:"\u81EA\u5DF1"},Z=["money","freedom","love","home","self"];var T={money:50,health:80,love:50,freedom:50,parents:50,regret:10},ee={money:["health","love","freedom","parents","regret"],freedom:["money","health","love","parents","regret"],love:["money","health","freedom","parents","regret"],home:["money","health","love","freedom","regret"],self:["money","health","love","freedom","parents"]},ye=(e,t,n)=>Math.min(n,Math.max(t,Number.isFinite(e)?e:t));function be(e){let t=2166136261;for(let n=0;n<e.length;n+=1)t^=e.charCodeAt(n),t=Math.imul(t,16777619)>>>0;return t}function te(e,t){var n;return((n=e==null?void 0:e.flags)==null?void 0:n[t])===!0}function w(e,t){var n,r,a,l,i,f,c;if(t==null)return!0;if(Array.isArray(t.flags)&&!t.flags.every(o=>te(e,o))||Array.isArray(t.notFlags)&&t.notFlags.some(o=>te(e,o)))return!1;if(t.tags!==void 0){for(let[o,s]of Object.entries(t.tags))if(((n=e==null?void 0:e.tags)==null?void 0:n[o])!==s)return!1}if(t.min!==void 0){for(let[o,s]of Object.entries(t.min))if(((a=(r=e==null?void 0:e.stats)==null?void 0:r[o])!=null?a:0)<s)return!1}if(t.max!==void 0){for(let[o,s]of Object.entries(t.max))if(((i=(l=e==null?void 0:e.stats)==null?void 0:l[o])!=null?i:0)>s)return!1}if(t.desires!==void 0){for(let[o,s]of Object.entries(t.desires))if(((c=(f=e==null?void 0:e.desires)==null?void 0:f[o])!=null?c:0)<s)return!1}return!(Array.isArray(t.any)&&!t.any.some(o=>w(e,o)))}function ne(e){let t=typeof e=="string"&&e.length>0?e:"xiaoshi";return{schema:2,seed:be(t),name:"\u5C0F\u72EE",age:18,year:2003,chapter:0,stats:{...T},tags:{city:"\u9633\u6C5F",school:"",job:"",partner:""},desires:{money:0,health:0,love:0,freedom:0,parents:0,self:0},flags:{},premise:"",log:[],finished:!1,endingId:""}}function ae(e,t){var n,r;return e.finished===!0?null:(r=(n=t==null?void 0:t.chapters)==null?void 0:n[e.chapter])!=null?r:null}function re(e,t,n){var r,a,l;for(let i of(r=t==null?void 0:t[`${n}Variants`])!=null?r:[])if(w(e,i.when))return(a=i[n])!=null?a:"";return(l=t==null?void 0:t[n])!=null?l:""}function se(e,t){var n;return((n=t==null?void 0:t.options)!=null?n:[]).map(r=>{var l,i;let a=r.requires===void 0?!0:w(e,r.requires);return{...r,note:re(e,r,"note"),echo:re(e,r,"echo"),locked:!a,lockReason:a?"":(i=(l=r.requires)==null?void 0:l.reason)!=null?i:"\u8FD9\u6761\u8DEF\u5DF2\u7ECF\u4E0D\u5B58\u5728\u4E86"}})}function ve(e,t){var n,r;for(let a of(n=t==null?void 0:t.variants)!=null?n:[])if(w(e,a.when))return a.narration;return(r=t==null?void 0:t.narration)!=null?r:""}function L(e,t){var a,l,i,f,c,o;let n=ae(e,t);if(n===null){let s=B(e,t);return{finished:!0,when:`${e.year}\u5E74`,age:e.age,year:e.year,chapter:e.chapter,total:(l=(a=t==null?void 0:t.chapters)==null?void 0:a.length)!=null?l:0,ending:s,open:je(e,t,s),stats:{...e.stats},tags:{...e.tags},premise:(i=e.premise)!=null?i:""}}let r=se(e,n);return{finished:!1,kind:(f=n.kind)!=null?f:"life",when:`${n.year}\u5E74`,age:n.age,year:n.year,chapter:e.chapter,total:t.chapters.length,id:n.id,title:n.title,era:(c=n.era)!=null?c:null,narration:ve(e,n),options:r.map(s=>{var m,p,j,b,A;return{id:s.id,label:s.label,desire:s.desire,desireLabel:(m=ue[s.desire])!=null?m:s.desire,canon:s.canon===!0,effects:(p=s.effects)!=null?p:{},tags:(j=s.tags)!=null?j:{},note:(b=s.note)!=null?b:"",echo:(A=s.echo)!=null?A:"",locked:s.locked,lockReason:s.lockReason}}),available:r.filter(s=>!s.locked).length,locked:r.filter(s=>s.locked).length,stats:{...e.stats},tags:{...e.tags},desires:{...e.desires},flags:{...e.flags},premise:(o=e.premise)!=null?o:""}}function le(e,t,n){var I,H,z,N,C,K,V,Y,G,J,P,Q,W;let r=ae(e,t);if(r===null)throw new Error("\u8FD9\u4E00\u9875\u5DF2\u7ECF\u7FFB\u5B8C\u4E86");let a=se(e,r).find(y=>y.id===n);if(a===void 0)throw new Error(`\u300C${r.title}\u300D\u6CA1\u6709\u8FD9\u4E2A\u9009\u9879\uFF1A${n}`);if(a.requires!==void 0&&!w(e,a.requires))throw new Error((I=a.requires.reason)!=null?I:"\u8FD9\u6761\u8DEF\u5DF2\u7ECF\u4E0D\u5B58\u5728\u4E86");let l=e.stats,i=(z=(H=e.desires)==null?void 0:H[a.desire])!=null?z:0,f=a.desire===void 0?1:1+.12*i,c={...l},o={};for(let[y,he]of Object.entries((N=a.effects)!=null?N:{})){if(!ge.includes(y))continue;let E=Number(he);if(!Number.isFinite(E))continue;let me=y===a.desire&&E>0||a.desire==="self"&&y==="regret"&&E<0,X=Math.round(ye(((C=c[y])!=null?C:0)+(me?E*f:E),0,100));o[y]=X-((K=c[y])!=null?K:0),c[y]=X}let s={...e.tags,...(V=a.tags)!=null?V:{}},m={...e.flags,...(Y=a.flags)!=null?Y:{}};for(let y of Array.isArray(a.unset)?a.unset:[])delete m[y];let p={...e.desires};a.desire!==void 0&&(p[a.desire]=((G=p[a.desire])!=null?G:0)+1);let j=e.chapter+1,b=(J=t.chapters)==null?void 0:J[j],A=b===void 0,M={...e,stats:c,tags:s,flags:m,desires:p,chapter:j},F=A?B({...M,finished:!0},t):null,D={...M,year:(P=b==null?void 0:b.year)!=null?P:r.year,age:(Q=b==null?void 0:b.age)!=null?Q:r.age,finished:A,endingId:F===null?"":F.id,log:[...Array.isArray(e.log)?e.log:[],{chapter:r.id,age:r.age,title:r.title,kind:(W=r.kind)!=null?W:"life",option:a.id,label:a.label,desire:a.desire,mult:f,effects:o}]};return{state:D,option:a,effects:o,mult:f,next:L(D,t)}}function ke(e){var a,l,i,f,c,o,s,m;let t=(a=e==null?void 0:e.stats)!=null?a:T,n=(l=e==null?void 0:e.desires)!=null?l:{},r=(i=e==null?void 0:e.flags)!=null?i:{};return{money:t.money+6*((f=n.money)!=null?f:0)+(r.ipo?12:0)+(r.bank?6:0)+(r.exec?6:0)+(r.manager?4:0)+(r.founder?4:0),freedom:t.freedom+6*((c=n.freedom)!=null?c:0)+(r.travel?6:0)+(r.sold_house?6:0)+(r.south?8:0)+(r.away?6:0)+(r.sabbatical?6:0)+(r.abroad?6:0),love:t.love+6*((o=n.love)!=null?o:0)+(r.married?6:0)+(r.child?4:0)+(r.family?8:0)+(r.reunited?8:0)+(r.stayed?4:0),home:t.parents+6*((s=n.parents)!=null?s:0)+(r.came_home?8:0)+(r.shop_home?8:0)+(r.school_teacher?4:0)+(r.civil?4:0),self:25+9*((m=n.self)!=null?m:0)+Math.max(0,50-t.regret)/2+(r.writer_life?12:0)+(r.painter_life?12:0)+(r.craft?8:0)+(r.student?6:0)+(r.restart?6:0)+(r.peace?8:0)}}function $e(e){let t=ke(e),n=Z[0];for(let r of Z)t[r]>t[n]&&(n=r);return{id:n,score:t[n],scores:t}}function xe(e,t){var i,f;let n=(i=e==null?void 0:e.stats)!=null?i:T,r=(f=ee[t])!=null?f:ee.money;if(t!=="self"&&r.includes("regret")&&n.regret>=55)return{id:"regret",deficit:n.regret-53,value:n.regret};let a="none",l=0;for(let c of r){let o=c==="regret"?n.regret-53:47-n[c];o>l&&(l=o,a=c)}return{id:a,deficit:l,value:a==="none"?0:n[a]}}function we(e){let t=$e(e),n=xe(e,t.id);return{theme:t.id,cost:n.id,id:`${t.id}-${n.id}`,themeScore:t.score,costDeficit:n.deficit}}function B(e,t){var f,c,o,s,m;let n=(f=t==null?void 0:t.endings)!=null?f:[],r=n.find(p=>p.kind==="special"&&w(e,p.when));if(r!==void 0)return{...r,theme:null,cost:null,cell:r.id};let a=we(e),l=n.find(p=>p.id===a.id),i=(o=(c=l!=null?l:n.find(p=>p.theme===a.theme))!=null?c:n[0])!=null?o:{id:"self-none",theme:"self",cost:"none",title:"\u81EA\u5DF1\u7684\u7B54\u6848",subtitle:"",text:"",comment:"",hint:""};return{...i,theme:(s=i.theme)!=null?s:a.theme,cost:(m=i.cost)!=null?m:a.cost,cell:a.id}}function je(e,t,n=B(e,t)){var i,f,c,o,s,m;let r=(i=e==null?void 0:e.stats)!=null?i:T,a=(f=e==null?void 0:e.tags)!=null?f:{},l=[`${a.city||"\u4E00\u5EA7\u6CA1\u6709\u540D\u5B57\u7684\u57CE"}\uFF0C${a.job||"\u6CA1\u6709\u56FA\u5B9A\u7684\u5DE5\u4F5C"}`,a.partner?`\u8EAB\u8FB9\u662F${a.partner}`:"\u8EAB\u8FB9\u6CA1\u6709\u4EBA\uFF0C\u4E5F\u6CA1\u6709\u4EBA\u7B49\u95E8",r.health>=70?"\u8EAB\u4F53\u8FD8\u7B97\u4E89\u6C14":r.health>=45?"\u8EAB\u4F53\u4E0D\u597D\u4E0D\u574F":"\u8EAB\u4F53\u5148\u4EAE\u4E86\u7EA2\u706F",r.parents>=70?"\u7236\u6BCD\u90A3\u8FB9\uFF0C\u4F60\u51E0\u4E4E\u6CA1\u6709\u7F3A\u5E2D":r.parents>=45?"\u7236\u6BCD\u90A3\u8FB9\uFF0C\u4F60\u5C3D\u529B\u4E86":"\u7236\u6BCD\u90A3\u8FB9\uFF0C\u4F60\u6B20\u7740\u4E00\u4E9B\u6CA1\u56DE\u53BB\u7684\u5468\u672B",r.regret>=55?"\u4F60\u8FD8\u662F\u5E38\u5E38\u60F3\u8D77\u53E6\u4E00\u6761\u8DEF":r.regret>=30?"\u5076\u5C14\u4F60\u4F1A\u60F3\uFF0C\u5982\u679C\u5F53\u65F6\u2026\u2026":"\u4F60\u5F88\u5C11\u518D\u60F3\u201C\u5982\u679C\u201D"];return{fragments:l,line:l.join("\uFF1B")+"\u3002",premise:(c=e==null?void 0:e.premise)!=null?c:"",title:(o=n==null?void 0:n.title)!=null?o:"",theme:(s=n==null?void 0:n.theme)!=null?s:"",cost:(m=n==null?void 0:n.cost)!=null?m:""}}var $=document.getElementById("app"),oe=[["money","\u94B1"],["health","\u5065\u5EB7"],["love","\u7231"],["freedom","\u81EA\u7531"],["parents","\u7236\u6BCD"],["regret","\u9057\u61BE"]],u=null,g=null,d=null,v=null,k=null,x="hub";function h(e){return String(e!=null?e:"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function ie(){window.scrollTo({top:0,behavior:"auto"})}function R(e){return`
+    <div class="card-stats life" aria-label="\u5F53\u524D\u6570\u503C">
+      ${oe.map(([t,n])=>{var l;let r=(l=e[t])!=null?l:0;return`<span class="stat ${t==="regret"&&r>=55||t==="health"&&r<=40?"danger":""}">
+          <span class="stat-top"><b>${n}</b><i>${r}</i></span>
+          <span class="stat-bar"><span style="width:${r}%"></span></span>
+        </span>`}).join("")}
+    </div>`}function U(e,t=""){return`
+    <main class="table">
+      <section class="card ${t}">${e}</section>
+      ${Ae()}
+      <p class="note">\u7A7F\u68AD\u4EBA\u751F \xB7 ${S.instances.length} \u4E2A\u526F\u672C \xB7 \u79BB\u7EBF</p>
+    </main>`}function Ae(){return x==="hub"?"":`
+    <div class="tools">
+      <button data-hub>\u526F\u672C\u5E93</button>
+      <button data-restart>\u91CD\u5F00\u8FD9\u4E2A\u526F\u672C</button>
+    </div>`}function q(){x="hub",$.innerHTML=`
+    <main class="table">
+      <section class="card back hub-card">
+        <div class="hub-inner">
+          <div class="back-seal" aria-hidden="true">\u7A7F</div>
+          <p class="back-kicker">B\u7AD9 @\u7A7F\u68AD\u4EBA\u751FUp \xB7 47 \u4E2A\u89C6\u9891</p>
+          <h1 class="back-title">\u526F\u672C</h1>
+          <p class="back-sub">\u9009\u4E00\u6BB5\u522B\u4EBA\u7684\u4EBA\u751F\uFF0C<br>\u66FF\u4ED6\u628A\u8FD9\u4E00\u6B65\u8D70\u5B8C\u3002</p>
+          <div class="hub-list">
+            ${S.instances.map(e=>`
+              <button class="instance-item" data-instance="${h(e.id)}">
+                <b>${h(e.title)}</b>
+                <small>${h(e.subtitle)}</small>
+                <span aria-hidden="true">\u203A</span>
+              </button>`).join("")}
+          </div>
+          <p class="hub-foot">
+            10 \u4E2A\u53EF\u73A9\u526F\u672C \xB7 \u5267\u60C5\u4E3A\u672C\u6E38\u620F\u539F\u521B
+            <a href="${h(S.source.url)}" target="_blank" rel="noopener">\u6765\u6E90\uFF1A\u7A7F\u68AD\u4EBA\u751FUp</a>
+          </p>
+        </div>
+      </section>
+      <p class="note">\u6BCF\u6BB5 3 \u9875 \xB7 3 \u4E2A\u9009\u62E9 \xB7 3\u20134 \u79CD\u7ED3\u5C40 \xB7 \u79BB\u7EBF</p>
+    </main>`,O()}function fe(e){let t=S.instances.find(n=>n.id===e);t&&(u=t,g=ne(`instance-${e}-${Date.now().toString(36)}`),g.stats={...u.start.stats},g.year=u.start.year,g.age=u.start.age,g.tags={...u.start.tags},g.premise="",d=L(g,u),v=null,k=null,x="play",ie(),_())}function ce(){if(!d||d.finished){de();return}x="play";let e=d.options.filter(t=>!t.locked).map(t=>`
+    <button class="choice" data-choice="${h(t.id)}">
+      <span class="choice-text"><span class="desire">${h(t.desireLabel)}</span>${h(t.label)}</span>
+      <span class="arrow" aria-hidden="true">\u203A</span>
+    </button>`).join("");$.innerHTML=U(`
+    <div class="card-grid">
+      <header class="card-head">
+        <p class="act">\u526F\u672C \xB7 \u7B2C${d.chapter+1}/${d.total}\u9875</p>
+        <h1>${h(d.title)}</h1>
+      </header>
+      <div class="card-seal" aria-hidden="true">\u526F</div>
+      <div class="card-meta"><span>${d.year}\u5E74</span><span>${d.age}\u5C81</span><span>${h(g.tags.city)}</span></div>
+      ${R(d.stats)}
+      <div class="card-story">
+        ${d.chapter===0?`<p class="instance-premise">${h(u.premise)}</p>`:""}
+        <p class="narration">${h(d.narration)}</p>
+      </div>
+      <div class="card-actions ${d.options.length>4?"many":""}">${e}</div>
+    </div>`),O()}function Ee(){var t;if(x="play",!v)return ce();let e=v.option;$.innerHTML=U(`
+    <div class="card-grid">
+      <header class="card-head">
+        <p class="act">\u526F\u672C \xB7 \u7B2C${v.chapter+1}/${u.chapters.length}\u9875</p>
+        <h1>${h(e.label)}</h1>
+      </header>
+      <div class="card-seal" aria-hidden="true">\u526F</div>
+      <div class="card-meta">
+        <span>\u6B32\u671B\uFF1A${h(e.desireLabel)}</span>
+        ${v.mult>1?`<span class="compound">\u590D\u5229 \xD7${v.mult.toFixed(2)}</span>`:""}
+      </div>
+      ${R(g.stats)}
+      <div class="card-story">
+        <p class="narration">${h(e.note)}</p>
+        <div class="deltas">${Object.entries((t=v.effects)!=null?t:{}).filter(([,n])=>n!==0).map(([n,r])=>{var l,i;let a=(i=(l=oe.find(([f])=>f===n))==null?void 0:l[1])!=null?i:n;return`<span class="delta ${r>0?"up":"down"}">${a} ${r>0?"+":""}${r}</span>`}).join("")}</div>
+      </div>
+      <div class="card-actions"><button class="primary" data-continue>\u7EE7\u7EED</button></div>
+    </div>`),O()}function Se(){x="ending",k&&($.innerHTML=U(`
+    <div class="card-grid">
+      <header class="card-head">
+        <p class="act">\u526F\u672C\u7ED3\u5C40 \xB7 ${h(u.title)}</p>
+        <h1>${h(k.title)}</h1>
+      </header>
+      <div class="card-seal" aria-hidden="true">\u526F</div>
+      <div class="card-meta"><span>${h(k.subtitle)}</span></div>
+      ${R(g.stats)}
+      <div class="card-story">
+        <p class="narration ending-text">${h(k.text)}</p>
+        <p class="ending-comment">${h(k.comment)}</p>
+      </div>
+      <div class="card-actions ending-actions">
+        <button class="primary" data-hub>\u518D\u8D70\u4E00\u4E2A\u526F\u672C</button>
+        <button class="secondary" data-restart>\u91CD\u5F00</button>
+      </div>
+    </div>`),O())}function Te(e){if(!d||d.finished)return;let t=le(g,u,e);g=t.state,v={option:t.option,effects:t.effects,mult:t.mult,chapter:d.chapter},d=t.next,ie(),_()}function de(){k||!d||!d.finished||(k=d.ending)}function qe(){u&&fe(u.id)}function _(){if(x==="hub")return q();if(v)return Ee();if(!k&&d&&d.finished&&de(),k)return Se();if(d)return ce();q()}function O(){$.querySelectorAll("[data-instance]").forEach(e=>{e.addEventListener("click",()=>fe(e.dataset.instance))}),$.querySelectorAll("[data-choice]").forEach(e=>{e.addEventListener("click",()=>Te(e.dataset.choice))}),$.querySelectorAll("[data-continue]").forEach(e=>{e.addEventListener("click",()=>{v=null,_()})}),$.querySelectorAll("[data-hub]").forEach(e=>e.addEventListener("click",q)),$.querySelectorAll("[data-restart]").forEach(e=>e.addEventListener("click",qe))}q();})();
+</script>
+</body>
+</html>
