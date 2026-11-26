@@ -1,7 +1,7 @@
 /**
  * 如果（小狮日记 · 人生之书）—— 4:6 单卡 demo。
  *
- * 1985 年出生在广东阳江。2003 年高考，2026 年四十一岁。
+ * 1985 年出生在广东东莞。2003 年高考，2026 年四十一岁。
  * 六次选择 + 三次拷问；前一步决定后一步哪条路存在。
  * 引擎算数值和结局，页面只负责把这一页讲出来。
  *
@@ -226,10 +226,10 @@ function renderStart() {
   app.innerHTML = shell(`
     <div class="back-inner">
       <div class="back-seal" aria-hidden="true">生</div>
-      <p class="back-kicker">1985 · 广东阳江 · 2026</p>
+      <p class="back-kicker">1985 · 广东东莞 · 2026</p>
       <h1 class="back-title">如果</h1>
       <p class="back-sub">人生之书<br>六次选择 · 三次拷问 · 七十种答案</p>
-      <p class="back-memory">台风、录像厅、咸水歌。<br>1997 香港回归，2003 年你十八岁。</p>
+      <p class="back-memory">台风、录像厅、龙舟鼓。<br>1997 香港回归，2003 年你十八岁。</p>
       <label class="premise-field">
         <span>如果当年……</span>
         <input data-premise maxlength="30" placeholder="可留空，写一句你的如果" value="${esc(premise)}">
