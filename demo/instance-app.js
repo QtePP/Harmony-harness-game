@@ -98,7 +98,7 @@ function renderHub() {
               </button>`).join('')}
           </div>
           <p class="hub-foot">
-            10 个可玩副本 · 剧情为本游戏原创
+            ${instancesData.instances.length} 个可玩副本 · 剧情为本游戏原创
             <a href="${esc(instancesData.source.url)}" target="_blank" rel="noopener">来源：穿梭人生Up</a>
           </p>
         </div>
