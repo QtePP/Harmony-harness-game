@@ -165,9 +165,10 @@ function deltaChips(effects) {
 }
 
 function journey(current) {
+  const pages = lifeData.pages ?? lifeData.chapters
   return `
     <div class="journey" aria-label="时间线">
-      ${lifeData.chapters.map((chapter, index) => {
+      ${pages.map((chapter, index) => {
         const cls = index < current ? 'done' : index === current ? 'now' : ''
         return `<span class="journey-step ${cls}"><i></i><b>${String(chapter.year).slice(2)}</b></span>`
       }).join('')}
@@ -352,7 +353,9 @@ function renderResult() {
       </div>
       ${statsBar(state.stats)}
       <div class="card-story">
-        <p class="narration">${esc(option.note)}</p>
+        ${result.after
+          ? `<p class="narration">${esc(result.after)}</p><p class="after-note">${esc(option.note)}</p>`
+          : `<p class="narration">${esc(option.note)}</p>`}
         ${deltaChips(result.effects)}
         ${option.echo ? `<p class="echo"><span>多年以后</span>${esc(option.echo)}</p>` : ''}
         ${decisionNote ? `<p class="decision"><b>本机决策器</b>${esc(decisionNote)}</p>` : ''}
@@ -402,7 +405,7 @@ function renderEnding() {
         </div>
         ${lastLine ? `<p class="lastline-show">你的如果：${esc(lastLine)}</p>` : ''}
       </div>
-      ${footline(lifeData.chapters.length)}
+      ${footline((lifeData.pages ?? lifeData.chapters).length)}
       <div class="card-actions ending-actions">
         <button class="primary" data-start>再活一次</button>
         <button class="secondary" data-gallery>图鉴</button>
@@ -456,6 +459,7 @@ function chooseOption(id, note = '') {
     option: out.option,
     effects: out.effects,
     mult: out.mult,
+    after: out.after,
     chapter: scene.chapter,
     title: scene.title
   }
