@@ -1,5 +1,5 @@
 /**
- * 小狮日记 · 人生之书 —— 4:6 单卡 demo。
+ * 如果（小狮日记 · 人生之书）—— 4:6 单卡 demo。
  *
  * 和 @ohos/dsh-sanguo 的卡片版同一套做法：引擎算数值，页面只负责把
  * 一章讲出来、把选项递到手上。没有模型、没有网络、没有外部依赖。
@@ -77,7 +77,7 @@ function shell(inner, extra = '') {
     <main class="table">
       <section class="card ${extra}">${inner}</section>
       ${tools()}
-      <p class="note">4:6 单卡 · 五章 · 六种答案 · 离线</p>
+      <p class="note">4:6 单卡 · 如果 · 五章 · 六种答案 · 离线</p>
     </main>`
 }
 
@@ -131,8 +131,8 @@ function renderStart() {
   app.innerHTML = shell(`
     <div class="back-inner">
       <div class="back-seal" aria-hidden="true">生</div>
-      <p class="back-kicker">1998 — 2033 · 临江</p>
-      <h1 class="back-title">小狮日记</h1>
+      <p class="back-kicker">小狮日记 · 1998—2033 · 临江</p>
+      <h1 class="back-title">如果</h1>
       <p class="back-sub">人生之书<br>五次选择 · 六种答案</p>
       <div class="back-actions">
         <button class="gold" data-start>${saved ? '翻开新的一生' : '翻开第一页'}</button>
@@ -166,7 +166,7 @@ function renderScene() {
       <div class="card-meta"><span>${scene.year}年</span><span>${scene.age}岁</span><span>${esc(state.tags.city)}</span></div>
       ${statsBar(scene.stats)}
       <div class="card-story"><p class="narration">${esc(scene.narration)}</p></div>
-      <div class="card-actions">${options}</div>
+      <div class="card-actions ${scene.options.length > 4 ? 'many' : ''}">${options}</div>
     </div>`)
   bind()
 }

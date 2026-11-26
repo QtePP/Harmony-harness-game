@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "life",
-  "title": "小狮 · 人生之书",
+  "title": "如果 · 小狮",
   "bind": ".life/life.json",
   "staleAfter": 86400,
   "blocks": [
