@@ -164,12 +164,16 @@ export function makeGame(document) {
     if (scene === null || scene.kind !== 'moral') {
       throw new Error('当前不是抉择场景')
     }
+    const beforeAge = state.age ?? 0
     const resolved = chooseBranch(state, act, scene, optionId)
     let next = nextCursor(resolved.state, acts)
     const moved = ready(next, acts)
+    const skipped = moved.skipped ?? (moved.state.age > beforeAge
+      ? { turns: (moved.state.age - beforeAge) * 4, targetAge: moved.state.age }
+      : null)
     return {
       state: moved.state,
-      skipped: moved.skipped,
+      skipped,
       result: {
         kind: 'choice',
         act: act?.name ?? '',
@@ -191,15 +195,19 @@ export function makeGame(document) {
     if (scene === null || scene.kind !== 'ability') {
       throw new Error('当前不是判定场景')
     }
+    const beforeAge = state.age ?? 0
     const resolved = attemptScene(state, act, scene, {
       attribute: scene.attribute,
       difficulty: scene.difficulty
     })
     let next = nextCursor(resolved.state, acts)
     const moved = ready(next, acts)
+    const skipped = moved.skipped ?? (moved.state.age > beforeAge
+      ? { turns: (moved.state.age - beforeAge) * 4, targetAge: moved.state.age }
+      : null)
     return {
       state: moved.state,
-      skipped: moved.skipped,
+      skipped,
       result: {
         kind: 'check',
         act: act?.name ?? '',
