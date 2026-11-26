@@ -86,7 +86,7 @@ function renderHub() {
       <section class="card back hub-card">
         <div class="hub-inner">
           <div class="back-seal" aria-hidden="true">穿</div>
-          <p class="back-kicker">B站 @穿梭人生Up · 47 个视频</p>
+          <p class="back-kicker">B站 @穿梭人生Up · 抖音 @潦草人生</p>
           <h1 class="back-title">副本</h1>
           <p class="back-sub">选一段别人的人生，<br>替他把这一步走完。</p>
           <div class="hub-list">
@@ -100,6 +100,7 @@ function renderHub() {
           <p class="hub-foot">
             ${instancesData.instances.length} 个可玩副本 · 剧情为本游戏原创
             <a href="${esc(instancesData.source.url)}" target="_blank" rel="noopener">来源：穿梭人生Up</a>
+            <a href="${esc(instancesData.source.douyin_url ?? 'https://www.douyin.com/user/MS4wLjABAAAAha92Qs4h063W72nAJ08YGQScsi8uoj9DLy7hrwShOwjkQCbwWgfXXylwLywYhTEx')}" target="_blank" rel="noopener">潦草人生</a>
           </p>
         </div>
       </section>
