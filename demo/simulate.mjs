@@ -22,15 +22,29 @@ const game = makeGame(document)
 
 const MAX_STEPS = 80
 
-function pickOption(view, policy) {
+/** Deterministic PRNG so the reachability counts do not flicker between runs. */
+function seeded(text) {
+  let state = 2166136261 >>> 0
+  for (let index = 0; index < text.length; index += 1) {
+    state ^= text.charCodeAt(index)
+    state = Math.imul(state, 16777619) >>> 0
+  }
+  return () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+    return state / 4294967296
+  }
+}
+
+function pickOption(view, policy, random) {
   if (policy === 'historical') {
     return (view.options.find((option) => option.historical) ?? view.options[0])?.id
   }
   if (policy === 'first') return view.options[0]?.id
-  return view.options[Math.floor(Math.random() * view.options.length)]?.id
+  return view.options[Math.floor(random() * view.options.length)]?.id
 }
 
 function run(seed, policy, epilogue) {
+  const random = seeded(`${seed}/${policy}/${epilogue}`)
   const started = game.newRun(seed)
   let state = started.state
   let steps = 0
@@ -38,7 +52,7 @@ function run(seed, policy, epilogue) {
     const view = game.view(state)
     if (view.finished) break
     if (view.kind === 'moral') {
-      const id = pickOption(view, policy)
+      const id = pickOption(view, policy, random)
       if (!id) throw new Error(`no option at ${view.sceneId}`)
       state = game.choose(state, id).state
     } else if (view.kind === 'ability') {

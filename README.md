@@ -16,6 +16,8 @@ deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、�
 
 ## 离线 demo（不用装 App）
 
+在线试玩：<https://qtepp.github.io/Harmony-harness-game/>
+
 [`demo/sanguo.html`](demo/sanguo.html) 是单文件离线版：下载后用浏览器打开即可，
 不需要 API Key、不需要网络、不需要 Node。它复用同一套引擎和 23 个场景，在长坂之后接一个
 demo 专属的「终章·白帝」，收束到 8 个结局；点「本机推演」可以按仁 / 霸 / 稳 / 隐四种倾向

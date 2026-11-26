@@ -1,5 +1,7 @@
 # 三国人生 · 离线 demo
 
+在线试玩：<https://qtepp.github.io/Harmony-harness-game/>
+
 [`sanguo.html`](sanguo.html) 是一个**单文件**的三国人生 demo：双击就能玩，不需要安装 App、
 不需要 API Key、不需要网络、不需要 Node。
 
