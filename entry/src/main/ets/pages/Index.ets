@@ -11,6 +11,7 @@ import { PluginConfig } from '../common/PluginConfig'
 import { PluginCatalog, PluginRow } from '../model/PluginCatalog'
 import { ChatMessage, Role, SessionStore, SessionSummary, ToolTrace, newSessionId, titleOf } from '../model/ChatModel'
 import { ProjectStore, ProjectSummary } from '../model/ProjectModel'
+import { localAct, localAdvance, localChoose, SanguoLocalReply } from '../model/SanguoLocal'
 import { renderBlocks, RenderedBlock } from '../model/DshClient'
 import { DirGrant } from '../host/DirGrant'
 import { ShareInbox } from '../model/ShareInbox'
@@ -507,21 +508,57 @@ struct Index {
   /**
    * Send one board-issued prompt.
    *
-   * Board actions are ordinary prompts — there is no second channel into the
-   * engine, on purpose. Anything the board can do, the user could have typed;
-   * the board only saves the typing. That keeps one code path for turn
-   * lifecycle, one for persistence, and one for rollback.
+   * Board actions first try the plugin's loopback API (127.0.0.1:4519): the
+   * engine resolves them in milliseconds, so the common taps (去做 / 等一等 /
+   * an option) do not pay a model round-trip. Any failure — old payload, port
+   * busy, malformed reply — falls back to the original prompt path, which is
+   * still the only path for 开始/重开 and free-form typing.
    */
-  private async boardAct(prompt: string): Promise<void> {
+  private async boardAct(prompt: string, optionId: string = ''): Promise<void> {
     if (this.boardBusy || this.running) {
       return
     }
     this.boardBusy = true
     try {
+      if (await this.tryBoardFast(prompt, optionId)) {
+        return
+      }
       await this.send(prompt, [])
     } finally {
       this.boardBusy = false
     }
+  }
+
+  /**
+   * Try the local engine. Returns true only when the engine committed and
+   * produced text; otherwise the caller sends the prompt to the model.
+   */
+  private async tryBoardFast(prompt: string, optionId: string): Promise<boolean> {
+    const workspace = this.workspaceOf(this.currentProjectId)
+    if (workspace.length === 0) {
+      return false
+    }
+    let reply: SanguoLocalReply | null = null
+    if (prompt === '去做' && this.board.scene.kind === 'ability') {
+      reply = await localAct(workspace, this.board.scene.attribute, this.board.scene.difficulty, prompt)
+    } else if (prompt.indexOf('我什么都不做') === 0) {
+      reply = await localAdvance(workspace, 1)
+    } else if (optionId.length > 0) {
+      reply = await localChoose(workspace, optionId)
+    }
+    if (reply === null || reply.ok !== true) {
+      return false
+    }
+    // The engine has already committed. Never fall back on an empty body: the
+    // model path would advance the same turn a second time.
+    const rendered = (reply.rendered ?? '').length > 0
+      ? (reply.rendered ?? '')
+      : '（本机引擎已结算，但没有返回叙述。）'
+    this.append(new ChatMessage(newSessionId(), Role.USER, prompt, ''))
+    this.append(new ChatMessage(newSessionId(), Role.ASSISTANT, rendered, '本机引擎'))
+    void this.persist()
+    this.refreshBoard()
+    return true
   }
 
   /** Start (or restart) a run, then show the board. */
@@ -532,7 +569,7 @@ struct Index {
 
   /** Pick one declared option by id; the engine, not the UI, resolves it. */
   private async boardChoose(option: SceneOption): Promise<void> {
-    await this.boardAct(`选「${option.label}」`)
+    await this.boardAct(`选「${option.label}」`, option.id)
   }
 
   /** Let the world run one season. */

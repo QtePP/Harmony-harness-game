@@ -118,6 +118,12 @@ bash scripts/test.sh                 # 全部检查：单测 / ArkTS / LocalUnit
 | 桥端口 | **4518** | HarmonyGo 占 4517；两个应用可以同时常驻，否则后启动的那个 `EADDRINUSE` |
 | 默认 profile | **ACP** | 只有 ohos profile 挂 `@ohos/dsh-sanguo`；SDK 下模型根本看不到 `sanguo_*` 工具 |
 | 思考深度 | **low**（新会话默认） | 引擎负责判定，模型只叙述；high 会把一轮拖到 13s，low 实测 2.3s |
+| 本机引擎 | **4519** | 棋盘按钮直连引擎，毫秒级结算；失败自动回退到模型 |
+
+棋盘的「去做 / 等一等 / 选项」现在先走 `127.0.0.1:4519` 的本机引擎，聊天里标「本机引擎」；
+旧载荷、端口占用、超时都会自动回退到模型。`开始/重开` 和自由输入仍走模型。
+本机回合只写存档 + App 消息，不写 ACP 会话历史；之后自由输入时模型可能先 `sanguo_status`
+对齐，这是预期。详见 [SPECULATIVE-TURNS.md](docs/SPECULATIVE-TURNS.md)。
 
 首次启动：启动页提示缺 Key → 点「设置」→ 填 DeepSeek API Key → 保存 → 重试。
 之后新建项目「汉末人生」→ 粘下面的建包指令 → 模型落盘并直接开局。

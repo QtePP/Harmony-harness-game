@@ -71,24 +71,33 @@ node scripts/preview-options.mjs /tmp/sanguo-preview
 
 | 方案 | 做法 | 代价 |
 |---|---|---|
-| **本地 HTTP**（推荐） | `@ohos/dsh-sanguo` 在 `127.0.0.1:4519` 起一个 `node:http`：`GET /state`、`POST /preview`、`POST /commit`、`POST /act`、`POST /advance`。ArkTS 用 `@ohos.net.http` 调 | 插件加 ~150 行；App 加一个 client；端口只绑 loopback；和桥一样无鉴权（自用内测可接受） |
+| **本地 HTTP**（已实现） | `@ohos/dsh-sanguo` 在 `127.0.0.1:4519` 起一个 `node:http`：`GET /health`、`POST /state`、`POST /act`、`POST /advance`、`POST /choose`。ArkTS 用 `@ohos.net.http` 调 | 插件加 ~200 行；App 加一个 client；端口只绑 loopback；和桥一样无鉴权（自用内测可接受） |
 | 自定义 ACP 方法 | 在 dsh-acp 里加 `sanguo/*` 方法 | 要改 dsh 上游/协议，版本耦合，不推荐 |
 | 新增工具 | 加 `sanguo_preview` 工具让模型调 | 仍要一次模型往返，达不到 <1s |
 
-HTTP 通道的边界：
+HTTP 通道的边界（已实现）：
 
 - 只监听 `127.0.0.1`，不监听 `0.0.0.0`；
-- 只接受当前 workspace 的 `.sanguo`，路径由插件解析，不接受客户端传绝对路径；
-- `commit` 必须带 `saveHash`，不匹配就 409，不覆盖；
-- 与 ACP 工具共用同一把文件锁/单线程事件循环，避免和模型同时写。
+- 只接受 `$HOME/workspace` / `$HOME/workspaces/<id>` 下的路径，别的直接 400；
+- 当前是**直接结算**（`/act` `/advance` `/choose` 当场 commit），没有 `preview` / `commit` / `saveHash`；预计算缓存是下一步，不是现在；
+- 与 ACP 工具共用同一个 Node 事件循环，App 在模型回合进行中会禁用棋盘按钮，避免并发写；
+- 请求体上限 256KB；错误统一 400 + `{ok:false,error}`，App 收到非 200 就回退模型。
+- 本机回合只 commit 存档 + 写 App 消息，**不写 ACP 会话历史**；下一次自由输入时模型可能先用 `sanguo_status` 对齐。
 
 ## 5. 提交与缓存
 
-- `saveHash`：`save.json` 的 sha256（或 size+mtime），再加 `scene` / `rng` / `age` / `options` 的摘要。
-- 影子目录：`<workspace>/.sanguo.preview/<optionKey>/`，用完删；不进 git。
-- 提交：把影子 `save.json` 以 temp+rename 换入；`history.jsonl` 追加一条 `kind: 'preview-commit'`。
-- 缓存 TTL：一个场景内有效；`sanguo_advance`、自由行动、切项目、切会话都清空。
-- 失败回退：hash 不匹配、文件被改、模型没回来 → 走原来的「发消息给模型」链路，用户最多等一次正常回合。
+当前实现：
+
+- `/act` `/advance` `/choose` 直接调用 `commit()`（`save.json` temp+rename，`history.jsonl` 追加），一次点击只结算一次；
+- App 在 `boardBusy || running` 时拒绝再次点击，避免双击双结算；
+- 本地消息会 `persist()`，切 tab/回前台不丢；
+- 任何 HTTP 失败（旧载荷、端口占用、超时、非 200）都回退到原来的模型链路；如果引擎已 `ok:true` 但没有文本，App 显示「本机引擎已结算」而不是回退，避免双结算。
+
+下一步（未做）：
+
+- `preview` / `commit` + `saveHash`：在玩家思考时把选项结果预计算到影子存档，点击只做一次原子提交；
+- 叙述预取（方案 B）：影子 ACP 会话生成 prose 缓存；
+- 连点/切后台/并发写压力测试。
 
 ## 6. 指标与 kill criteria
 
@@ -99,10 +108,10 @@ HTTP 通道的边界：
 
 ## 7. 落地顺序
 
-1. 引擎 HTTP 通道 + `preview`/`commit`（可先用 `scripts/preview-options.mjs` 的逻辑）。
-2. App 选项模型：渲染时 preview，点击时 commit，引擎文本先上屏。
-3. 模型叙述改为可选：先显示引擎文本，再异步追加 prose（不阻塞状态）。
-4. 叙述预取（方案 B）：影子会话 + 缓存；先只对「去做 / 等一等」两个按钮做。
-5. 真机验收：同一场景连点 20 次，状态不丢、hash 不匹配能回退、切后台不写坏存档。
+1. 引擎 HTTP 通道 + `/act` `/advance` `/choose` — **已实现**。
+2. App 棋盘按钮直连 + 引擎文本上屏 + 失败回退 — **已实现**；聊天标「本机引擎」，本地消息持久化。
+3. 模型叙述改为可选（先引擎文本，再异步 prose）— 未做；当前直连只显示引擎文本。
+4. 叙述预取（方案 B）— 未做。
+5. 真机验收 — `去做` / 仁义选项 / `等一等` 三条路径已在 CMM-AL10 验成；连点 20 次/切后台/并发压力未做。
 
-当前进度：**第 1 步的引擎侧原型已验**（`scripts/preview-options.mjs`，0.03ms/选项）；HTTP 通道与 App 接入还没做，需要真机验证。
+当前进度：**本地 HTTP + App 直连已真机闭环**（2026-11-26 手机 CMM-AL10）：点击后 0.8s 内棋盘已到下一幕，聊天出现「本机引擎」结算，session log 无新模型请求；`/state` `/health` `/act` 也在 fport 下验过。

@@ -1852,6 +1852,14 @@ export struct ChatView {
   aboutToAppear(): void {
     this.refreshArtifacts()
     this.syncTypingTimer()
+    // The phone unmounts this view while the board tab is open. A local board
+    // turn can append messages in the meantime, so a fresh mount must land on
+    // the newest row once the list has laid out.
+    setTimeout(() => {
+      if (this.messages.length > 0) {
+        this.scroller.scrollToIndex(this.messages.length - 1, false)
+      }
+    }, 80)
   }
 
   aboutToDisappear(): void {
