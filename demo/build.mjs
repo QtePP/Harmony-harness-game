@@ -44,3 +44,4 @@ async function emit(entry, templateName, outputName) {
 
 await emit('app.js', 'template.html', 'sanguo.html')
 await emit('card.js', 'card.template.html', 'card.html')
+await emit('life-app.js', 'life.template.html', 'life.html')

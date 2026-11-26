@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "id": "xiaoshi-life",
+  "name": "小狮日记 · 人生之书",
+  "emoji": "📖",
+  "accent": "amber",
+  "home": "chat",
+  "cards": ["life"],
+  "skills": ["play-page", "recap"],
+  "schedule": [],
+  "notes": "人生模拟（扮演小狮，18—35 岁）。引擎是 @ohos/dsh-life 插件，模型只做叙述；六个数值、欲望账本、六种结局全由引擎给。"
+}

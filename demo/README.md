@@ -2,19 +2,21 @@
 
 在线试玩：
 
-- 长页版：<https://qtepp.github.io/Harmony-harness-game/demo/sanguo.html>
-- 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/card.html>
+- 三国 · 长页版：<https://qtepp.github.io/Harmony-harness-game/demo/sanguo.html>
+- 三国 · 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/card.html>
+- 人生之书 · 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/life.html>
 
 本地：
 
 ```bash
-open demo/sanguo.html          # 长页版
-open demo/card.html            # 4:6 单卡版
+open demo/sanguo.html          # 三国 · 长页版
+open demo/card.html            # 三国 · 4:6 单卡版
+open demo/life.html            # 人生之书 · 4:6 单卡版
 # 或者直接把文件拖进浏览器
 ```
 
-两个都是**单文件**：不需要安装 App、不需要 API Key、不需要网络、不需要 Node。
-每个约 100 KB，页面没有任何外部请求。
+三个都是**单文件**：不需要安装 App、不需要 API Key、不需要网络、不需要 Node。
+三国两个约 100 KB，人生之书约 42 KB；页面没有任何外部请求。
 
 ## 它是什么
 
@@ -32,12 +34,13 @@ open demo/card.html            # 4:6 单卡版
 > 达到同样的目的：离线、即时、可解释。要真上小型神经网络，得离线训练再把权重嵌进来，
 > 对这个体量的文本不值得。
 
-## 两个版本
+## 三个版本
 
 | 文件 | 形态 | 说明 |
 |---|---|---|
 | `sanguo.html` | 长页 | 场景、数值、选项纵向排列；适合阅读和手机滚动 |
-| `card.html` | 4:6 单卡 | 4 列 × 6 行的竖版卡；卡内完成选择/判定/继续，卡外只有推演、倾向、图鉴、重开 |
+| `card.html` | 三国 · 4:6 单卡 | 4 列 × 6 行的竖版卡；卡内完成选择/判定/继续，卡外只有推演、倾向、图鉴、重开 |
+| `life.html` | 人生之书 · 4:6 单卡 | 五章、六种答案；每个选项带「当年 / 如果」与欲望标签 |
 
 两版共用 `game.js` / `endings.js` / `policy.js`，存档与结局图鉴共用同一组
 `localStorage` key，所以在一个版本里解锁的结局，另一个版本能看到。
@@ -50,22 +53,24 @@ open demo/card.html            # 4:6 单卡版
 | `card.js` | 4:6 卡片版的界面与流程 |
 | `endings.js` | 8 个结局文本 + 判定条件（读 `state.flags` + 数值） |
 | `policy.js` | 本机推演的透明权重（仁 / 霸 / 稳 / 隐） |
-| `game.js` | 把纯 JS 引擎包成浏览器可用的控制器；开局状态是 `engine/state.js` 的 `createSave` 副本（浏览器不能 import `node:fs`），引擎改字段时要同步 |
+| `game.js` | 把三国纯 JS 引擎包成浏览器可用的控制器；开局状态是 `engine/state.js` 的 `createSave` 副本（浏览器不能 import `node:fs`），引擎改字段时要同步 |
+| `life-app.js` / `life.template.html` | 人生之书的 4:6 卡片版；引擎在 `@ohos/dsh-life`，5 章 / 6 结局 |
+| `life.html` | 人生之书卡片版的生成物 |
 | `template.html` | 长页版骨架与全部 CSS |
 | `card.template.html` | 卡片版骨架与全部 CSS |
-| `build.mjs` | esbuild 打包两个入口 + 内联 JS |
+| `build.mjs` | esbuild 打包三个入口 + 内联 JS |
 | `simulate.mjs` | 无头验收：38 个场景能走到 end，8 个结局全部可达 |
 
 ```bash
 cd demo
 npm install
-npm run build       # 生成 sanguo.html 和 card.html
+npm run build       # 生成 sanguo.html / card.html / life.html
 npm run simulate    # 8 条固定计划，断言 8 个结局都出现
 ```
 
 `sanguo.html` / `card.html` 是**生成物**，不要直接改；改上面的源文件再 build。
 
-## 8 个结局
+## 三国：8 个结局
 
 关键选择：
 
@@ -89,6 +94,13 @@ npm run simulate    # 8 条固定计划，断言 8 个结局都出现
 
 结局图鉴存在浏览器 `localStorage`（`sanguo-demo-endings-v1`）；中途存档用
 `sanguo-demo-run-v1`，刷新后可以从开场页「继续上局」。
+
+## 人生之书：六种答案
+
+`life.html` 是同一套「引擎 + 卡片」做的人生模拟：小狮 18—35 岁，五章，
+每个节点有「当年 / 如果」；六个数值是钱 / 健康 / 爱 / 自由 / 父母 / 遗憾，
+结局是标准答案 / 远方的答案 / 被爱的答案 / 野心的答案 / 回家的答案 / 自己的答案。
+`npm run simulate` 只验三国；人生之书的 432 条路径在 `@ohos/dsh-life/test/life.test.mjs` 里验。
 
 ## 边界
 

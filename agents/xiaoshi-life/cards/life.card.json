@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "life",
+  "title": "小狮 · 人生之书",
+  "bind": ".life/life.json",
+  "staleAfter": 86400,
+  "blocks": [
+    { "type": "metric", "label": "年份", "value": "{{when}}" },
+    { "type": "metric", "label": "年龄", "value": "{{age}}", "unit": "岁" },
+    { "type": "metric", "label": "城市", "value": "{{tags.city}}" },
+    { "type": "progress", "label": "钱", "value": "{{stats.money}}", "max": 100 },
+    { "type": "progress", "label": "健康", "value": "{{stats.health}}", "max": 100 },
+    { "type": "progress", "label": "爱", "value": "{{stats.love}}", "max": 100 },
+    { "type": "progress", "label": "自由", "value": "{{stats.freedom}}", "max": 100 },
+    { "type": "progress", "label": "父母", "value": "{{stats.parents}}", "max": 100 },
+    { "type": "progress", "label": "遗憾", "value": "{{stats.regret}}", "max": 100 },
+    {
+      "type": "actions",
+      "items": [
+        { "label": "继续", "prompt": "继续" },
+        { "label": "我走到哪了", "prompt": "我走到哪了" },
+        { "label": "重开一页", "prompt": "重开一本" }
+      ]
+    }
+  ]
+}
