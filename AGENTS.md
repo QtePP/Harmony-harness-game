@@ -165,6 +165,7 @@ ACP 实测契约（勿凭直觉改）：
 - **本地装配/同构测试 Node = 22.22.2**（macOS 侧，见 `scripts/deploy.sh` 的 PATH）。两个数字并存，不是笔误。
 - dsh 0.2.1-rc.4；载荷 zip ≈225MB；HAP ≈335MB（signed）；桥端口 4517。
 - **独立游戏包**：bundleName **`com.qtepp.sanguo`**、显示名「三国人生」、桥端口 **4518**（HarmonyGo 占 4517；两个应用同时常驻时后启动者才不会 `EADDRINUSE`）、默认 profile **ACP**（`@ohos/dsh-sanguo` 只挂在 ohos profile，SDK 下模型看不到 `sanguo_*`）。这三处属于本仓的应用身份，不是笔误。
+- **新会话默认思考深度 `low`**：引擎掷骰/判成败，模型只把结果讲成 2–4 句；ACP 协议仍支持 off/low/high/max，但应用暂无选择器。2026-11-26 手机 CMM-AL10 实测：high 一轮 13s，low 2.3s（请求头 `reasoningEffort: low`）。
 - `hdc` 不在 PATH：`/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/hdc`。
 - 设备侧文件路径两种视角同目录：hdc shell `/data/app/el2/100/base/<bundle>/haps/entry/files/…`
   ⇄ App 内 `/data/storage/el2/base/haps/entry/files/…`（`context.filesDir`）。

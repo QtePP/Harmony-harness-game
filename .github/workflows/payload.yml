@@ -84,4 +84,12 @@ jobs:
             ' /tmp/dump.txt | grep -q 'disabled: true' \
               || { echo "row not disabled: $row"; exit 1; }
           done
+          # The engine owns the rules; the model only narrates. High reasoning
+          # was ~8s of a 13s turn, so the profile must default to low.
+          awk -v id="^- id: llm-deepseek\$" '
+            $0 ~ id { inside = 1; next }
+            inside && /^- id: / { exit }
+            inside { print }
+          ' /tmp/dump.txt | grep -q 'reasoningEffort: low' \
+            || { echo "llm-deepseek must default reasoningEffort: low"; exit 1; }
           echo "profile composed"

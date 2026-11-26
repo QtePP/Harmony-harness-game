@@ -105,6 +105,7 @@ bash scripts/test.sh                 # 全部检查：单测 / ArkTS / LocalUnit
 | 显示名 / 图标 | 三国人生 / 汉印 | 桌面上不会和闪电图标的 HarmonyGo 混淆 |
 | 桥端口 | **4518** | HarmonyGo 占 4517；两个应用可以同时常驻，否则后启动的那个 `EADDRINUSE` |
 | 默认 profile | **ACP** | 只有 ohos profile 挂 `@ohos/dsh-sanguo`；SDK 下模型根本看不到 `sanguo_*` 工具 |
+| 思考深度 | **low**（新会话默认） | 引擎负责判定，模型只叙述；high 会把一轮拖到 13s，low 实测 2.3s |
 
 首次启动：启动页提示缺 Key → 点「设置」→ 填 DeepSeek API Key → 保存 → 重试。
 之后新建项目「汉末人生」→ 粘下面的建包指令 → 模型落盘并直接开局。
