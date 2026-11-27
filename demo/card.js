@@ -12,7 +12,7 @@ import { ENDINGS, ENDING_BY_ID, endingFor } from './endings.js'
 import { PERSONAS, bestOption } from './policy.js'
 
 const game = makeGame(actsDocument)
-const app = document.getElementById('app')
+let app = null
 
 const SAVE_KEY = 'sanguo-demo-run-v1'
 const GALLERY_KEY = 'sanguo-demo-endings-v1'
@@ -143,6 +143,7 @@ function toolsBar() {
         </select>
       </label>
       <button data-gallery>图鉴 ${unlocked.size}/${ENDINGS.length}</button>
+      <button data-copybook>副本库</button>
       <button data-restart>重开</button>
     </div>`
 }
@@ -465,7 +466,8 @@ function openGallery() {
     stopAuto()
     render()
   }
-  const existing = document.querySelector('.overlay')
+  const scope = app.getRootNode()
+  const existing = scope.querySelector('.overlay')
   if (existing) existing.remove()
   const previousOverflow = document.body.style.overflow
   document.body.style.overflow = 'hidden'
@@ -498,7 +500,7 @@ function openGallery() {
       </div>
       <p class="modal-foot">结局解锁会留在这台设备上（localStorage），与页面版共用。</p>
     </div>`
-  document.body.appendChild(overlay)
+  scope.appendChild(overlay)
   const close = () => {
     overlay.remove()
     document.body.style.overflow = previousOverflow
@@ -524,6 +526,8 @@ function bind() {
   app.querySelectorAll('[data-resume]').forEach((node) => node.addEventListener('click', resumeRun))
   app.querySelectorAll('[data-gallery]').forEach((node) => node.addEventListener('click', openGallery))
   app.querySelectorAll('[data-restart]').forEach((node) => node.addEventListener('click', restart))
+  app.querySelectorAll('[data-copybook]').forEach((node) => node.addEventListener('click', () => window.__openCopybook?.()))
+  app.querySelectorAll('[data-life]').forEach((node) => node.addEventListener('click', () => window.__openLife?.()))
   app.querySelectorAll('[data-choice]').forEach((node) => {
     node.addEventListener('click', () => chooseOption(node.dataset.choice))
   })
@@ -554,4 +558,8 @@ function render() {
   }
   if (auto && mode === 'play' && !ending) scheduleAuto()
 }
-render()
+
+export function mountSanguo(root) {
+  app = root
+  render()
+}

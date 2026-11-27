@@ -248,7 +248,7 @@ function renderStart() {
         <button class="gold" data-start>${saved ? '翻开新的一生' : '翻开第一页'}</button>
         ${saved ? '<button class="ghost-light" data-resume>继续上局</button>' : ''}
         <button class="link-light" data-gallery>结局图鉴 ${seen.size} / ${lifeData.endings.length}</button>
-        <button class="link-light" data-copybook>穿梭人生 · ${instancesData.instances.length + 1} 个副本</button>
+        <button class="link-light" data-copybook>人生副本 · ${instancesData.instances.length + 2} 个</button>
         <button class="link-light" data-random-sim>模拟体验一段人生</button>
       </div>
       <p class="back-foot">离线 · 无网络请求</p>

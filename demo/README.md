@@ -1,11 +1,11 @@
-# 三国人生 · 离线 demo
+# 人生副本 · 如果 · 离线 demo
 
 在线试玩：
 
 - 三国 · 长页版：<https://qtepp.github.io/Harmony-harness-game/demo/sanguo.html>
 - 三国 · 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/card.html>
-- 如果 · 竖版卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/life.html>
-- 穿梭人生 · 副本：<https://qtepp.github.io/Harmony-harness-game/demo/life.html#copybook>
+- 人生副本 · 如果（主入口）：<https://qtepp.github.io/Harmony-harness-game/demo/life.html>
+- 副本库（含三国）：<https://qtepp.github.io/Harmony-harness-game/demo/life.html#copybook>
 
 本地：
 
@@ -18,7 +18,7 @@ open demo/life.html#copybook    # 穿梭人生 · 副本（同一份 HTML）
 ```
 
 三个都是**单文件**：不需要安装 App、不需要 API Key、不需要网络、不需要 Node。
-三国两个约 105 KB，人生之书（含 50 个副本）约 722 KB；页面没有任何外部请求。
+三国两个约 105 KB，主入口（含 50 个副本 + 小狮 + 三国）约 829 KB；页面没有任何外部请求。
 
 ## 它是什么
 
@@ -42,7 +42,7 @@ open demo/life.html#copybook    # 穿梭人生 · 副本（同一份 HTML）
 |---|---|---|
 | `sanguo.html` | 长页 | 场景、数值、选项纵向排列；适合阅读和手机滚动 |
 | `card.html` | 三国 · 4:6 单卡 | 4 列 × 6 行的竖版卡；卡内完成选择/判定/继续，卡外只有推演、倾向、图鉴、重开 |
-| `life.html#copybook` | 穿梭人生 · 副本 | 50 个独立人生副本 + 小狮本人（最长的一条，70 结局）；副本共 233 个结局；和《如果》在同一个 HTML 里，结局页会按这一世推荐 3 个副本，副本库支持「模拟体验」 |
+| `life.html#copybook` | 人生副本 | 50 个独立人生 + 小狮（70 结局）+ 三国（38 场景 8 结局）；副本共 233 个结局；和《如果》在同一个 HTML 里，结局页会按这一世推荐 3 个副本，副本库支持「模拟体验」 |
 | `life.html` | 如果 · 竖版单卡 | 九页（六次选择 + 三次拷问 + 六段分支事件）、七十种答案；大屏保持 4:6，手机上卡片加高到 600px，正文 14.5–15px、选项 13–14.5px；锁住的路可点开看原因 |
 
 两版共用 `game.js` / `endings.js` / `policy.js`，存档与结局图鉴共用同一组

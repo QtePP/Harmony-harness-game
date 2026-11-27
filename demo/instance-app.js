@@ -91,14 +91,19 @@ function renderHub() {
         <div class="hub-inner">
           <div class="back-seal" aria-hidden="true">穿</div>
           <p class="back-kicker">B站 @穿梭人生Up · 抖音 @潦草人生</p>
-          <h1 class="back-title">副本</h1>
-          <p class="back-sub">选一段别人的人生，<br>替他把这一步走完。</p>
+          <h1 class="back-title">人生副本</h1>
+          <p class="back-sub">小狮的一生、五十段别人的人生、<br>还有三国十二幕。选一段，走完它。</p>
           <button class="hub-sim" data-simulate-random>模拟体验 · 随机一段</button>
           <button class="hub-back" data-life>← 回到《如果》</button>
           <div class="hub-list">
             <button class="instance-item feature" data-life>
               <b>小狮 · 人生之书</b>
               <small>1985 · 东莞 · 七十种结局 · 最长的一条</small>
+              <span aria-hidden="true">›</span>
+            </button>
+            <button class="instance-item feature" data-sanguo>
+              <b>三国 · 东汉末年</b>
+              <small>十二幕 · 从涿郡桑树到白帝托孤 · 另一个游戏</small>
               <span aria-hidden="true">›</span>
             </button>
             ${instancesData.instances.map((item) => `
@@ -109,13 +114,13 @@ function renderHub() {
               </button>`).join('')}
           </div>
           <p class="hub-foot">
-            ${instancesData.instances.length + 1} 个可玩副本 · 剧情为本游戏原创
+            ${instancesData.instances.length + 2} 个可玩副本 · 剧情为本游戏原创
             <a href="${esc(instancesData.source.url)}" target="_blank" rel="noopener">来源：穿梭人生Up</a>
             <a href="${esc(instancesData.source.douyin_url ?? 'https://www.douyin.com/user/MS4wLjABAAAAha92Qs4h063W72nAJ08YGQScsi8uoj9DLy7hrwShOwjkQCbwWgfXXylwLywYhTEx')}" target="_blank" rel="noopener">潦草人生</a>
           </p>
         </div>
       </section>
-      <p class="note">每段 3 页 · 3 个选择 · 3–4 种结局 · 离线</p>
+      <p class="note">点开就是一段人生 · 离线</p>
     </main>`
   bind()
 }
@@ -347,6 +352,7 @@ function bind() {
   })
   app.querySelectorAll('[data-hub]').forEach((node) => node.addEventListener('click', renderHub))
   app.querySelectorAll('[data-life]').forEach((node) => node.addEventListener('click', () => window.__openLife?.()))
+  app.querySelectorAll('[data-sanguo]').forEach((node) => node.addEventListener('click', () => window.__openSanguo?.()))
   app.querySelectorAll('[data-restart]').forEach((node) => node.addEventListener('click', restart))
   app.querySelectorAll('[data-simulate]').forEach((node) => node.addEventListener('click', () => {
     if (simulating) return stopSim(true)

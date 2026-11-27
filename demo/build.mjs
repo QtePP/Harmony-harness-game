@@ -25,7 +25,7 @@ async function emit(entry, templateName, outputName, title) {
     minify: true,
     write: false,
     legalComments: 'none',
-    loader: { '.json': 'json' },
+    loader: { '.json': 'json', '.html': 'text' },
     logLevel: 'warning'
   })
 
@@ -49,9 +49,9 @@ await emit('main-app.js', 'life.template.html', 'life.html')
 await writeFile(join(here, 'instances.html'), `<!doctype html>
 <html lang="zh-CN">
 <head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./life.html#copybook">
-<title>如果 · 穿梭副本</title></head>
+<title>人生副本 · 如果</title></head>
 <body style="background:#17130f;color:#d9b98d;font-family:serif;padding:40px">
-<p>正在进入《如果》的穿梭副本……</p>
+<p>正在进入《人生副本 —— 如果》……</p>
 <p><a style="color:#e6c993" href="./life.html#copybook">点这里继续</a></p>
 </body></html>
 `, 'utf8')
