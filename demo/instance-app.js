@@ -91,7 +91,7 @@ function renderHub() {
         <div class="hub-inner">
           <div class="back-seal" aria-hidden="true">穿</div>
           <p class="back-kicker">B站 @穿梭人生Up · 抖音 @潦草人生</p>
-          <h1 class="back-title">人生副本</h1>
+          <h1 class="back-title">人生之书</h1>
           <p class="back-sub">小狮的一生、五十段别人的人生、<br>还有三国十二幕。选一段，走完它。</p>
           <button class="hub-sim" data-simulate-random>模拟体验 · 随机一段</button>
           <button class="hub-back" data-life>← 回到《如果》</button>

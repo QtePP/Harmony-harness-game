@@ -2,8 +2,10 @@
 
 [![payload](https://github.com/QtePP/Harmony-harness-game/actions/workflows/payload.yml/badge.svg)](https://github.com/QtePP/Harmony-harness-game/actions/workflows/payload.yml)
 
-**dsh 鸿蒙外壳上的游戏应用。** 三国人生模拟：你扮演刘备，从 161 年涿县出生，
-走完他生命里的十二个岔路口。你可以照史载走，也可以随时离开它。
+**dsh 鸿蒙外壳上的游戏应用：《人生之书 —— 如果》。**
+
+一个入口，一本书：小狮 1985—2026 的一生（70 种结局）、50 段别人的人生、
+以及三国十二幕（38 个场景、8 种结局）。点进去，选一段，走完它。
 
 <img src="store-assets/screenshots/01-board.png" width="320" alt="三国人生的棋盘">
 
@@ -16,16 +18,16 @@ deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、�
 
 ## 离线 demo（不用装 App）
 
-在线试玩：<https://qtepp.github.io/Harmony-harness-game/>
+在线试玩（根路径就是游戏）：<https://qtepp.github.io/Harmony-harness-game/>
 
-[`demo/sanguo.html`](demo/sanguo.html)（三国 · 长页）、[`demo/card.html`](demo/card.html)
-（三国 · 4:6 单卡）和 [`demo/life.html`](demo/life.html)（如果 · 竖版单卡）都是单文件
-离线版：下载后用浏览器打开即可，不需要 API Key、不需要网络、不需要 Node。
+[`index.html`](index.html) 是统一入口，也是单文件离线版：下载后用浏览器打开即可，
+不需要 API Key、不需要网络、不需要 Node。`demo/sanguo.html`（三国长页）和
+`demo/card.html`（三国 4:6 单卡）是保留的独立版。
 它复用同一套引擎和十二幕 38 个场景，结局由第十一幕称帝、第十二幕夷陵/白帝的关键选择与末局
 数值决定；点「本机推演」可以按仁 / 霸 / 稳 / 隐四种倾向自动走完一生，全程不调用模型。
 人生之书则是小狮 1985 年生于广东东莞、2003—2026 的九页人生：六次选择 + 三次拷问，
 前置选择会锁掉后面的路，五个主题 × 六个代价位共 30 种，再加 30 种特殊人生和 10 种「潦草人生」，共 70 种结局；点「本机决策」会往前推演到结局再回头选。
-另有 `demo/life.html#copybook`：「穿梭人生」副本模式，52 个可玩副本（小狮 + 三国 + 50 个独立人生，共 233 个副本结局；灵感来自 B 站 @穿梭人生Up 的 40 条 + 抖音 @潦草人生 的 12 条视频标题，剧情原创）。
+另有 `index.html#copybook`：统一的副本库，52 个可玩副本（小狮 + 三国 + 50 个独立人生，共 233 个副本结局；灵感来自 B 站 @穿梭人生Up 的 40 条 + 抖音 @潦草人生 的 12 条视频标题，剧情原创）。
 构建与验收见 [`demo/README.md`](demo/README.md)。
 
 ---
