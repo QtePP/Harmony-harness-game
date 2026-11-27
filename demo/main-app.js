@@ -8,7 +8,7 @@
  */
 
 import { renderStart, resumeLife } from './life-app.js'
-import { renderHub, openInstance } from './instance-app.js'
+import { renderHub, openInstance, simulateRandom } from './instance-app.js'
 
 const wantsCopybook = () => location.hash.replace('#', '') === 'copybook'
 
@@ -23,6 +23,7 @@ function openLife() {
 }
 
 window.__openCopybook = openCopybook
+window.__simulateRandom = simulateRandom
 window.__openCopybookWith = (id) => {
   if (location.hash !== '#copybook') history.replaceState(null, '', '#copybook')
   openInstance(id)

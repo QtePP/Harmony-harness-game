@@ -366,4 +366,9 @@ function openInstance(id) {
   startInstance(id, false)
 }
 
-export { renderHub, render, openInstance }
+function simulateRandom() {
+  const pick = instancesData.instances[Math.floor(Math.random() * instancesData.instances.length)]
+  startInstance(pick.id, true)
+}
+
+export { renderHub, render, openInstance, simulateRandom }

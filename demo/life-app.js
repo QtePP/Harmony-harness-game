@@ -249,6 +249,7 @@ function renderStart() {
         ${saved ? '<button class="ghost-light" data-resume>继续上局</button>' : ''}
         <button class="link-light" data-gallery>结局图鉴 ${seen.size} / ${lifeData.endings.length}</button>
         <button class="link-light" data-copybook>穿梭人生 · ${instancesData.instances.length + 1} 个副本</button>
+        <button class="link-light" data-random-sim>模拟体验一段人生</button>
       </div>
       <p class="back-foot">离线 · 无网络请求</p>
     </div>`, 'back')
@@ -673,6 +674,7 @@ function bind() {
   app.querySelectorAll('[data-restart]').forEach((node) => node.addEventListener('click', restart))
   app.querySelectorAll('[data-gallery]').forEach((node) => node.addEventListener('click', showGallery))
   app.querySelectorAll('[data-copybook]').forEach((node) => node.addEventListener('click', () => window.__openCopybook?.()))
+  app.querySelectorAll('[data-random-sim]').forEach((node) => node.addEventListener('click', () => window.__simulateRandom?.()))
   app.querySelectorAll('[data-open-copy]').forEach((node) => node.addEventListener('click', () => window.__openCopybookWith?.(node.dataset.openCopy)))
   app.querySelectorAll('[data-locked]').forEach((node) => {
     node.addEventListener('click', () => showLocked(scene ? scene.options : []))
