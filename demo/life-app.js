@@ -9,6 +9,7 @@
  */
 
 import lifeData from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-life/data/life.json'
+import instancesData from '../host/profile-ohos/profiles/ohos/node_modules/@ohos/dsh-life/data/instances.json'
 import {
   createSave,
   sceneOf,
@@ -34,6 +35,14 @@ const STATS = [
 ]
 const DESIRE = {
   money: '钱', health: '健康', love: '被爱', freedom: '自由', parents: '被期待', self: '自己'
+}
+
+const COPY_SUGGEST = {
+  money: ['billionaire', 'phoenix', 'top-donor'],
+  freedom: ['mayor', 'delivery', 'sloppy'],
+  love: ['marry-love', 'moonlight', 'npd'],
+  home: ['village', 'mom-shop', 'barber'],
+  self: ['misdiagnosis', 'glasses', 'acting']
 }
 
 const themeLabel = (id) => lifeData.themes.find((theme) => theme.id === id)?.label ?? id
@@ -239,6 +248,7 @@ function renderStart() {
         <button class="gold" data-start>${saved ? '翻开新的一生' : '翻开第一页'}</button>
         ${saved ? '<button class="ghost-light" data-resume>继续上局</button>' : ''}
         <button class="link-light" data-gallery>结局图鉴 ${seen.size} / ${lifeData.endings.length}</button>
+        <button class="link-light" data-copybook>穿梭副本 · ${instancesData.instances.length} 段人生</button>
       </div>
       <p class="back-foot">离线 · 无网络请求</p>
     </div>`, 'back')
@@ -372,6 +382,26 @@ function renderResult() {
 /* 结局                                                                */
 /* ------------------------------------------------------------------ */
 
+function endingTheme(ending) {
+  if (ending.theme) return ending.theme
+  const flags = state?.flags ?? {}
+  if (flags.sea_life || flags.sea_owner || flags.fisherman) return 'freedom'
+  if (flags.factory_owner || flags.boss) return 'money'
+  if (flags.coach || flags.pro_athlete || flags.writer_life || flags.painter_life) return 'self'
+  if (flags.ipo || flags.bank) return 'money'
+  if (flags.reunited || flags.family) return 'love'
+  if (flags.sea_life || flags.south) return 'freedom'
+  if (flags.shop_home || flags.came_home) return 'home'
+  return 'self'
+}
+
+function suggestedCopies(ending) {
+  const ids = COPY_SUGGEST[endingTheme(ending)] ?? COPY_SUGGEST.self
+  return ids
+    .map((id) => instancesData.instances.find((item) => item.id === id))
+    .filter(Boolean)
+}
+
 function renderEnding() {
   mode = 'ending'
   auto = false
@@ -404,6 +434,12 @@ function renderEnding() {
           <button class="secondary" data-save-line>留下</button>
         </div>
         ${lastLine ? `<p class="lastline-show">你的如果：${esc(lastLine)}</p>` : ''}
+        <div class="ending-copies">
+          <p class="copy-title">换一段人生 · 根据这一世给你推的副本</p>
+          <div class="copy-buttons">
+            ${suggestedCopies(ending).map((item) => `<button class="copy-chip" data-open-copy="${esc(item.id)}">${esc(item.title)}<span>${esc(item.subtitle)}</span></button>`).join('')}
+          </div>
+        </div>
       </div>
       ${footline((lifeData.pages ?? lifeData.chapters).length)}
       <div class="card-actions ending-actions">
@@ -636,6 +672,8 @@ function bind() {
   app.querySelectorAll('[data-resume]').forEach((node) => node.addEventListener('click', resumeRun))
   app.querySelectorAll('[data-restart]').forEach((node) => node.addEventListener('click', restart))
   app.querySelectorAll('[data-gallery]').forEach((node) => node.addEventListener('click', showGallery))
+  app.querySelectorAll('[data-copybook]').forEach((node) => node.addEventListener('click', () => window.__openCopybook?.()))
+  app.querySelectorAll('[data-open-copy]').forEach((node) => node.addEventListener('click', () => window.__openCopybookWith?.(node.dataset.openCopy)))
   app.querySelectorAll('[data-locked]').forEach((node) => {
     node.addEventListener('click', () => showLocked(scene ? scene.options : []))
   })
@@ -685,4 +723,9 @@ function render() {
   if (auto && mode === 'play' && !ending) scheduleAuto()
 }
 
-render()
+function resumeLife() {
+  if (state) render()
+  else renderStart()
+}
+
+export { renderStart, render, resumeLife }

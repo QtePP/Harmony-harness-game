@@ -33,6 +33,8 @@ let scene = null
 let result = null
 let ending = null
 let mode = 'hub'
+let simulating = false
+let simTimer = null
 
 function esc(value) {
   return String(value ?? '')
@@ -74,6 +76,8 @@ function tools() {
   if (mode === 'hub') return ''
   return `
     <div class="tools">
+      <button data-simulate>${simulating ? '停止模拟' : '模拟体验'}</button>
+      <button data-life>回到《如果》</button>
       <button data-hub>副本库</button>
       <button data-restart>重开这个副本</button>
     </div>`
@@ -89,6 +93,8 @@ function renderHub() {
           <p class="back-kicker">B站 @穿梭人生Up · 抖音 @潦草人生</p>
           <h1 class="back-title">副本</h1>
           <p class="back-sub">选一段别人的人生，<br>替他把这一步走完。</p>
+          <button class="hub-sim" data-simulate-random>模拟体验 · 随机一段</button>
+          <button class="hub-back" data-life>← 回到《如果》</button>
           <div class="hub-list">
             ${instancesData.instances.map((item) => `
               <button class="instance-item" data-instance="${esc(item.id)}">
@@ -109,9 +115,11 @@ function renderHub() {
   bind()
 }
 
-function startInstance(id) {
+function startInstance(id, sim = false) {
   const found = instancesData.instances.find((item) => item.id === id)
   if (!found) return
+  clearSim()
+  simulating = sim
   instance = found
   state = createSave(`instance-${id}-${Date.now().toString(36)}`)
   state.stats = { ...instance.start.stats }
@@ -184,6 +192,8 @@ function renderResult() {
 
 function renderEnding() {
   mode = 'ending'
+  simulating = false
+  clearSim()
   if (!ending) return
   app.innerHTML = shell(`
     <div class="card-grid">
@@ -204,6 +214,65 @@ function renderEnding() {
       </div>
     </div>`)
   bind()
+}
+
+function utility(state) {
+  const s = state.stats
+  return s.money + s.health + s.love + s.freedom + s.parents - s.regret * 0.8
+}
+
+function rollout(state) {
+  let s = state
+  for (let i = 0; i < 6 && s.finished !== true; i += 1) {
+    const scene = sceneOf(s, instance)
+    if (scene.finished) break
+    let best = null
+    for (const option of scene.options) {
+      if (option.locked) continue
+      const next = choose(s, instance, option.id).state
+      const value = utility(next)
+      if (best === null || value > best.value) best = { id: option.id, value }
+    }
+    if (best === null) break
+    s = choose(s, instance, best.id).state
+  }
+  return utility(s)
+}
+
+function bestChoice() {
+  const scene = sceneOf(state, instance)
+  if (scene.finished) return null
+  let best = null
+  for (const option of scene.options) {
+    if (option.locked) continue
+    const next = choose(state, instance, option.id).state
+    const value = rollout(next)
+    if (best === null || value > best.value) best = { id: option.id, value }
+  }
+  return best === null ? null : best.id
+}
+
+function clearSim() {
+  if (simTimer !== null) { clearTimeout(simTimer); simTimer = null }
+}
+
+function stopSim(resume = true) {
+  simulating = false
+  clearSim()
+  if (resume && mode !== 'hub') render()
+}
+
+function scheduleSim() {
+  clearSim()
+  if (!simulating || mode !== 'play') return
+  simTimer = setTimeout(() => {
+    simTimer = null
+    if (!simulating) return
+    if (result) { result = null; render(); return }
+    if (!scene || scene.finished) { simulating = false; render(); return }
+    const id = bestChoice()
+    if (id) chooseOption(id)
+  }, 900)
 }
 
 function chooseOption(id) {
@@ -228,17 +297,22 @@ function finish() {
 }
 
 function restart() {
-  if (instance) startInstance(instance.id)
+  if (instance) startInstance(instance.id, simulating)
 }
 
 function render() {
-  if (mode === 'hub') return renderHub()
-  if (result) return renderResult()
-  if (!ending && scene && scene.finished) finish()
-  if (ending) return renderEnding()
-  if (scene) return renderScene()
-  renderHub()
+  if (mode === 'hub') { renderHub(); return }
+  if (result) renderResult()
+  else {
+    if (!ending && scene && scene.finished) finish()
+    if (ending) renderEnding()
+    else if (scene) renderScene()
+    else renderHub()
+  }
+  if (simulating && mode === 'play' && !ending) scheduleSim()
 }
+
+
 
 function bind() {
   app.querySelectorAll('[data-instance]').forEach((node) => {
@@ -254,7 +328,24 @@ function bind() {
     })
   })
   app.querySelectorAll('[data-hub]').forEach((node) => node.addEventListener('click', renderHub))
+  app.querySelectorAll('[data-life]').forEach((node) => node.addEventListener('click', () => window.__openLife?.()))
   app.querySelectorAll('[data-restart]').forEach((node) => node.addEventListener('click', restart))
+  app.querySelectorAll('[data-simulate]').forEach((node) => node.addEventListener('click', () => {
+    if (simulating) return stopSim(true)
+    simulating = true
+    if (result) result = null
+    render()
+  }))
+  app.querySelectorAll('[data-simulate-random]').forEach((node) => {
+    node.addEventListener('click', () => {
+      const pick = instancesData.instances[Math.floor(Math.random() * instancesData.instances.length)]
+      startInstance(pick.id, true)
+    })
+  })
 }
 
-renderHub()
+function openInstance(id) {
+  startInstance(id, false)
+}
+
+export { renderHub, render, openInstance }

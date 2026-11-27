@@ -45,5 +45,13 @@ async function emit(entry, templateName, outputName, title) {
 
 await emit('app.js', 'template.html', 'sanguo.html')
 await emit('card.js', 'card.template.html', 'card.html')
-await emit('life-app.js', 'life.template.html', 'life.html')
-await emit('instance-app.js', 'life.template.html', 'instances.html', '如果 · 穿梭人生副本')
+await emit('main-app.js', 'life.template.html', 'life.html')
+await writeFile(join(here, 'instances.html'), `<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=./life.html#copybook">
+<title>如果 · 穿梭副本</title></head>
+<body style="background:#17130f;color:#d9b98d;font-family:serif;padding:40px">
+<p>正在进入《如果》的穿梭副本……</p>
+<p><a style="color:#e6c993" href="./life.html#copybook">点这里继续</a></p>
+</body></html>
+`, 'utf8')
