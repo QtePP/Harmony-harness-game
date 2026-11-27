@@ -44,7 +44,7 @@ async function emit(entry, templateName, outputName, title) {
 }
 
 await emit('app.js', 'template.html', 'sanguo.html')
-await emit('card.js', 'card.template.html', 'card.html')
+await emit('card-entry.js', 'card.template.html', 'card.html')
 await emit('main-app.js', 'life.template.html', 'life.html')
 await writeFile(join(here, 'instances.html'), `<!doctype html>
 <html lang="zh-CN">
