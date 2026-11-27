@@ -53,6 +53,7 @@ function openSanguo() {
 }
 
 const wantsCopybook = () => location.hash.replace('#', '') === 'copybook'
+const wantsLife = () => location.hash.replace('#', '') === 'life'
 const wantsSanguo = () => location.hash.replace('#', '') === 'sanguo'
 
 function openCopybook() {
@@ -63,7 +64,7 @@ function openCopybook() {
 
 function openLife() {
   closeSanguo()
-  if (location.hash !== '') history.replaceState(null, '', location.pathname + location.search)
+  if (location.hash !== '#life') history.replaceState(null, '', '#life')
   resumeLife()
 }
 
@@ -78,10 +79,10 @@ window.__openLife = openLife
 
 window.addEventListener('hashchange', () => {
   if (wantsSanguo()) openSanguo()
-  else if (wantsCopybook()) { closeSanguo(); renderHub() }
-  else { closeSanguo(); resumeLife() }
+  else if (wantsLife()) { closeSanguo(); resumeLife() }
+  else { closeSanguo(); renderHub() }
 })
 
 if (wantsSanguo()) openSanguo()
-else if (wantsCopybook()) renderHub()
-else renderStart()
+else if (wantsLife()) resumeLife()
+else renderHub()

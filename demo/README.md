@@ -4,7 +4,7 @@
 
 - 三国 · 长页版：<https://qtepp.github.io/Harmony-harness-game/demo/sanguo.html>
 - 三国 · 4:6 卡片版：<https://qtepp.github.io/Harmony-harness-game/demo/card.html>
-- 主入口（根路径就是游戏）：<https://qtepp.github.io/Harmony-harness-game/>
+- 主入口（根路径就是副本库）：<https://qtepp.github.io/Harmony-harness-game/>
 - 副本库（含三国）：<https://qtepp.github.io/Harmony-harness-game/demo/life.html#copybook>
 
 本地：

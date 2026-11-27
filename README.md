@@ -18,7 +18,7 @@ deepseek-harness-harmony）分出来的**垂域仓**：外壳只提供会话、�
 
 ## 离线 demo（不用装 App）
 
-在线试玩（根路径就是游戏）：<https://qtepp.github.io/Harmony-harness-game/>
+在线试玩（根路径就是《人生之书》副本库）：<https://qtepp.github.io/Harmony-harness-game/>
 
 [`index.html`](index.html) 是统一入口，也是单文件离线版：下载后用浏览器打开即可，
 不需要 API Key、不需要网络、不需要 Node。`demo/sanguo.html`（三国长页）和

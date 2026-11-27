@@ -94,10 +94,9 @@ function renderHub() {
           <h1 class="back-title">人生之书</h1>
           <p class="back-sub">小狮的一生、五十段别人的人生、<br>还有三国十二幕。选一段，走完它。</p>
           <button class="hub-sim" data-simulate-random>模拟体验 · 随机一段</button>
-          <button class="hub-back" data-life>← 回到《如果》</button>
           <div class="hub-list">
             <button class="instance-item feature" data-life>
-              <b>小狮 · 人生之书</b>
+              <b>小狮 · 如果</b>
               <small>1985 · 东莞 · 七十种结局 · 最长的一条</small>
               <span aria-hidden="true">›</span>
             </button>
