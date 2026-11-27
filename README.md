@@ -2,7 +2,7 @@
 
 [![payload](https://github.com/QtePP/Harmony-harness-game/actions/workflows/payload.yml/badge.svg)](https://github.com/QtePP/Harmony-harness-game/actions/workflows/payload.yml)
 
-**dsh 鸿蒙外壳上的游戏应用：《人生之书 —— 如果》。**
+**dsh 鸿蒙外壳上的游戏应用：《人生之书——如果》。**
 
 一个入口，一本书：小狮 1985—2026 的一生（70 种结局）、50 段别人的人生、
 以及三国十二幕（38 个场景、8 种结局）。点进去，选一段，走完它。
