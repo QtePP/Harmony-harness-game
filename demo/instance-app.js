@@ -96,6 +96,11 @@ function renderHub() {
           <button class="hub-sim" data-simulate-random>模拟体验 · 随机一段</button>
           <button class="hub-back" data-life>← 回到《如果》</button>
           <div class="hub-list">
+            <button class="instance-item feature" data-life>
+              <b>小狮 · 人生之书</b>
+              <small>1985 · 东莞 · 七十种结局 · 最长的一条</small>
+              <span aria-hidden="true">›</span>
+            </button>
             ${instancesData.instances.map((item) => `
               <button class="instance-item" data-instance="${esc(item.id)}">
                 <b>${esc(item.title)}</b>
@@ -104,7 +109,7 @@ function renderHub() {
               </button>`).join('')}
           </div>
           <p class="hub-foot">
-            ${instancesData.instances.length} 个可玩副本 · 剧情为本游戏原创
+            ${instancesData.instances.length + 1} 个可玩副本 · 剧情为本游戏原创
             <a href="${esc(instancesData.source.url)}" target="_blank" rel="noopener">来源：穿梭人生Up</a>
             <a href="${esc(instancesData.source.douyin_url ?? 'https://www.douyin.com/user/MS4wLjABAAAAha92Qs4h063W72nAJ08YGQScsi8uoj9DLy7hrwShOwjkQCbwWgfXXylwLywYhTEx')}" target="_blank" rel="noopener">潦草人生</a>
           </p>
@@ -190,6 +195,13 @@ function renderResult() {
   bind()
 }
 
+function nextCopies() {
+  const list = instancesData.instances
+  if (!instance) return list.slice(0, 2)
+  const index = list.findIndex((item) => item.id === instance.id)
+  return [list[(index + 1) % list.length], list[(index + 3) % list.length]].filter(Boolean)
+}
+
 function renderEnding() {
   mode = 'ending'
   simulating = false
@@ -207,6 +219,12 @@ function renderEnding() {
       <div class="card-story">
         <p class="narration ending-text">${esc(ending.text)}</p>
         <p class="ending-comment">${esc(ending.comment)}</p>
+        <div class="ending-copies">
+          <p class="copy-title">下一段人生</p>
+          <div class="copy-buttons">
+            ${nextCopies().map((item) => `<button class="copy-chip" data-instance="${esc(item.id)}">${esc(item.title)}<span>${esc(item.subtitle)}</span></button>`).join('')}
+          </div>
+        </div>
       </div>
       <div class="card-actions ending-actions">
         <button class="primary" data-hub>再走一个副本</button>
